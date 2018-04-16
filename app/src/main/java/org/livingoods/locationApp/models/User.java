@@ -10,7 +10,7 @@ public class User {
 
     @Id
     public long id;
-    public Long userId;
+    public String chpId;
     public String phoneNumber;
 
 

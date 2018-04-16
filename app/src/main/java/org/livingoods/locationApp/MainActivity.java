@@ -17,7 +17,9 @@
 package org.livingoods.locationApp;
 
 import android.Manifest;
+import android.app.Activity;
 import android.app.PendingIntent;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
@@ -31,6 +33,7 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.util.Log;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.TextView;
 
@@ -89,7 +92,22 @@ public class MainActivity extends FragmentActivity implements
     // UI Widgets.
     private Button mRequestUpdatesButton;
     private Button mRemoveUpdatesButton;
+
+    private Button cancelBtn;
+    private Button saveBtn;
+    private TextView chpText;
+
     private TextView mLocationUpdatesResultView;
+
+    public static void hideKeyboard(Activity activity) {
+        if (activity != null) {
+            InputMethodManager inputManager = (InputMethodManager) activity.getSystemService(Context.INPUT_METHOD_SERVICE);
+            if (activity.getCurrentFocus() != null && inputManager != null) {
+                inputManager.hideSoftInputFromWindow(activity.getCurrentFocus().getWindowToken(), 0);
+                inputManager.showSoftInputFromInputMethod(activity.getCurrentFocus().getWindowToken(), 0);
+            }
+        }
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -102,10 +120,10 @@ public class MainActivity extends FragmentActivity implements
         mRequestUpdatesButton = (Button) findViewById(R.id.request_updates_button);
         mRemoveUpdatesButton = (Button) findViewById(R.id.remove_updates_button);
         mLocationUpdatesResultView = (TextView) findViewById(R.id.location_updates_result);
-
-
-        //if 1st run - no user record exists.
-        User user = userService.getlatestRegisteredUser();
+        cancelBtn = (Button) findViewById(R.id.cancelBtn);
+        saveBtn = (Button) findViewById(R.id.saveBtn);
+        chpText = (TextView) findViewById(R.id.chpText);
+        ;
 
 
         // Check if the user revoked runtime permissions.
@@ -115,6 +133,9 @@ public class MainActivity extends FragmentActivity implements
 
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
         createLocationRequest();
+
+
+        loadData();
     }
 
     @Override
@@ -123,7 +144,6 @@ public class MainActivity extends FragmentActivity implements
         PreferenceManager.getDefaultSharedPreferences(this)
                 .registerOnSharedPreferenceChangeListener(this);
     }
-
 
     @Override
     protected void onResume() {
@@ -328,6 +348,63 @@ public class MainActivity extends FragmentActivity implements
         } else {
             mRequestUpdatesButton.setEnabled(true);
             mRemoveUpdatesButton.setEnabled(false);
+        }
+    }
+
+    void showSnack(String text) {
+        Snackbar.make(
+                findViewById(R.id.activity_main),
+                text,//R.string.permission_denied_explanation,
+                Snackbar.LENGTH_SHORT)
+                .setAction(R.string.settings, null)
+                .show();
+    }
+
+    /**
+     * Handles the Save registration button.
+     */
+    public void registrationSave(View view) {
+        Log.i(TAG, "registrationSave updates");
+        saveRegistration();
+
+
+    }
+
+    /**
+     * Handles the cancel registration button.
+     */
+    public void registrationCancel(View view) {
+        Log.i(TAG, "registrationCancel ");
+        loadData();
+    }
+
+    void loadData() {
+
+        //if 1st run - no user record exists.
+        User user = userService.getRegisteredUser();
+        //if(user ==null){
+        chpText.setText(user == null ? null : user.chpId);
+        // }
+
+    }
+
+    void saveRegistration() {
+
+        //if 1st run - no user record exists.
+        User user = userService.getRegisteredUser();
+        if (user == null) {
+            //chpText.setText(user==null?null:user.chpId);
+            user = new User();
+            user.chpId = chpText.getText().toString().trim();
+
+        }
+        //add device info
+
+
+        if (userService.insertUser(user)) {
+            showSnack("saved CHV information");
+            chpText.clearFocus();
+            hideKeyboard(this);
         }
     }
 }

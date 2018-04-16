@@ -2,19 +2,19 @@ package org.livingoods.locationApp.services;
 
 import android.util.Log;
 
-import org.livingoods.locationApp.AppController;
 import org.livingoods.locationApp.models.User;
-import org.livingoods.locationApp.models.User_;
+
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 import io.objectbox.Box;
 
-public class UserService {
+@Singleton
+public class UserService extends BaseService {
 
-    private static final String TAG = UserService.class.getSimpleName();
-
-    //@Inject
-    //@Singleton
-    public void UserService() {
+    @Inject
+    public UserService() {
+        //super(boxStore);
 
     }
 
@@ -22,7 +22,7 @@ public class UserService {
 
         try {
 
-            Box<User> userBox = (AppController.getInstance()).getBoxStore().boxFor(User.class);
+            Box<User> userBox = boxStore.boxFor(User.class);//(AppController.getInstance()).getBoxStore().boxFor(User.class);
             userBox.put(user);
             return true;
 
@@ -33,13 +33,16 @@ public class UserService {
 
     }
 
-    public User getlatestRegisteredUser() {
+    /*
+     * Only one user per device
+     */
+    public User getRegisteredUser() {
 
         try {
 
             //if 1st run - no user record exists.
-            Box<User> userBox = (AppController.getInstance()).getBoxStore().boxFor(User.class);
-            User user = userBox.query().orderDesc(User_.createdAt).build().findFirst();
+            Box<User> userBox = boxStore.boxFor(User.class);
+            User user = userBox.query().build().findFirst();//.orderDesc(User_.createdAt).build().findFirst();
 
             return user;
         } catch (Exception e) {

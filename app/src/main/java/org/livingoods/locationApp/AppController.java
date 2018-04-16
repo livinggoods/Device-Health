@@ -10,7 +10,7 @@ public class AppController extends Application {
     private static AppController instance;
 
     private AppcontrollerComponent component;
-    private BoxStore boxStore;
+
 
     public static AppController getInstance() {
         if (instance == null) {
@@ -53,7 +53,4 @@ public class AppController extends Application {
         // notesBox = ((AppController) getApplication()).getBoxStore().boxFor(Note.class);
     }
 
-    public BoxStore getBoxStore() {
-        return boxStore;
-    }
 }

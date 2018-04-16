@@ -5,16 +5,12 @@
   "entities": [
     {
       "id": "1:7129388409425330234",
-      "lastPropertyId": "5:7511104139395057880",
+      "lastPropertyId": "6:1439068190333065215",
       "name": "User",
       "properties": [
         {
           "id": "1:6436433853193013612",
           "name": "id"
-        },
-        {
-          "id": "2:3447438787561684228",
-          "name": "userId"
         },
         {
           "id": "3:972831289198029829",
@@ -27,6 +23,10 @@
         {
           "id": "5:7511104139395057880",
           "name": "updatedAt"
+        },
+        {
+          "id": "6:1439068190333065215",
+          "name": "chpId"
         }
       ],
       "relations": []
@@ -73,7 +73,9 @@
   "modelVersionParserMinimum": 4,
   "retiredEntityUids": [],
   "retiredIndexUids": [],
-  "retiredPropertyUids": [],
+  "retiredPropertyUids": [
+    3447438787561684228
+  ],
   "retiredRelationUids": [],
   "version": 1
 }

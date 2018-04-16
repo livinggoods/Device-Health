@@ -1,7 +1,5 @@
 package org.livingoods.locationApp;
 
-import org.livingoods.locationApp.services.UserService;
-
 import javax.inject.Singleton;
 
 import dagger.Component;
@@ -14,8 +12,9 @@ public interface AppcontrollerComponent extends AndroidInjector<AppController> {
 
     void inject(AppController target);
 
-    void inject(UserService target);
+    // void inject(BaseService target);
 
+    // void inject(UserService target);
     void inject(MainActivity target);
 
 
