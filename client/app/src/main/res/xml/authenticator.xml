@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <account-authenticator xmlns:android="http://schemas.android.com/apk/res/android"
     android:accountPreferences="@xml/syncsettings"
-    android:accountType="org.livingoods.locationApp"
+    android:accountType="org.goods.living.tech.health.device"
     android:icon="@mipmap/ic_launcher"
     android:label="@string/app_name"
     android:smallIcon="@mipmap/ic_launcher" />

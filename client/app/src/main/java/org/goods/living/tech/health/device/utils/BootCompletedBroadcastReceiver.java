@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-package org.livingoods.locationApp.utils;
+package org.goods.living.tech.health.device.utils;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.util.Log;
 
-import org.livingoods.locationApp.UI.MainActivity;
-import org.livingoods.locationApp.services.StatsService;
+import org.goods.living.tech.health.device.UI.MainActivity;
+import org.goods.living.tech.health.device.services.StatsService;
 
 import javax.inject.Inject;
 
@@ -41,7 +41,7 @@ import javax.inject.Inject;
  */
 public class BootCompletedBroadcastReceiver extends BroadcastReceiver {
     static final String ACTION_PROCESS_UPDATES =
-            "org.livingoods.locationApp.locationupdatespendingintent.action" +
+            "org.goods.living.tech.health.device.locationupdatespendingintent.action" +
                     ".PROCESS_UPDATES";
     private static final String TAG = "LUBroadcastReceiver";
 

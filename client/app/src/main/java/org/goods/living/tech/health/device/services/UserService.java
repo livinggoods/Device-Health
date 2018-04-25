@@ -1,8 +1,8 @@
-package org.livingoods.locationApp.services;
+package org.goods.living.tech.health.device.services;
 
 import android.util.Log;
 
-import org.livingoods.locationApp.models.User;
+import org.goods.living.tech.health.device.models.User;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;

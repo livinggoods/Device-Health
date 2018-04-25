@@ -1,12 +1,12 @@
-package org.livingoods.locationApp;
+package org.goods.living.tech.health.device;
 
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.location.Location;
 
-import org.livingoods.locationApp.models.MyObjectBox;
-import org.livingoods.locationApp.models.Stats;
-import org.livingoods.locationApp.models.User;
+import org.goods.living.tech.health.device.models.MyObjectBox;
+import org.goods.living.tech.health.device.models.Stats;
+import org.goods.living.tech.health.device.models.User;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;

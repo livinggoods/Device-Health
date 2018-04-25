@@ -1,4 +1,4 @@
-package org.livingoods.locationApp.utils;
+package org.goods.living.tech.health.device.utils;
 
 import android.content.ContentProvider;
 import android.content.ContentResolver;

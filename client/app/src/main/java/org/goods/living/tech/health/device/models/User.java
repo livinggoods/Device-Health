@@ -1,4 +1,4 @@
-package org.livingoods.locationApp.models;
+package org.goods.living.tech.health.device.models;
 
 import java.util.Date;
 

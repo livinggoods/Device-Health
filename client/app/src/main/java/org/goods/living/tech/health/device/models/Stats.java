@@ -1,4 +1,4 @@
-package org.livingoods.locationApp.models;
+package org.goods.living.tech.health.device.models;
 
 import java.util.Date;
 
@@ -18,7 +18,7 @@ public class Stats {
     public double longitude;
     public double accuracy;
     public String provider;
-    public long time;
+    public Date time;
 
     public Date createdAt;
     // Date updatedAt;

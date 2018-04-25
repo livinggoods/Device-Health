@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.livingoods.locationApp.utils;
+package org.goods.living.tech.health.device.utils;
 
 
 import android.app.NotificationChannel;
@@ -25,6 +25,7 @@ import android.content.Intent;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.location.Location;
+import android.location.LocationManager;
 import android.os.Build;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
@@ -32,8 +33,8 @@ import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.TaskStackBuilder;
 import android.util.Log;
 
-import org.livingoods.locationApp.R;
-import org.livingoods.locationApp.UI.MainActivity;
+import org.goods.living.tech.health.device.R;
+import org.goods.living.tech.health.device.UI.MainActivity;
 
 import java.util.List;
 
@@ -45,7 +46,7 @@ public class Utils {
     //  public final static String KEY_LOCATION_UPDATES_REQUESTED = "location-updates-requested";
     //  public final static String KEY_LOCATION_UPDATES_RESULT = "location-update-result";
     public final static String CHANNEL_ID = "channel_01";
-    public static final String CONTENT_AUTHORITY = "org.livingoods.locationApp" + ".provider";
+    public static final String CONTENT_AUTHORITY = "org.goods.living.tech.health.device" + ".provider";
     final static String TAG = Utils.class.getSimpleName();//BaseService.class.getSimpleName();
     final static String KEY_INSTALL_ID = "KEY_INSTALL_ID";
 /*
@@ -145,5 +146,17 @@ public class Utils {
         }
 
         return uuid;
+    }
+
+    public static boolean isLocationOn(Context context){
+
+            LocationManager locationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
+          boolean  isGpsEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
+           boolean isNetworkEnabled = locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
+
+            //Start your Activity if location was enabled:
+           return (isGpsEnabled || isNetworkEnabled) ;
+
+
     }
 }

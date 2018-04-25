@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <sync-adapter xmlns:android="http://schemas.android.com/apk/res/android"
 
-    android:accountType="org.livingoods.locationApp"
+    android:accountType="org.goods.living.tech.health.device"
     android:allowParallelSyncs="false"
-    android:contentAuthority="org.livingoods.locationApp.provider"
+    android:contentAuthority="org.goods.living.tech.health.device.provider"
     android:isAlwaysSyncable="true"
     android:supportsUploading="false"
     android:userVisible="true" />

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.livingoods.locationApp.services;
+package org.goods.living.tech.health.device.services;
 
 import android.app.IntentService;
 import android.content.Context;
@@ -23,8 +23,8 @@ import android.util.Log;
 
 import com.google.android.gms.location.LocationResult;
 
-import org.livingoods.locationApp.AppController;
-import org.livingoods.locationApp.utils.Utils;
+import org.goods.living.tech.health.device.AppController;
+import org.goods.living.tech.health.device.utils.Utils;
 
 import java.util.List;
 
@@ -43,10 +43,10 @@ import javax.inject.Inject;
  * {@link com.google.android.gms.location.LocationRequest} when the app is no longer in the
  * foreground.
  */
-public class LocationUpdatesIntentService extends IntentService {
+public class LocationUpdatesIntentService { //extends IntentService {
 
-    public static final String ACTION_PROCESS_UPDATES =
-            "org.livingoods.locationApp.locationupdatespendingintent.action" +
+   /* public static final String ACTION_PROCESS_UPDATES =
+            "org.goods.living.tech.health.device.locationupdatespendingintent.action" +
                     ".PROCESS_UPDATES";
     private static final String TAG = LocationUpdatesIntentService.class.getSimpleName();
 
@@ -74,8 +74,10 @@ public class LocationUpdatesIntentService extends IntentService {
                     Log.i(TAG, "received location updates");
 
                     statsService.insertLocationData(locations);
+                }else{
+                    Log.i(TAG, "received NULL LocationResult.extractResult(intent) location updates ");
                 }
             }
         }
-    }
+    }*/
 }

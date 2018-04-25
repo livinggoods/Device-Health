@@ -1,9 +1,9 @@
-package org.livingoods.locationApp;
+package org.goods.living.tech.health.device;
 
-import org.livingoods.locationApp.UI.MainActivity;
-import org.livingoods.locationApp.services.LocationUpdatesIntentService;
-import org.livingoods.locationApp.utils.LocationUpdatesBroadcastReceiver;
-import org.livingoods.locationApp.utils.SyncAdapter;
+import org.goods.living.tech.health.device.UI.MainActivity;
+import org.goods.living.tech.health.device.services.LocationUpdatesIntentService;
+import org.goods.living.tech.health.device.utils.LocationUpdatesBroadcastReceiver;
+import org.goods.living.tech.health.device.utils.SyncAdapter;
 
 import javax.inject.Singleton;
 

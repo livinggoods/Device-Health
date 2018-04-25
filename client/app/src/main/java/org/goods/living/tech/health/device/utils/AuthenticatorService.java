@@ -1,4 +1,4 @@
-package org.livingoods.locationApp.utils;
+package org.goods.living.tech.health.device.utils;
 
 import android.accounts.Account;
 import android.accounts.AccountManager;
@@ -14,7 +14,7 @@ public class AuthenticatorService extends Service {
 
     public static final String ACCOUNT = "LG locationApp";
     public static final long SYNC_FREQUENCY = 60 * 60; // 1 hour (seconds)
-    static final String ACCOUNT_TYPE = "org.livingoods.locationApp";
+    static final String ACCOUNT_TYPE = "org.goods.living.tech.health.device";
     static String PREF_SETUP_COMPLETE = "PREF_SETUP_COMPLETE";
     // Instance field that stores the authenticator object
     private Authenticator mAuthenticator;

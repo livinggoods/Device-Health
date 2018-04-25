@@ -1,8 +1,8 @@
-package org.livingoods.locationApp;
+package org.goods.living.tech.health.device;
 
 import android.app.Application;
 
-import io.objectbox.BoxStore;
+import org.goods.living.tech.health.device.DaggerAppcontrollerComponent;
 
 public class AppController extends Application {
 

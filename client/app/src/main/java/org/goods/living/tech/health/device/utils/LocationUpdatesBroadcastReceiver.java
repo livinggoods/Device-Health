@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.livingoods.locationApp.utils;
+package org.goods.living.tech.health.device.utils;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -24,8 +24,9 @@ import android.util.Log;
 
 import com.google.android.gms.location.LocationResult;
 
-import org.livingoods.locationApp.AppController;
-import org.livingoods.locationApp.services.StatsService;
+import org.goods.living.tech.health.device.AppController;
+import org.goods.living.tech.health.device.UI.MainActivity;
+import org.goods.living.tech.health.device.services.StatsService;
 
 import java.util.List;
 
@@ -45,9 +46,8 @@ import javax.inject.Inject;
  * foreground.
  */
 public class LocationUpdatesBroadcastReceiver extends BroadcastReceiver {
-    static final String ACTION_PROCESS_UPDATES =
-            "org.livingoods.locationApp.locationupdatespendingintent.action" +
-                    ".PROCESS_UPDATES";
+    public static final String ACTION_PROCESS_UPDATES =
+                    ".org.goods.living.tech.health.device.LocationUpdatesBroadcastReceiver.ACTION_PROCESS_UPDATES";
     private static final String TAG = "LUBroadcastReceiver";
 
     @Inject
@@ -58,9 +58,25 @@ public class LocationUpdatesBroadcastReceiver extends BroadcastReceiver {
 
         AppController.getInstance().getComponent().inject(this);
 
+
+
+
         if (intent != null) {
-            final String action = intent.getAction();
-            if (ACTION_PROCESS_UPDATES.equals(action)) {
+
+            if (intent.getAction().matches("android.location.PROVIDERS_CHANGED"))
+            {
+                Log.i(TAG, "Location Providers changed");
+
+                boolean on = Utils.isLocationOn(context);
+
+                Log.i(TAG, "Location Providers on: "+ on);
+                //Start your Activity if location was enabled:
+                if (Utils.isLocationOn(context)) {
+                    Intent i = new Intent(context, MainActivity.class);
+                    context.startActivity(i);
+                }
+            }
+            else if (ACTION_PROCESS_UPDATES.matches(intent.getAction())) {
                 LocationResult result = LocationResult.extractResult(intent);
                 if (result != null) {
                     List<Location> locations = result.getLocations();
@@ -69,7 +85,9 @@ public class LocationUpdatesBroadcastReceiver extends BroadcastReceiver {
                     Utils.sendNotification(context, "received location updates");
                     Log.i(TAG, "received location updates");
 
-                    statsService.insertLocationData(locations);
+                    statsService.insertFilteredLocationData(locations);
+                }else{
+                    Log.i(TAG, "received NULL LocationResult.extractResult(intent) location updates ");
                 }
             }
         }

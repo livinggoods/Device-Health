@@ -1,8 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="org.livingoods.locationApp">
+    package="org.goods.living.tech.health.device">
 
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_INTERNET"/>
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+
     <uses-permission android:name="android.permission.GET_ACCOUNTS" />
     <uses-permission android:name="android.permission.MANAGE_ACCOUNTS" />
     <uses-permission android:name="android.permission.AUTHENTICATE_ACCOUNTS" />
@@ -28,15 +31,17 @@
             </intent-filter>
         </activity>
 
-        <service
+      <!--  <service
             android:name=".services.LocationUpdatesIntentService"
-            android:exported="false" />
+            android:exported="false" /> -->
 
         <receiver
             android:name=".utils.LocationUpdatesBroadcastReceiver"
             android:exported="true">
             <intent-filter>
-                <action android:name="org.livingoods.locationApp.LocationUpdatesBroadcastReceiver.ACTION_PROCESS_UPDATES" />
+                <action android:name="org.goods.living.tech.health.device.LocationUpdatesBroadcastReceiver.ACTION_PROCESS_UPDATES" />
+                <action android:name="android.location.PROVIDERS_CHANGED" />
+                <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </receiver>
         <receiver
@@ -59,7 +64,7 @@
         </service>
         <provider
             android:name=".utils.StubProvider"
-            android:authorities="org.livingoods.locationApp.provider"
+            android:authorities="org.goods.living.provider"
             android:exported="false"
             android:syncable="true" />
 

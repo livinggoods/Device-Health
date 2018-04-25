@@ -1,4 +1,4 @@
-package org.livingoods.locationApp.utils;
+package org.goods.living.tech.health.device.utils;
 
 import android.accounts.Account;
 import android.content.AbstractThreadedSyncAdapter;
@@ -9,8 +9,8 @@ import android.content.SyncResult;
 import android.os.Bundle;
 import android.util.Log;
 
-import org.livingoods.locationApp.AppController;
-import org.livingoods.locationApp.services.SyncService;
+import org.goods.living.tech.health.device.AppController;
+import org.goods.living.tech.health.device.services.SyncService;
 
 import javax.inject.Inject;
 

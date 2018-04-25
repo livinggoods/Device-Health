@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.livingoods.locationApp.UI;
+package org.goods.living.tech.health.device.UI;
 
 import android.Manifest;
 import android.app.Activity;
@@ -34,6 +34,7 @@ import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
+import android.text.format.DateFormat;
 import android.util.Log;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
@@ -44,17 +45,18 @@ import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 
-import org.livingoods.locationApp.AppController;
-import org.livingoods.locationApp.BuildConfig;
-import org.livingoods.locationApp.R;
-import org.livingoods.locationApp.models.Stats;
-import org.livingoods.locationApp.models.User;
-import org.livingoods.locationApp.services.LocationUpdatesIntentService;
-import org.livingoods.locationApp.services.StatsService;
-import org.livingoods.locationApp.services.UserService;
-import org.livingoods.locationApp.utils.AuthenticatorService;
-import org.livingoods.locationApp.utils.SyncAdapter;
-import org.livingoods.locationApp.utils.Utils;
+import org.goods.living.tech.health.device.AppController;
+import org.goods.living.tech.health.device.BuildConfig;
+import org.goods.living.tech.health.device.R;
+import org.goods.living.tech.health.device.models.Stats;
+import org.goods.living.tech.health.device.models.User;
+import org.goods.living.tech.health.device.services.LocationUpdatesIntentService;
+import org.goods.living.tech.health.device.services.StatsService;
+import org.goods.living.tech.health.device.services.UserService;
+import org.goods.living.tech.health.device.utils.AuthenticatorService;
+import org.goods.living.tech.health.device.utils.LocationUpdatesBroadcastReceiver;
+import org.goods.living.tech.health.device.utils.SyncAdapter;
+import org.goods.living.tech.health.device.utils.Utils;
 
 import java.util.Date;
 import java.util.List;
@@ -82,7 +84,7 @@ public class MainActivity extends FragmentActivity implements
     /**
      * The desired interval for location updates. Inexact. Updates may be more or less frequent.
      */
-    private static final long UPDATE_INTERVAL = 60; // Every 60 seconds.
+    private static final long UPDATE_INTERVAL = 20; // Every 60 seconds.
 
     /**
      * The fastest rate for active location updates. Updates will never be more frequent
@@ -94,7 +96,9 @@ public class MainActivity extends FragmentActivity implements
      * The max time before batched results are delivered by location services. Results may be
      * delivered sooner than this interval.
      */
-    private static final long MAX_WAIT_TIME = UPDATE_INTERVAL * 5; // Every 5 minutes.
+   // private static final long MAX_WAIT_TIME = UPDATE_INTERVAL * 5; // Every 5 minutes.
+
+    private static final long MAX_WAIT_RECORDS =  2; // Every 5 items
 
     LocationRequest mLocationRequest;
 
@@ -115,21 +119,10 @@ public class MainActivity extends FragmentActivity implements
     private TextView chpText;
     private TextView phoneText;
 
-    private Button cancel2Btn;
-    private Button save2Btn;
     private TextView intervalText;
 
     private TextView mLocationUpdatesResultView;
 
-    public static void hideKeyboard(Activity activity) {
-        if (activity != null) {
-            InputMethodManager inputManager = (InputMethodManager) activity.getSystemService(Context.INPUT_METHOD_SERVICE);
-            if (activity.getCurrentFocus() != null && inputManager != null) {
-                inputManager.hideSoftInputFromWindow(activity.getCurrentFocus().getWindowToken(), 0);
-                inputManager.showSoftInputFromInputMethod(activity.getCurrentFocus().getWindowToken(), 0);
-            }
-        }
-    }
 
 
     @Override
@@ -145,9 +138,7 @@ public class MainActivity extends FragmentActivity implements
         saveBtn = (Button) findViewById(R.id.saveBtn);
         chpText = (TextView) findViewById(R.id.chpText);
         phoneText = (TextView) findViewById(R.id.phoneText);
-
-        cancel2Btn = (Button) findViewById(R.id.cancel2Btn);
-        save2Btn = (Button) findViewById(R.id.save2Btn);
+;
         intervalText = (TextView) findViewById(R.id.intervalText);
 
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
@@ -179,6 +170,8 @@ public class MainActivity extends FragmentActivity implements
         if (!checkPermissions()) {
             requestPermissions();
         } else {
+            requestLocationUpdates();
+
             checkLocationEnabled();
         }
         loadData();
@@ -237,7 +230,7 @@ public class MainActivity extends FragmentActivity implements
         // Sets the maximum time when batched location updates are delivered. Updates may be
         // delivered sooner than this interval.
 
-        long maxWaitTime = updateInterval * 5;
+        long maxWaitTime = updateInterval * MAX_WAIT_RECORDS;
         mLocationRequest.setMaxWaitTime(maxWaitTime);
         return mLocationRequest;
     }
@@ -250,13 +243,13 @@ public class MainActivity extends FragmentActivity implements
         // started in the background in "O".
 
         // TODO(developer): uncomment to use PendingIntent.getService().
-        Intent intent = new Intent(this, LocationUpdatesIntentService.class);
-        intent.setAction(LocationUpdatesIntentService.ACTION_PROCESS_UPDATES);
-        return PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+      //  Intent intent = new Intent(this, LocationUpdatesIntentService.class);
+      //  intent.setAction(LocationUpdatesIntentService.ACTION_PROCESS_UPDATES);
+      //  return PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
 
-        //   Intent intent = new Intent(this, LocationUpdatesBroadcastReceiver.class);
-        //   intent.setAction(LocationUpdatesBroadcastReceiver.ACTION_PROCESS_UPDATES);
-        //  return PendingIntent.getBroadcast(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+          Intent intent = new Intent(this, LocationUpdatesBroadcastReceiver.class);
+           intent.setAction(LocationUpdatesBroadcastReceiver.ACTION_PROCESS_UPDATES);
+          return PendingIntent.getBroadcast(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
     }
 
     /**
@@ -281,7 +274,7 @@ public class MainActivity extends FragmentActivity implements
                     findViewById(R.id.activity_main),
                     R.string.permission_rationale,
                     Snackbar.LENGTH_INDEFINITE)
-                    .setAction(R.string.ok, new View.OnClickListener() {
+                    .setAction("Ok", new View.OnClickListener() {
                         @Override
                         public void onClick(View view) {
                             // Request permission
@@ -413,23 +406,7 @@ public class MainActivity extends FragmentActivity implements
         loadData();
     }
 
-    /**
-     * Handles the Save registration button.
-     */
-    public void settingsSave(View view) {
-        Log.i(TAG, "settingsSave updates");
-        saveRegistration();
 
-
-    }
-
-    /**
-     * Handles the cancel registration button.
-     */
-    public void settingsCancel(View view) {
-        Log.i(TAG, "settingsCancel ");
-        loadData();
-    }
 
     public void minimise(View view) {
         moveTaskToBack(true);
@@ -445,12 +422,14 @@ public class MainActivity extends FragmentActivity implements
         intervalText.setText(user == null ? null : "" + user.updateInterval);
         // }
 
+
         //load latest locs
         List<Stats> list = statsService.getLatestStats();
         long count = statsService.getStatsCount();
         String data = "count :" + count + " \n" +
                 "";
         for (Stats stats : list) {
+            data += " tim: " + DateFormat.format("MM/dd m:s",stats.time); //new Date(TimeinMilliSeccond)
             data += " lat: " + stats.latitude;
             data += " lon: " + stats.longitude;
             data += "\n";
@@ -470,17 +449,15 @@ public class MainActivity extends FragmentActivity implements
             String androidId = Utils.getAndroidId(this);
             user.androidId = androidId;
             user.createdAt = new Date();
+            if (userService.insertUser(user)) {
+                showSnack("created user settings");
+            } else {
+                showSnack("error creating user information");
+            }
         }
-        user.chpId = chpText.getText().toString().trim();
-        user.phoneNumber = chpText.getText().toString().trim();
 
-
-        if (userService.insertUser(user)) {
-            showSnack("created user settings");
-        } else {
-            showSnack("error creating user information");
-        }
     }
+
 
     void saveRegistration() {
 
@@ -488,10 +465,12 @@ public class MainActivity extends FragmentActivity implements
 
         user.chpId = chpText.getText().toString().trim();
         user.phoneNumber = chpText.getText().toString().trim();
+        Long interval = Long.valueOf(intervalText.getText().toString());
+        user.updateInterval = interval==null?UPDATE_INTERVAL:interval;
 
         if (userService.insertUser(user)) {
             showSnack("saved CHV information");
-            chpText.clearFocus();
+            findViewById(R.id.activity_main).requestFocus();
 
             hideKeyboard(this);
         } else {
@@ -506,7 +485,7 @@ public class MainActivity extends FragmentActivity implements
         isGpsProviderEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
         isNetworkProviderEnabled = locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
 
-        if (!isGpsProviderEnabled && !isNetworkProviderEnabled) {
+        if (!Utils.isLocationOn(this)) {
             final AlertDialog.Builder builder = new AlertDialog.Builder(this);
             builder.setTitle("Location Permission");
             builder.setMessage("The app needs location permissions. Please grant this permission to continue using the features of the app.");
@@ -521,6 +500,17 @@ public class MainActivity extends FragmentActivity implements
             builder.setCancelable(false);
             builder.setNegativeButton(null, null);
             builder.show();
+        }
+    }
+
+
+    public  void hideKeyboard(Activity activity) {
+        if (activity != null) {
+            InputMethodManager inputManager = (InputMethodManager) activity.getSystemService(Context.INPUT_METHOD_SERVICE);
+            if (activity.getCurrentFocus() != null && inputManager != null) {
+                inputManager.hideSoftInputFromWindow(activity.getCurrentFocus().getWindowToken(), 0);
+                inputManager.showSoftInputFromInputMethod(activity.getCurrentFocus().getWindowToken(), 0);
+            }
         }
     }
 }

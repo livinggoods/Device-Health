@@ -1,10 +1,10 @@
-package org.livingoods.locationApp.services;
+package org.goods.living.tech.health.device.services;
 
 import android.location.Location;
 import android.util.Log;
 
-import org.livingoods.locationApp.models.Stats;
-import org.livingoods.locationApp.models.Stats_;
+import org.goods.living.tech.health.device.models.Stats;
+import org.goods.living.tech.health.device.models.Stats_;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -22,6 +22,7 @@ public class StatsService extends BaseService {
     @Inject
     Box<Stats> box;//= boxStore.boxFor(Stats.class);
 
+public static long ACCURACY_THRESHHOLD =10;
 
     @Inject
     public StatsService() {
@@ -51,7 +52,7 @@ public class StatsService extends BaseService {
 
             //if 1st run - no user record exists.
             // Box<User> userBox = boxStore.boxFor(User.class);
-            List<Stats> list = box.query().orderDesc(Stats_.createdAt).build().find(0, 10);//.orderDesc(User_.createdAt).build().findFirst();
+            List<Stats> list = box.query().orderDesc(Stats_.createdAt).build().find(0, 15);//.orderDesc(User_.createdAt).build().findFirst();
 
             return list;
         } catch (Exception e) {
@@ -77,17 +78,29 @@ public class StatsService extends BaseService {
 
     }
 
-    public boolean insertLocationData(List<Location> locations) {
+    /**
+     * insert locationdata. filter out inaccurate locations
+     * @param locations
+     * @return
+     */
+
+    public boolean insertFilteredLocationData(List<Location> locations) {
         try {
 
             List<Stats> list = new ArrayList<>();
             for (Location loc : locations) {
+
+                if(loc.getAccuracy()<ACCURACY_THRESHHOLD){//take only accurate readings
+                    Log.i(TAG, "skipping inaccurate readings accuracy: "+ loc.getAccuracy());
+                    continue;
+                }
+
                 Stats stats = new Stats();
                 stats.longitude = loc.getLongitude();
                 stats.latitude = loc.getLatitude();
                 stats.accuracy = loc.getAccuracy();
                 stats.provider = loc.getProvider();
-                stats.time = loc.getTime();
+                stats.time = new Date(loc.getTime());
                 stats.createdAt = new Date();
 
                 list.add(stats);
