@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<Context path="Device-Health-Server" reloadable="true" copyXML="true">
+
+<!--  -->
+	<Resource name="jdbc/postgresClientDB" auth="Container" type="javax.sql.DataSource"
+		driverClassName="org.postgresql.Driver"
+		url="jdbc:postgresql://localhost:5432/device_health"
+		username="postgres" password="postgres" maxActive="30"
+		validationQuery="SELECT 1;" testOnBorrow="true" />
+
+
+	<Resource name="BeanManager" auth="Container"
+		type="javax.enterprise.inject.spi.BeanManager" factory="org.jboss.weld.resources.ManagerObjectFactory" />
+
+	<WatchedResource>WEB-INF/web.xml</WatchedResource>
+	<WatchedResource>META-INF/context.xml</WatchedResource>
+
+	<!-- Application Parameters -->
+
+	<!-- JWT token duration -->
+	<Parameter name="org.goods.living.tech.health.device.jwt.token.life"
+		value="123400" />
+		
+	<!-- JWT token duration -->
+	<Parameter name="org.goods.living.tech.health.device.jwt.token.hash.key"
+		value="itShouldNotBeSecret" />
+
+
+</Context>
