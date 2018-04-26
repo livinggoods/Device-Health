@@ -40,10 +40,9 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
         b.putBoolean(ContentResolver.SYNC_EXTRAS_MANUAL, true);
         b.putBoolean(ContentResolver.SYNC_EXTRAS_EXPEDITED, true);
 
-        ContentResolver.setSyncAutomatically(AuthenticatorService.getAccount(), Utils.CONTENT_AUTHORITY, true);
 
         ContentResolver.requestSync(AuthenticatorService.getAccount(),
-                Utils.CONTENT_AUTHORITY, b);
+                AuthenticatorService.CONTENT_AUTHORITY, b);
     }
 
 

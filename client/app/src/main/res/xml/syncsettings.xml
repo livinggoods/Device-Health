@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+<PreferenceScreen>
+    <!--
     <SwitchPreference
         android:key="use_sync"
         android:summary="Enable Sync"
-        android:title="Toggle Sync Options" />
+        android:title="Toggle Sync Options" /> -->
 </PreferenceScreen>

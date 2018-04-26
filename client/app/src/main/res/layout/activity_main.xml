@@ -20,7 +20,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_margin="5dp"
-            android:text="Header"
+            android:text="Settings"
             android:textColor="#000000"
             android:textSize="20sp" />
     </RelativeLayout>
@@ -50,16 +50,6 @@
             android:gravity="top"
             android:orientation="vertical">
 
-
-
-            <TextView
-                android:id="@+id/desc"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="@dimen/default_margin"
-                android:layout_weight="1"
-                android:text="Settings"
-                android:textSize="@dimen/text_large" />
 
             <LinearLayout
                 android:layout_width="match_parent"

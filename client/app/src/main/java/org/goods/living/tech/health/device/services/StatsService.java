@@ -11,10 +11,12 @@ import java.util.Date;
 import java.util.List;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
 import io.objectbox.Box;
+import io.objectbox.query.Query;
 
 @Singleton
 public class StatsService extends BaseService {
@@ -22,7 +24,8 @@ public class StatsService extends BaseService {
     @Inject
     Box<Stats> box;//= boxStore.boxFor(Stats.class);
 
-public static long ACCURACY_THRESHHOLD =10;
+    public static long ACCURACY_THRESHHOLD = 10;
+    static long CLEANUP_LIMIT = 100;
 
     @Inject
     public StatsService() {
@@ -46,13 +49,22 @@ public static long ACCURACY_THRESHHOLD =10;
     }
 
     public @Nonnull
-    List<Stats> getLatestStats() {
+    List<Stats> getLatestStats(@Nullable Long limit) {
 
         try {
 
             //if 1st run - no user record exists.
             // Box<User> userBox = boxStore.boxFor(User.class);
-            List<Stats> list = box.query().orderDesc(Stats_.createdAt).build().find(0, 15);//.orderDesc(User_.createdAt).build().findFirst();
+            Query<Stats> q = box.query().orderDesc(Stats_.createdAt).build();
+
+            List<Stats> list;
+
+            if (limit != null) {
+                list = q.find(0, limit);//find(0, 15);//.orderDesc(User_.createdAt).build().findFirst();
+            } else {
+                list = q.find();
+            }
+
 
             return list;
         } catch (Exception e) {
@@ -80,6 +92,7 @@ public static long ACCURACY_THRESHHOLD =10;
 
     /**
      * insert locationdata. filter out inaccurate locations
+     *
      * @param locations
      * @return
      */
@@ -90,8 +103,8 @@ public static long ACCURACY_THRESHHOLD =10;
             List<Stats> list = new ArrayList<>();
             for (Location loc : locations) {
 
-                if(loc.getAccuracy()<ACCURACY_THRESHHOLD){//take only accurate readings
-                    Log.i(TAG, "skipping inaccurate readings accuracy: "+ loc.getAccuracy());
+                if (loc.getAccuracy() < ACCURACY_THRESHHOLD) {//take only accurate readings
+                    Log.i(TAG, "skipping inaccurate readings accuracy: " + loc.getAccuracy());
                     continue;
                 }
 
@@ -106,9 +119,27 @@ public static long ACCURACY_THRESHHOLD =10;
                 list.add(stats);
             }
             box.put(list);
+
+            //cleanup
+            deleteSyncedRecords(CLEANUP_LIMIT);
+
             return true;
         } catch (Exception e) {
-            Log.i(TAG, e.toString());
+            Log.wtf(TAG, e.toString());
+            return false;
+        }
+    }
+
+    public boolean deleteSyncedRecords(Long above) {
+        try {
+
+
+            List<Stats> list = box.query().orderDesc(Stats_.createdAt).equal(Stats_.synced, true).build().find(above, 10000);//.orderDesc(User_.createdAt).build().findFirst();
+            Log.i(TAG, "Deleting synced records: " + list.size());
+            box.remove(list);
+            return true;
+        } catch (Exception e) {
+            Log.wtf(TAG, e);
             return false;
         }
     }

@@ -46,7 +46,6 @@ public class Utils {
     //  public final static String KEY_LOCATION_UPDATES_REQUESTED = "location-updates-requested";
     //  public final static String KEY_LOCATION_UPDATES_RESULT = "location-update-result";
     public final static String CHANNEL_ID = "channel_01";
-    public static final String CONTENT_AUTHORITY = "org.goods.living.tech.health.device" + ".provider";
     final static String TAG = Utils.class.getSimpleName();//BaseService.class.getSimpleName();
     final static String KEY_INSTALL_ID = "KEY_INSTALL_ID";
 /*
@@ -55,7 +54,7 @@ public class Utils {
                 .edit()
                 .putBoolean(KEY_LOCATION_UPDATES_REQUESTED, value)
                 .apply();
-    }
+    }T
 
     public static boolean getRequestingLocationUpdates(Context context) {
         return PreferenceManager.getDefaultSharedPreferences(context)
@@ -148,14 +147,14 @@ public class Utils {
         return uuid;
     }
 
-    public static boolean isLocationOn(Context context){
+    public static boolean isLocationOn(Context context) {
 
-            LocationManager locationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
-          boolean  isGpsEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
-           boolean isNetworkEnabled = locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
+        LocationManager locationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
+        boolean isGpsEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
+        boolean isNetworkEnabled = locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
 
-            //Start your Activity if location was enabled:
-           return (isGpsEnabled || isNetworkEnabled) ;
+        //Start your Activity if location was enabled:
+        return (isGpsEnabled || isNetworkEnabled);
 
 
     }

@@ -54,6 +54,6 @@ public class BootCompletedBroadcastReceiver extends BroadcastReceiver {
         //AppController.getInstance().getComponent().inject(this);
 
         Log.w("BootCompletedBroadcastReceiver", "starting main...");
-        context.startService(new Intent(context, MainActivity.class));
+        context.startActivity(new Intent(context, MainActivity.class));
     }
 }

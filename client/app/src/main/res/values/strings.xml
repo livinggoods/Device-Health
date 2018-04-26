@@ -1,6 +1,13 @@
 <resources>
     <string name="app_name">LG Device Health</string>
 
+    <string name="account_type">org.goods.living.tech.health.device.utils.SyncAdapter.account</string>
+    <string name="content_authority">org.goods.living.tech.health.device.utils.SyncAdapter</string>
+
+
+    <string name="server_url">http://192.168.8.101:8080</string>
+
+
     <string name="permission_rationale">Location permission is needed for core functionality</string>
     <string name="permission_denied_explanation">Permission was denied, but is needed for core
         functionality.</string>

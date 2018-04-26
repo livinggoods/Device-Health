@@ -50,7 +50,6 @@ import org.goods.living.tech.health.device.BuildConfig;
 import org.goods.living.tech.health.device.R;
 import org.goods.living.tech.health.device.models.Stats;
 import org.goods.living.tech.health.device.models.User;
-import org.goods.living.tech.health.device.services.LocationUpdatesIntentService;
 import org.goods.living.tech.health.device.services.StatsService;
 import org.goods.living.tech.health.device.services.UserService;
 import org.goods.living.tech.health.device.utils.AuthenticatorService;
@@ -96,9 +95,9 @@ public class MainActivity extends FragmentActivity implements
      * The max time before batched results are delivered by location services. Results may be
      * delivered sooner than this interval.
      */
-   // private static final long MAX_WAIT_TIME = UPDATE_INTERVAL * 5; // Every 5 minutes.
+    // private static final long MAX_WAIT_TIME = UPDATE_INTERVAL * 5; // Every 5 minutes.
 
-    private static final long MAX_WAIT_RECORDS =  2; // Every 5 items
+    private static final long MAX_WAIT_RECORDS = 2; // Every 5 items
 
     LocationRequest mLocationRequest;
 
@@ -124,7 +123,6 @@ public class MainActivity extends FragmentActivity implements
     private TextView mLocationUpdatesResultView;
 
 
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
@@ -138,7 +136,7 @@ public class MainActivity extends FragmentActivity implements
         saveBtn = (Button) findViewById(R.id.saveBtn);
         chpText = (TextView) findViewById(R.id.chpText);
         phoneText = (TextView) findViewById(R.id.phoneText);
-;
+        ;
         intervalText = (TextView) findViewById(R.id.intervalText);
 
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
@@ -243,13 +241,13 @@ public class MainActivity extends FragmentActivity implements
         // started in the background in "O".
 
         // TODO(developer): uncomment to use PendingIntent.getService().
-      //  Intent intent = new Intent(this, LocationUpdatesIntentService.class);
-      //  intent.setAction(LocationUpdatesIntentService.ACTION_PROCESS_UPDATES);
-      //  return PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+        //  Intent intent = new Intent(this, LocationUpdatesIntentService.class);
+        //  intent.setAction(LocationUpdatesIntentService.ACTION_PROCESS_UPDATES);
+        //  return PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
 
-          Intent intent = new Intent(this, LocationUpdatesBroadcastReceiver.class);
-           intent.setAction(LocationUpdatesBroadcastReceiver.ACTION_PROCESS_UPDATES);
-          return PendingIntent.getBroadcast(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+        Intent intent = new Intent(this, LocationUpdatesBroadcastReceiver.class);
+        intent.setAction(LocationUpdatesBroadcastReceiver.ACTION_PROCESS_UPDATES);
+        return PendingIntent.getBroadcast(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
     }
 
     /**
@@ -407,7 +405,6 @@ public class MainActivity extends FragmentActivity implements
     }
 
 
-
     public void minimise(View view) {
         moveTaskToBack(true);
     }
@@ -424,14 +421,15 @@ public class MainActivity extends FragmentActivity implements
 
 
         //load latest locs
-        List<Stats> list = statsService.getLatestStats();
+        List<Stats> list = statsService.getLatestStats(500l);
         long count = statsService.getStatsCount();
         String data = "count :" + count + " \n" +
                 "";
         for (Stats stats : list) {
-            data += " tim: " + DateFormat.format("MM/dd m:s",stats.time); //new Date(TimeinMilliSeccond)
+            data += " tim: " + DateFormat.format("MM/dd h:m:s", stats.time); //new Date(TimeinMilliSeccond)
             data += " lat: " + stats.latitude;
             data += " lon: " + stats.longitude;
+            data += " acu: " + stats.accuracy;
             data += "\n";
         }
 
@@ -466,7 +464,7 @@ public class MainActivity extends FragmentActivity implements
         user.chpId = chpText.getText().toString().trim();
         user.phoneNumber = chpText.getText().toString().trim();
         Long interval = Long.valueOf(intervalText.getText().toString());
-        user.updateInterval = interval==null?UPDATE_INTERVAL:interval;
+        user.updateInterval = interval == null ? UPDATE_INTERVAL : interval;
 
         if (userService.insertUser(user)) {
             showSnack("saved CHV information");
@@ -504,7 +502,7 @@ public class MainActivity extends FragmentActivity implements
     }
 
 
-    public  void hideKeyboard(Activity activity) {
+    public void hideKeyboard(Activity activity) {
         if (activity != null) {
             InputMethodManager inputManager = (InputMethodManager) activity.getSystemService(Context.INPUT_METHOD_SERVICE);
             if (activity.getCurrentFocus() != null && inputManager != null) {

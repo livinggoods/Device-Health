@@ -10,11 +10,17 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.util.Log;
 
+import org.goods.living.tech.health.device.AppController;
+import org.goods.living.tech.health.device.R;
+
 public class AuthenticatorService extends Service {
 
-    public static final String ACCOUNT = "LG locationApp";
-    public static final long SYNC_FREQUENCY = 60 * 60; // 1 hour (seconds)
-    static final String ACCOUNT_TYPE = "org.goods.living.tech.health.device";
+    public static final String ACCOUNT = AppController.getInstance().getString(R.string.app_name);
+
+    static final String ACCOUNT_TYPE = AppController.getInstance().getString(R.string.account_type);
+    public static final String CONTENT_AUTHORITY = "org.goods.living.tech.health.device" + ".utils.SyncAdapter";
+
+
     static String PREF_SETUP_COMPLETE = "PREF_SETUP_COMPLETE";
     // Instance field that stores the authenticator object
     private Authenticator mAuthenticator;
@@ -35,7 +41,7 @@ public class AuthenticatorService extends Service {
 
         Account account = getAccount();
 
-        ContentResolver.addPeriodicSync(account, Utils.CONTENT_AUTHORITY, new Bundle(), updateSeconds);
+        ContentResolver.addPeriodicSync(account, CONTENT_AUTHORITY, new Bundle(), updateSeconds);
     }
 
     public static void createSyncAccount(Context c) {
@@ -51,15 +57,15 @@ public class AuthenticatorService extends Service {
 
 
             // Inform the system that this account supports sync
-            ContentResolver.setIsSyncable(account, Utils.CONTENT_AUTHORITY, 1);
+            ContentResolver.setIsSyncable(account, CONTENT_AUTHORITY, 1);
             // Inform the system that this account is eligible for auto sync when the network is up
-            ContentResolver.setSyncAutomatically(account, Utils.CONTENT_AUTHORITY, true);
-            //  ContentResolver.setMasterSyncAutomatically(true);
+            ContentResolver.setSyncAutomatically(account, CONTENT_AUTHORITY, true);
+            //ContentResolver.setMasterSyncAutomatically(true);
 
             // Recommend a schedule for automatic synchronization. The system may modify this based
             // on other scheduled syncs and network utilization.
             // ContentResolver.addPeriodicSync(account, CONTENT_AUTHORITY, new Bundle(), SYNC_FREQUENCY);
-            setSyncInterval(SYNC_FREQUENCY);
+            setSyncInterval(Constants.SYNC_FREQUENCY);
 
             created = true;
         }

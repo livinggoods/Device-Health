@@ -10,7 +10,9 @@ import android.net.Uri;
 import android.util.Log;
 
 public class StubProvider extends ContentProvider {
-    public static final Uri BASE_CONTENT_URI = Uri.parse("content://" + Utils.CONTENT_AUTHORITY);
+
+
+    public static final Uri BASE_CONTENT_URI = Uri.parse("content://" + AuthenticatorService.CONTENT_AUTHORITY);
     public static final int ROUTE_ENTRIES = 1;
     public static final int ROUTE_ENTRIES_ID = 2;
     public static final String CONTENT_TYPE =
@@ -23,8 +25,8 @@ public class StubProvider extends ContentProvider {
     private static final UriMatcher sUriMatcher = new UriMatcher(UriMatcher.NO_MATCH);
 
     static {
-        sUriMatcher.addURI(Utils.CONTENT_AUTHORITY, "entries", ROUTE_ENTRIES);
-        sUriMatcher.addURI(Utils.CONTENT_AUTHORITY, "entries/*", ROUTE_ENTRIES_ID);
+        sUriMatcher.addURI(AuthenticatorService.CONTENT_AUTHORITY, "entries", ROUTE_ENTRIES);
+        sUriMatcher.addURI(AuthenticatorService.CONTENT_AUTHORITY, "entries/*", ROUTE_ENTRIES_ID);
     }
 
     // DataBaseCurdOperation dataBaseCurdOperation;

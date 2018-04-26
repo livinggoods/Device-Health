@@ -20,6 +20,7 @@ public class Stats {
     public String provider;
     public Date time;
 
+    public boolean synced;
     public Date createdAt;
     // Date updatedAt;
 }
