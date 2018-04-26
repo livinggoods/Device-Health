@@ -6,6 +6,8 @@ import com.loopj.android.http.AsyncHttpResponseHandler;
 import com.loopj.android.http.RequestParams;
 import com.loopj.android.http.SyncHttpClient;
 
+import cz.msebera.android.httpclient.entity.StringEntity;
+
 public class ServerRestClient {
     private final String baseUrl;
 
@@ -16,20 +18,21 @@ public class ServerRestClient {
     private AsyncHttpClient clientAsync = new AsyncHttpClient();
     private SyncHttpClient clientSync = new SyncHttpClient();
 
-    public void getAsync(String url, RequestParams params, AsyncHttpResponseHandler responseHandler) {
+    public void getAsync(String url, RequestParams params, AsyncHttpResponseHandler responseHandler) {//RequestParams
         clientAsync.get(getAbsoluteUrl(url), params, responseHandler);
     }
 
-    public void postAsync(String url, RequestParams params, AsyncHttpResponseHandler responseHandler) {
-        clientAsync.post(getAbsoluteUrl(url), params, responseHandler);
+    public void postAsync(String url, StringEntity params, AsyncHttpResponseHandler responseHandler) {
+        clientAsync.post(null, getAbsoluteUrl(url), params, "application/json", responseHandler);
     }
 
     public void getSync(String url, RequestParams params, AsyncHttpResponseHandler responseHandler) {
         clientSync.get(getAbsoluteUrl(url), params, responseHandler);
     }
 
-    public void postSync(String url, RequestParams params, AsyncHttpResponseHandler responseHandler) {
-        clientSync.post(getAbsoluteUrl(url), params, responseHandler);
+    public void postSync(String url, StringEntity params, AsyncHttpResponseHandler responseHandler) {
+
+        clientSync.post(null, getAbsoluteUrl(url), params, "application/json", responseHandler);
     }
 
     private String getAbsoluteUrl(String relativeUrl) {

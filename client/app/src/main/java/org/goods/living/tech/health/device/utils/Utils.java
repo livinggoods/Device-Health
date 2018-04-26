@@ -25,7 +25,6 @@ import android.content.Intent;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.location.Location;
-import android.location.LocationManager;
 import android.os.Build;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
@@ -48,6 +47,8 @@ public class Utils {
     public final static String CHANNEL_ID = "channel_01";
     final static String TAG = Utils.class.getSimpleName();//BaseService.class.getSimpleName();
     final static String KEY_INSTALL_ID = "KEY_INSTALL_ID";
+
+
 /*
     public static void setRequestingLocationUpdates(Context context, boolean value) {
         PreferenceManager.getDefaultSharedPreferences(context)
@@ -147,15 +148,5 @@ public class Utils {
         return uuid;
     }
 
-    public static boolean isLocationOn(Context context) {
 
-        LocationManager locationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
-        boolean isGpsEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
-        boolean isNetworkEnabled = locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
-
-        //Start your Activity if location was enabled:
-        return (isGpsEnabled || isNetworkEnabled);
-
-
-    }
 }
