@@ -1,29 +1,27 @@
 package org.goods.living.tech.health.device.service;
 
-import javax.inject.Inject;
+import javax.ws.rs.GET;
+import javax.ws.rs.Produces;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-//import org.jboss.resteasy.logging.Logger;
-//import org.goods.living.tech.health.device.jpa.qualifier.PersistenceUnitQualifier;
-//import org.goods.living.tech.health.device.jpa.utility.PersistenceUnitEnum;
-//import org.goods.living.tech.health.device.service.security.qualifier.Secured;
-import org.goods.living.tech.health.device.utility.ApplicationParameters;
+import org.goods.living.tech.health.device.models.Result;
 
 public class BaseService {
 
-	// @Inject
-	// @PersistenceUnitQualifier(PersistenceUnitEnum.POSTGRES_MANAGEMENT)
-	// private EntityManagerFactory copd_management_emf;
+	Logger logger = LogManager.getLogger();
 
-	@Inject
-	ApplicationParameters applicationParameters;
-
-	Logger logger = LogManager.getLogger();// .getName());
-	// Logger logger = LogManager.getLogger(MyApp.class);
-	// Logger logger = Logger.getLogger(getClass());
+	String serviceMessage = getClass().getSimpleName();
 
 	public BaseService() {
 	}
 
+	@GET
+	@Produces("application/json")
+	public Result<String> index() {// Response
+		logger.debug("index page of " + serviceMessage);
+
+		Result<String> result = new Result(true, "", serviceMessage);
+		return result;// Response.status(200).entity(result).build();
+	}
 }

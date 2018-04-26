@@ -1,45 +1,34 @@
 package org.goods.living.tech.health.device.utility;
 
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.Iterator;
 
-import javax.ws.rs.core.Response;
-
-import org.json.JSONException;
-import org.json.JSONObject;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.codehaus.jackson.JsonNode;
+import org.codehaus.jackson.map.ObjectMapper;
 
 public class JSonHelper {
 
 	static Logger logger = LogManager.getLogger();// .getName());
 
-	public static JSONObject getObject(InputStream incomingData) {
-		StringBuilder jsonElements = new StringBuilder();
+	static ObjectMapper objectMapper = new ObjectMapper();
+	{
+		// objectMapper.disable(com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
+	}
+
+	public static JsonNode getJsonNode(InputStream incomingData) {
 		try {
 			BufferedReader in = new BufferedReader(new InputStreamReader(incomingData));
-			String line = null;
-			while ((line = in.readLine()) != null) {
-				jsonElements.append(line);
-			}
-			logger.debug("Data Received: " + jsonElements.toString());
 
-			JSONObject jObject;
-			jObject = new JSONObject(jsonElements.toString());
-
-			Iterator<?> keys = jObject.keys();
-
-			while (keys.hasNext()) {
-				String key = (String) keys.next();
-				String value = jObject.getString(key);
-				logger.debug("key: " + key + "\t value: " + value);
-			}
-			return jObject;
+			// JsonFactory factory = new JsonFactory();
+			// factory.createJsonParser(in).
+			JsonNode jsonNode = objectMapper.readTree(in);
+			logger.debug(jsonNode);
+			return jsonNode;
 		} catch (Exception e) {
-			logger.error("Error ",e);
+			logger.error("Error ", e);
 			return null;
 		}
 	}

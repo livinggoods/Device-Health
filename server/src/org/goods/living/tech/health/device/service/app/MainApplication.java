@@ -13,8 +13,8 @@ import org.apache.logging.log4j.Logger;
 import org.goods.living.tech.health.device.service.UserService;
 
 
-@ApplicationPath("/main")
-public class MainApplication extends Application {
+//@ApplicationPath("/main")
+public class MainApplication {//extends Application {
 
 	Logger logger = LogManager.getLogger();// .getName());
 	
@@ -30,12 +30,12 @@ public class MainApplication extends Application {
         classes.add(UserService.class);
     }
 
-    @Override
+  //  @Override
     public Set<Class<?>> getClasses() {
         return classes;
     }
 
-    @Override
+  //  @Override
     public Set<Object> getSingletons() {
         if (singletons == null) {
             CorsFilter corsFilter = new CorsFilter();

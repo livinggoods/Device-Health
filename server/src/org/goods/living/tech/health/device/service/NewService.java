@@ -23,10 +23,10 @@ import org.goods.living.tech.health.device.utility.ApplicationParameters;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-@Path("/test")
+@Path("/new")
 @Named
 @RequestScoped
-public class TestService extends BaseService {
+public class NewService extends BaseService {
 
 	// @Inject
 	// @PersistenceUnitQualifier(PersistenceUnitEnum.POSTGRES_MANAGEMENT)
@@ -37,7 +37,7 @@ public class TestService extends BaseService {
 
 	private String serviceMessage = "This is the Test service";
 
-	public TestService() {
+	public NewService() {
 	}
 
 	// http://localhost:8080/appname/rest/test/about

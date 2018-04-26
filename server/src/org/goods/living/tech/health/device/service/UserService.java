@@ -1,107 +1,95 @@
 package org.goods.living.tech.health.device.service;
 
+import java.io.InputStream;
+
 import javax.enterprise.context.RequestScoped;
-import javax.inject.Inject;
 import javax.inject.Named;
-import javax.persistence.EntityManagerFactory;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.util.Iterator;
-import javax.ws.rs.core.Response.Status;
-
-//import org.goods.living.tech.health.device.jpa.qualifier.PersistenceUnitQualifier;
-//import org.goods.living.tech.health.device.jpa.utility.PersistenceUnitEnum;
-//import org.goods.living.tech.health.device.service.security.qualifier.Secured;
-import org.goods.living.tech.health.device.utility.ApplicationParameters;
+import org.codehaus.jackson.JsonNode;
+import org.codehaus.jackson.node.ObjectNode;
+import org.goods.living.tech.health.device.models.Result;
+import org.goods.living.tech.health.device.utility.Constants;
 import org.goods.living.tech.health.device.utility.JSonHelper;
-import org.json.JSONException;
-import org.json.JSONObject;
-
 
 //https://dzone.com/articles/lets-compare-jax-rs-vs-spring-for-rest-endpoints
 
-@Path("/user")
+@Path(Constants.URL.USER)
 @Named
 @RequestScoped
-public class UserService  extends BaseService{
+public class UserService extends BaseService {
 
-//	@Inject
-//	@PersistenceUnitQualifier(PersistenceUnitEnum.POSTGRES_MANAGEMENT)
-//	private EntityManagerFactory copd_management_emf;
-	
-	//@Inject
-	//private ApplicationParameters applicationParameters;
+	// @Inject
+	// @PersistenceUnitQualifier(PersistenceUnitEnum.POSTGRES_MANAGEMENT)
+	// private EntityManagerFactory copd_management_emf;
 
+	// @Inject
+	// private ApplicationParameters applicationParameters;
 
 	public UserService() {
 	}
 
-	// http://localhost:8080/appname/rest/user/add
-	
 	@POST
-	@Consumes(MediaType.APPLICATION_JSON)
-	@Path("/add")
-	public Response add(InputStream incomingData) {
-		try {
-			JSONObject jObject = JSonHelper.getObject(incomingData);
+	// @Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path(Constants.URL.CREATE)
+	public Result<JsonNode> create(InputStream incomingData) {
+		logger.debug("create");
+		JsonNode data = JSonHelper.getJsonNode(incomingData);
+		ObjectNode o = (ObjectNode) data;
+		o.put("masterId", 1);
+		o.put("updateInterval", 10);
+		// NodeBean toValue = mapper.convertValue(node, NodeBean.cla
 
-			return Response.status(200).entity(jObject).build();
-			
-		} catch (Exception e) {
-			
-			return Response.status(Status.INTERNAL_SERVER_ERROR).entity("").build();
-		}
+		Result<JsonNode> result = new Result<JsonNode>(true, "", o);
+		return result;
 
 	}
-	
+
 	@POST
-	@Path("/get")
-	@Produces("application/json")
-	public JSONObject get(InputStream incomingData) { //@PathVariable("id") String id
-		try {
-			JSONObject jObject = JSonHelper.getObject(incomingData);
+	// @Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path(Constants.URL.READ)
+	public Result<JsonNode> read(InputStream incomingData) {
+		logger.debug("read");
+		JsonNode data = JSonHelper.getJsonNode(incomingData);
 
-			return jObject;
-			
-		} catch (Exception e) {
-			logger.error("Error",e);
-			return null;
-		}
+		Result<JsonNode> result = new Result<JsonNode>(true, "", data);
+		return result;
 
 	}
 
-	@GET
-	//@Produces("application/json")
-	public JSONObject index(InputStream incomingData) { //@PathVariable("id") String id
-		try {
-			logger.debug("index hit");
-			JSONObject jObject = JSonHelper.getObject(incomingData);
+	@POST
+	// @Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path(Constants.URL.UPDATE)
+	public Result<JsonNode> update(InputStream incomingData) {
+		logger.debug("update");
+		JsonNode data = JSonHelper.getJsonNode(incomingData);
+		ObjectNode o = (ObjectNode) data;
+		o.put("masterId", 1);
+		o.put("updateInterval", 30);
+		// NodeBean toValue = mapper.convertValue(node, NodeBean.cla
 
-			return jObject;
-			
-		} catch (Exception e) {
-			logger.error("Error",e);
-			return null;
-		}
+		Result<JsonNode> result = new Result<JsonNode>(true, "", o);
+		return result;
 
 	}
-//	@Secured
-//	@GET
-//	@Path("/secureAbout")
-//	public Response secureAbout() {
-//		String result = "{ \"result\":" + "\"" + serviceMessage + "\" }";
-//		System.out.println(result);
-//
-//		return Response.status(200).entity(result).build();
-//	}
+
+	@POST
+	// @Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path(Constants.URL.DELETE)
+	public Result<JsonNode> delete(InputStream incomingData) {
+		logger.debug("delete");
+		JsonNode data = JSonHelper.getJsonNode(incomingData);
+
+		Result<JsonNode> result = new Result<JsonNode>(true, "", data);
+		return result;
+
+	}
+
 }
