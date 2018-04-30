@@ -18,7 +18,7 @@ CREATE SCHEMA if not exists events
 COMMENT ON SCHEMA events IS 'Events schema';
 
 
-ALTER DATABASE device_health_${environment} SET search_path=public, shared, events;
+ALTER DATABASE device_health_development SET search_path=public, shared, events;
 
 GRANT USAGE ON SCHEMA shared TO "device_health_admin";
 GRANT USAGE ON SCHEMA shared TO "device_health_user";
