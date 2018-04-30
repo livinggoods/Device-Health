@@ -1,7 +1,10 @@
 package org.goods.living.tech.health.device.service;
 
 import java.io.InputStream;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
 
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
@@ -13,7 +16,9 @@ import javax.ws.rs.core.MediaType;
 
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.node.ObjectNode;
+import org.goods.living.tech.health.device.jpa.controllers.StatJpaController;
 import org.goods.living.tech.health.device.jpa.controllers.UserJpaController;
+import org.goods.living.tech.health.device.jpa.dao.Stat;
 import org.goods.living.tech.health.device.jpa.dao.User;
 import org.goods.living.tech.health.device.models.Result;
 import org.goods.living.tech.health.device.utility.Constants;
@@ -21,10 +26,10 @@ import org.goods.living.tech.health.device.utility.JSonHelper;
 
 //https://dzone.com/articles/lets-compare-jax-rs-vs-spring-for-rest-endpoints
 
-@Path(Constants.URL.USER)
+@Path(Constants.URL.STATS)
 @Named
 @RequestScoped
-public class UserService extends BaseService {
+public class StatsService extends BaseService {
 
 	// @Inject
 	// @PersistenceUnitQualifier(PersistenceUnitEnum.POSTGRES_MANAGEMENT)
@@ -32,40 +37,61 @@ public class UserService extends BaseService {
 
 	// @Inject
 	// private ApplicationParameters applicationParameters;
+	@Inject
+	StatJpaController statsJpaController;
 
 	@Inject
 	UserJpaController usersJpaController;
 
-	Integer DEFAULT_UPDATE_INTERVAL = 60;
+	Long SYSTEM_USER_ID = 0L;
 
-	public UserService() {
+	/// DateTimeFormatter formatter = DateTimeFormatter.ofPattern("ddd mmm
+	/// dd/MM/yyyy HH:mm:ss");// Mon Apr 30 08:46:10 GMT+03:00 2018
+	SimpleDateFormat dateFormat = new SimpleDateFormat("MM-dd-yyyy HH:mm:ss");
+	// String formattedDate = dateFormat.format(date);
+
+	public StatsService() {
 	}
 
 	@POST
 	// @Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path(Constants.URL.CREATE)
-	public Result<JsonNode> create(InputStream incomingData) {
+	public Result<String> create(InputStream incomingData) throws ParseException {
 		logger.debug("create");
-		JsonNode data = JSonHelper.getJsonNode(incomingData);
+		// JSONObject response = new JSONObject(responseString);
+		List<JsonNode> list = JSonHelper.getJsonNodeArray(incomingData);
 
-		User users = new User();
-		users.setAndroidId(data.get("androidId").asText());
-		users.setChvId(data.has("chvId") ? data.get("chvId").asText() : null);
-		users.setPhone(data.has("phone") ? data.get("phone").asText() : null);
+		Long userId = SYSTEM_USER_ID;// TODO: get this from session
 
-		users.setUpdateInterval(DEFAULT_UPDATE_INTERVAL);
+		if (list.size() > 0) {
+			userId = list.get(0).has("userMasterId") ? list.get(0).get("userMasterId").asLong() : SYSTEM_USER_ID;
+		}
 
-		users.setCreatedAt(new Date());
+		User user = usersJpaController.findUser(userId);
+		for (JsonNode j : list) {
+			logger.debug(j);
 
-		usersJpaController.create(users);
+			Stat stats = new Stat();
+			stats.setUserId(user);
+			stats.setAccuracy(j.has("accuracy") ? j.get("accuracy").asDouble() : null);
+			stats.setLatitude(j.has("latitude") ? j.get("latitude").asDouble() : null);
+			stats.setLongitude(j.has("longitude") ? j.get("longitude").asDouble() : null);
+			stats.setProvider(j.has("provider") ? j.get("provider").asText() : null);
+			if (j.has("recordedAt")) {
+				SimpleDateFormat dateFormat = new SimpleDateFormat("MM-dd-yyyy HH:mm:ss");
+				Date recordedAt = dateFormat.parse(j.get("recordedAt").asText());
 
-		ObjectNode o = (ObjectNode) data;
-		o.put("masterId", users.getId());
-		o.put("updateInterval", DEFAULT_UPDATE_INTERVAL);
+				stats.setRecordedAt(recordedAt);
+			}
+
+			stats.setCreatedAt(new Date());
+			statsJpaController.create(stats);
+		}
+
 		// NodeBean toValue = mapper.convertValue(node, NodeBean.cla
 
-		Result<JsonNode> result = new Result<JsonNode>(true, "", o);
+		Result<String> result = new Result<String>(true, "", null);
 		return result;
 
 	}

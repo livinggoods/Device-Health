@@ -9,7 +9,7 @@ import javax.ws.rs.core.Application;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.goods.living.tech.health.device.service.NewService;
+import org.goods.living.tech.health.device.service.StatsService;
 //import org.goods.living.tech.health.device.filter.CustomCorsFilter;
 import org.goods.living.tech.health.device.service.TestService;
 import org.goods.living.tech.health.device.service.UserService;
@@ -32,9 +32,9 @@ public class RestApplication extends Application {
 	public RestApplication() {
 		logger.debug("TestRestApplication() called");
 
-		classes.add(NewService.class);
 		classes.add(TestService.class);
 		classes.add(UserService.class);
+		classes.add(StatsService.class);
 
 		// classes.add(FormService.class);
 	}
