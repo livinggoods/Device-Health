@@ -36,17 +36,6 @@
 -- Be sure that ID and DESCRIPTION fields exist in
 -- BigInteger and String compatible fields respectively.
 
-CREATE SCHEMA if not exists shared
-       AUTHORIZATION "device_health_admin";
-COMMENT ON SCHEMA shared IS 'Shared schema';
-
-CREATE SCHEMA if not exists events
-       AUTHORIZATION "device_health_admin";
-COMMENT ON SCHEMA events IS 'Events schema';
-
-
-ALTER DATABASE device_health_${environment} SET search_path=public, shared, events;
-
 
 
 CREATE TABLE shared.${changelog} (
