@@ -60,17 +60,17 @@
                         android:layout_width="wrap_content"
                         android:layout_height="match_parent"
                         android:layout_weight="1"
+                        android:editable="false"
                         android:gravity="center_vertical"
-                        android:paddingRight="10dp"
-                        android:text="CHP id" />
+                        android:text="CHV id" />
 
                     <EditText
-                        android:id="@+id/chpText"
+                        android:id="@+id/chvText"
                         android:layout_width="wrap_content"
                         android:layout_height="match_parent"
-                        android:layout_weight="3"
+                        android:layout_weight="1"
                         android:ems="10"
-                        android:hint="CHP UUID"
+                        android:hint="CHV ID"
                         android:inputType="textPersonName"
                         android:singleLine="true" />
 
@@ -88,16 +88,15 @@
                         android:layout_height="match_parent"
                         android:layout_weight="1"
                         android:gravity="center_vertical"
-                        android:paddingRight="10dp"
                         android:text="Phone" />
 
                     <EditText
                         android:id="@+id/phoneText"
                         android:layout_width="wrap_content"
                         android:layout_height="match_parent"
-                        android:layout_weight="3"
+                        android:layout_weight="1"
                         android:ems="10"
-                        android:hint="PHONE"
+                        android:hint="Phone Number"
                         android:inputType="textPersonName"
                         android:singleLine="true" />
                 </LinearLayout>
@@ -114,8 +113,7 @@
                         android:layout_height="match_parent"
                         android:layout_weight="1"
                         android:gravity="center_vertical"
-                        android:paddingRight="10dp"
-                        android:text="Refresh interval (seconds)" />
+                        android:text="Location Update interval (seconds)" />
 
                     <TextView
                         android:id="@+id/intervalText"
@@ -135,9 +133,11 @@
             </LinearLayout>
 
             <LinearLayout
+                android:id="@+id/btnLayout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal">
+                android:orientation="horizontal"
+                android:visibility="visible">
 
                 <Button
                     android:id="@+id/cancelBtn"

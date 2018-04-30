@@ -166,7 +166,8 @@ public class PermissionActivity extends FragmentActivity {
                 Log.i(TAG, "User interaction was cancelled.");
             } else if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 // Permission was granted.
-                PermissionsUtils.checkAndRequestPermissions(this, userService);
+              //  PermissionsUtils.checkAndRequestPermissions(this, userService);
+
             } else {
                 // Permission denied.
 
@@ -207,6 +208,6 @@ public class PermissionActivity extends FragmentActivity {
         Intent i = new Intent(this, MainActivity.class);
         this.startActivity(i);
 
-        moveTaskToBack(true);
+        //moveTaskToBack(true);
     }
 }

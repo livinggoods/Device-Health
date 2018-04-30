@@ -19,10 +19,12 @@ package org.goods.living.tech.health.device.utils;
 
 import android.Manifest;
 import android.app.PendingIntent;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.LocationManager;
+import android.os.Build;
 import android.support.v4.app.ActivityCompat;
 import android.util.Log;
 
@@ -43,7 +45,7 @@ public class PermissionsUtils {
     /**
      * The desired interval for location updates. Inexact. Updates may be more or less frequent.
      */
-    public static final long UPDATE_INTERVAL = 20; // Every 60 seconds.
+    public static final long UPDATE_INTERVAL = 60; // Every 60 seconds.
 
     private static final long MAX_WAIT_RECORDS = 2; // Every 5 items
 
@@ -73,6 +75,14 @@ public class PermissionsUtils {
     public static void checkAndRequestPermissions(final Context context, UserService userService) {
 
         try {
+
+            //enable reboot receiver
+            ComponentName receiver = new ComponentName(context, LocationUpdatesBroadcastReceiver.class);
+            PackageManager pm = context.getPackageManager();
+
+            pm.setComponentEnabledSetting(receiver,
+                    PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
+                    PackageManager.DONT_KILL_APP);
 
             // Check if the user revoked runtime permissions.
             if (!checkPermissions(context)) {
@@ -184,5 +194,23 @@ public class PermissionsUtils {
         Intent intent = new Intent(context, LocationUpdatesBroadcastReceiver.class);
         intent.setAction(LocationUpdatesBroadcastReceiver.ACTION_PROCESS_UPDATES);
         return PendingIntent.getBroadcast(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+    }
+
+    public static boolean isStoragePermissionGranted(Context context) {
+        if (Build.VERSION.SDK_INT >= 23) {
+            if (context.checkSelfPermission(android.Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                    == PackageManager.PERMISSION_GRANTED) {
+                Log.v(TAG, "Permission is granted");
+                return true;
+            } else {
+
+                Log.v(TAG, "Permission is revoked");
+                //   ActivityCompat.requestPermissions(context, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 1);
+                return false;
+            }
+        } else { //permission is automatically granted on sdk<23 upon installation
+            Log.v(TAG, "Permission is granted");
+            return true;
+        }
     }
 }

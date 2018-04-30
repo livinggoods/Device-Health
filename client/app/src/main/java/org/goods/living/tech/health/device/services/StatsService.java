@@ -48,6 +48,21 @@ public class StatsService extends BaseService {
 
     }
 
+    public boolean insertStats(List<Stats> stats) {
+
+        try {
+
+
+            box.put(stats);
+            return true;
+
+        } catch (Exception e) {
+            Log.i(TAG, e.toString());
+            return false;
+        }
+
+    }
+
     public @Nonnull
     List<Stats> getLatestStats(@Nullable Long limit) {
 
@@ -64,6 +79,23 @@ public class StatsService extends BaseService {
             } else {
                 list = q.find();
             }
+
+
+            return list;
+        } catch (Exception e) {
+            Log.i(TAG, e.toString());
+            return new ArrayList<>();
+        }
+
+    }
+
+    public @Nonnull
+    List<Stats> getUnSyncedStats() {
+
+        try {
+            Query<Stats> q = box.query().equal(Stats_.synced, false).order(Stats_.createdAt).build();
+
+            List<Stats> list = q.find();
 
 
             return list;
@@ -101,6 +133,7 @@ public class StatsService extends BaseService {
         try {
 
             List<Stats> list = new ArrayList<>();
+
             for (Location loc : locations) {
 
                 if (loc.getAccuracy() < ACCURACY_THRESHHOLD) {//take only accurate readings
@@ -111,9 +144,9 @@ public class StatsService extends BaseService {
                 Stats stats = new Stats();
                 stats.longitude = loc.getLongitude();
                 stats.latitude = loc.getLatitude();
-                stats.accuracy = loc.getAccuracy();
+                stats.accuracy = Math.round(loc.getAccuracy() * 100) / 100;//2dp
                 stats.provider = loc.getProvider();
-                stats.time = new Date(loc.getTime());
+                stats.recordedAt = new Date(loc.getTime());
                 stats.createdAt = new Date();
 
                 list.add(stats);
@@ -134,7 +167,7 @@ public class StatsService extends BaseService {
         try {
 
 
-            List<Stats> list = box.query().orderDesc(Stats_.createdAt).equal(Stats_.synced, true).build().find(above, 10000);//.orderDesc(User_.createdAt).build().findFirst();
+            List<Stats> list = box.query().equal(Stats_.synced, true).build().find(above, 10000);//.orderDesc(User_.createdAt).build().findFirst();
             Log.i(TAG, "Deleting synced records: " + list.size());
             box.remove(list);
             return true;

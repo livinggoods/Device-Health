@@ -64,14 +64,7 @@ public class LocationUpdatesBroadcastReceiver extends BroadcastReceiver {
 
 
         if (intent != null) {
-            if (Intent.ACTION_BOOT_COMPLETED.equals(intent.getAction())) {
-                Log.i(TAG, "Reboot occured - relaunching listeners");
-
-
-                PermissionsUtils.checkAndRequestPermissions(context, userService);
-
-
-            } else if (Intent.ACTION_PROVIDER_CHANGED.equals(intent.getAction())) {
+            if (Intent.ACTION_PROVIDER_CHANGED.equals(intent.getAction())) {
                 Log.i(TAG, "Location Providers changed");
 
                 boolean on = PermissionsUtils.isLocationOn(context);
@@ -95,6 +88,13 @@ public class LocationUpdatesBroadcastReceiver extends BroadcastReceiver {
                 } else {
                     Log.i(TAG, "received NULL LocationResult.extractResult(intent) location updates ");
                 }
+            } else {// if (Intent.ACTION_BOOT_COMPLETED.equals(intent.getAction()) || Intent.ACTION_EXTERNAL_APPLICATIONS_AVAILABLE.equals(intent.getAction())) {
+                Log.i(TAG, "Reboot occured - relaunching listeners");
+
+
+                PermissionsUtils.checkAndRequestPermissions(context, userService);
+
+
             }
         }
     }

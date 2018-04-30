@@ -17,7 +17,9 @@
 package org.goods.living.tech.health.device.UI;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
@@ -28,6 +30,7 @@ import android.util.Log;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.google.android.gms.location.LocationRequest;
@@ -81,12 +84,14 @@ public class MainActivity extends FragmentActivity implements
 
     private Button cancelBtn;
     private Button saveBtn;
-    private TextView chpText;
+    private TextView chvText;
     private TextView phoneText;
 
     private TextView intervalText;
 
     private TextView mLocationUpdatesResultView;
+
+    LinearLayout btnLayout;
 
 
     @Override
@@ -100,12 +105,12 @@ public class MainActivity extends FragmentActivity implements
         mLocationUpdatesResultView = (TextView) findViewById(R.id.location_updates_result);
         cancelBtn = (Button) findViewById(R.id.cancelBtn);
         saveBtn = (Button) findViewById(R.id.saveBtn);
-        chpText = (TextView) findViewById(R.id.chpText);
+        chvText = (TextView) findViewById(R.id.chvText);
         phoneText = (TextView) findViewById(R.id.phoneText);
-        ;
         intervalText = (TextView) findViewById(R.id.intervalText);
+        btnLayout = (LinearLayout) findViewById(R.id.btnLayout);
 
-
+        disableSettingsEdit();
         createUserOnFirstRun();
 
         loadData();
@@ -167,7 +172,21 @@ public class MainActivity extends FragmentActivity implements
      */
     public void registrationSave(View view) {
         Log.i(TAG, "registrationSave updates");
-        saveRegistration();
+
+        final AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Register Details");
+        builder.setMessage("This is a one time registration.\n Confirm save");
+        builder.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+
+                saveRegistration();
+            }
+        });
+        // builder.setNegativeButton(android.R.string.no, null);
+        // builder.setCancelable(false);
+        builder.setNegativeButton(android.R.string.cancel, null);
+        builder.show();
 
 
     }
@@ -190,7 +209,7 @@ public class MainActivity extends FragmentActivity implements
         //if 1st run - no user record exists.
         User user = userService.getRegisteredUser();
         //if(user ==null){
-        chpText.setText(user == null ? null : user.chpId);
+        chvText.setText(user == null ? null : user.chvId);
         phoneText.setText(user == null ? null : user.phoneNumber);
         intervalText.setText(user == null ? null : "" + user.updateInterval);
         // }
@@ -202,7 +221,7 @@ public class MainActivity extends FragmentActivity implements
         String data = "count :" + count + " \n" +
                 "";
         for (Stats stats : list) {
-            data += " tim: " + DateFormat.format("MM/dd h:m:s", stats.time); //new Date(TimeinMilliSeccond)
+            data += "" + DateFormat.format("MM/dd h:m:s", stats.recordedAt); //new Date(TimeinMilliSeccond)
             data += " lat: " + stats.latitude;
             data += " lon: " + stats.longitude;
             data += " acu: " + stats.accuracy;
@@ -228,7 +247,26 @@ public class MainActivity extends FragmentActivity implements
             } else {
                 showSnack("error creating user information");
             }
+
+
         }
+
+        if (user != null && user.chvId == null) {
+            enableSettingsEdit();
+        }
+
+    }
+
+    void enableSettingsEdit() {
+        btnLayout.setVisibility(View.VISIBLE);
+        chvText.setEnabled(true);
+        phoneText.setEnabled(true);
+    }
+
+    void disableSettingsEdit() {
+        btnLayout.setVisibility(View.GONE);
+        chvText.setEnabled(false);
+        phoneText.setEnabled(false);
 
     }
 
@@ -237,12 +275,17 @@ public class MainActivity extends FragmentActivity implements
 
         User user = userService.getRegisteredUser();
 
-        user.chpId = chpText.getText().toString().trim();
-        user.phoneNumber = chpText.getText().toString().trim();
+        String chvId = chvText.getText().toString().trim();
+        user.chvId = chvId.isEmpty() ? null : chvId;
+        user.phoneNumber = phoneText.getText().toString().trim();
 
         if (userService.insertUser(user)) {
             showSnack("saved CHV information");
             findViewById(R.id.activity_main).requestFocus();
+            if (user.chvId != null) {
+                disableSettingsEdit();
+            }
+
 
             hideKeyboard(this);
         } else {
