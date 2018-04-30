@@ -36,11 +36,11 @@
 -- Be sure that ID and DESCRIPTION fields exist in
 -- BigInteger and String compatible fields respectively.
 
-CREATE SCHEMA shared
+CREATE SCHEMA if not exists shared
        AUTHORIZATION "device_health_admin";
 COMMENT ON SCHEMA shared IS 'Shared schema';
 
-CREATE SCHEMA events
+CREATE SCHEMA if not exists events
        AUTHORIZATION "device_health_admin";
 COMMENT ON SCHEMA events IS 'Events schema';
 
