@@ -13,8 +13,8 @@ import javax.ws.rs.core.MediaType;
 
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.node.ObjectNode;
-import org.goods.living.tech.health.device.jpa.controllers.UserJpaController;
-import org.goods.living.tech.health.device.jpa.dao.User;
+import org.goods.living.tech.health.device.jpa.controllers.UsersJpaController;
+import org.goods.living.tech.health.device.jpa.dao.Users;
 import org.goods.living.tech.health.device.models.Result;
 import org.goods.living.tech.health.device.utility.Constants;
 import org.goods.living.tech.health.device.utility.JSonHelper;
@@ -34,7 +34,7 @@ public class UserService extends BaseService {
 	// private ApplicationParameters applicationParameters;
 
 	@Inject
-	UserJpaController usersJpaController;
+	UsersJpaController usersJpaController;
 
 	Integer DEFAULT_UPDATE_INTERVAL = 60;
 
@@ -49,7 +49,12 @@ public class UserService extends BaseService {
 		logger.debug("create");
 		JsonNode data = JSonHelper.getJsonNode(incomingData);
 
-		User users = new User();
+		int API = data.get("api").asInt();
+
+		Users users = new Users();
+		users.setApi(data.has("api") ? Short.valueOf(data.get("api").asText()) : null);
+		users.setUsername(data.has("username") ? data.get("username").asText() : null);
+		users.setPassword(data.has("password") ? data.get("password").asText() : null);
 		users.setAndroidId(data.get("androidId").asText());
 		users.setChvId(data.has("chvId") ? data.get("chvId").asText() : null);
 		users.setPhone(data.has("phone") ? data.get("phone").asText() : null);
@@ -90,6 +95,9 @@ public class UserService extends BaseService {
 	public Result<JsonNode> update(InputStream incomingData) {
 		logger.debug("update");
 		JsonNode data = JSonHelper.getJsonNode(incomingData);
+
+		int API = data.get("api").asInt();
+
 		ObjectNode o = (ObjectNode) data;
 		o.put("masterId", 1);
 		o.put("updateInterval", 30);

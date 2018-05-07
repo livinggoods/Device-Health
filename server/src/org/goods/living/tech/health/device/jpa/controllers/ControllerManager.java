@@ -22,12 +22,12 @@ public class ControllerManager {
 	EntityManagerFactory entityManagerFactory;
 
 	@Produces
-	public UserJpaController getUsersJpaController() {
-		return new UserJpaController(entityManagerFactory);
+	public UsersJpaController getUsersJpaController() {
+		return new UsersJpaController(entityManagerFactory);
 	}
 
 	@Produces
-	public StatJpaController getStatsJpaController() {
-		return new StatJpaController(entityManagerFactory);
+	public StatsJpaController getStatsJpaController() {
+		return new StatsJpaController(entityManagerFactory);
 	}
 }

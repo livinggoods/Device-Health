@@ -19,13 +19,13 @@ package org.goods.living.tech.health.device.utils;
 
 import android.Manifest;
 import android.app.PendingIntent;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.LocationManager;
 import android.os.Build;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.util.Log;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -77,12 +77,18 @@ public class PermissionsUtils {
         try {
 
             //enable reboot receiver
-            ComponentName receiver = new ComponentName(context, LocationUpdatesBroadcastReceiver.class);
-            PackageManager pm = context.getPackageManager();
+            //     ComponentName receiver = new ComponentName(context, LocationUpdatesBroadcastReceiver.class);
+            //     PackageManager pm = context.getPackageManager();
 
-            pm.setComponentEnabledSetting(receiver,
-                    PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
-                    PackageManager.DONT_KILL_APP);
+            //      pm.setComponentEnabledSetting(receiver,
+            //             PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
+            //             PackageManager.DONT_KILL_APP);
+
+            int hasPermission = ContextCompat.checkSelfPermission(context, Manifest.permission.RECEIVE_BOOT_COMPLETED);
+            if (hasPermission != PackageManager.PERMISSION_GRANTED) {//cant relaunch
+//show message?
+                Log.i(TAG, "no relaunch on boot permissions");
+            }
 
             // Check if the user revoked runtime permissions.
             if (!checkPermissions(context)) {

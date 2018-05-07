@@ -62,15 +62,15 @@
                         android:layout_weight="1"
                         android:editable="false"
                         android:gravity="center_vertical"
-                        android:text="CHV id" />
+                        android:text="Smart Health Username" />
 
                     <EditText
-                        android:id="@+id/chvText"
+                        android:id="@+id/usernameText"
                         android:layout_width="wrap_content"
                         android:layout_height="match_parent"
                         android:layout_weight="1"
                         android:ems="10"
-                        android:hint="CHV ID"
+                        android:hint="Username"
                         android:inputType="textPersonName"
                         android:singleLine="true" />
 

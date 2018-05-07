@@ -16,10 +16,10 @@ import javax.ws.rs.core.MediaType;
 
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.node.ObjectNode;
-import org.goods.living.tech.health.device.jpa.controllers.StatJpaController;
-import org.goods.living.tech.health.device.jpa.controllers.UserJpaController;
-import org.goods.living.tech.health.device.jpa.dao.Stat;
-import org.goods.living.tech.health.device.jpa.dao.User;
+import org.goods.living.tech.health.device.jpa.controllers.StatsJpaController;
+import org.goods.living.tech.health.device.jpa.controllers.UsersJpaController;
+import org.goods.living.tech.health.device.jpa.dao.Stats;
+import org.goods.living.tech.health.device.jpa.dao.Users;
 import org.goods.living.tech.health.device.models.Result;
 import org.goods.living.tech.health.device.utility.Constants;
 import org.goods.living.tech.health.device.utility.JSonHelper;
@@ -38,10 +38,10 @@ public class StatsService extends BaseService {
 	// @Inject
 	// private ApplicationParameters applicationParameters;
 	@Inject
-	StatJpaController statsJpaController;
+	StatsJpaController statsJpaController;
 
 	@Inject
-	UserJpaController usersJpaController;
+	UsersJpaController usersJpaController;
 
 	Long SYSTEM_USER_ID = 0L;
 
@@ -63,16 +63,17 @@ public class StatsService extends BaseService {
 		List<JsonNode> list = JSonHelper.getJsonNodeArray(incomingData);
 
 		Long userId = SYSTEM_USER_ID;// TODO: get this from session
-
+		int API = 1;
 		if (list.size() > 0) {
 			userId = list.get(0).has("userMasterId") ? list.get(0).get("userMasterId").asLong() : SYSTEM_USER_ID;
+			API = list.get(0).get("api").asInt();
 		}
 
-		User user = usersJpaController.findUser(userId);
+		Users user = usersJpaController.findUsers(userId);
 		for (JsonNode j : list) {
 			logger.debug(j);
 
-			Stat stats = new Stat();
+			Stats stats = new Stats();
 			stats.setUserId(user);
 			stats.setAccuracy(j.has("accuracy") ? j.get("accuracy").asDouble() : null);
 			stats.setLatitude(j.has("latitude") ? j.get("latitude").asDouble() : null);

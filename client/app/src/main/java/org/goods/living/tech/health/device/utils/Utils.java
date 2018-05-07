@@ -19,6 +19,7 @@ package org.goods.living.tech.health.device.utils;
 
 //import android.app.NotificationChannel;
 
+import android.app.Activity;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -30,6 +31,7 @@ import android.location.Location;
 import android.os.Build;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
+import android.support.design.widget.Snackbar;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.TaskStackBuilder;
 import android.util.Log;
@@ -150,5 +152,12 @@ public class Utils {
         return uuid;
     }
 
-
+    public static void showSnack(Activity activity, String text) {
+        Snackbar.make(
+                activity.getWindow().getDecorView().getRootView(),//findViewById(R.id.activity_main),
+                text,//R.string.permission_denied_explanation,
+                Snackbar.LENGTH_SHORT)
+                .setAction(R.string.settings, null)
+                .show();
+    }
 }

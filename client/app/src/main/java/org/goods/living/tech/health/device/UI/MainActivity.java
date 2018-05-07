@@ -23,7 +23,6 @@ import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
-import android.support.design.widget.Snackbar;
 import android.support.v4.app.FragmentActivity;
 import android.text.format.DateFormat;
 import android.util.Log;
@@ -46,7 +45,6 @@ import org.goods.living.tech.health.device.utils.PermissionsUtils;
 import org.goods.living.tech.health.device.utils.SyncAdapter;
 import org.goods.living.tech.health.device.utils.Utils;
 
-import java.util.Date;
 import java.util.List;
 
 import javax.inject.Inject;
@@ -84,7 +82,7 @@ public class MainActivity extends FragmentActivity implements
 
     private Button cancelBtn;
     private Button saveBtn;
-    private TextView chvText;
+    private TextView usernameText;
     private TextView phoneText;
 
     private TextView intervalText;
@@ -105,13 +103,17 @@ public class MainActivity extends FragmentActivity implements
         mLocationUpdatesResultView = (TextView) findViewById(R.id.location_updates_result);
         cancelBtn = (Button) findViewById(R.id.cancelBtn);
         saveBtn = (Button) findViewById(R.id.saveBtn);
-        chvText = (TextView) findViewById(R.id.chvText);
+        usernameText = (TextView) findViewById(R.id.usernameText);
         phoneText = (TextView) findViewById(R.id.phoneText);
         intervalText = (TextView) findViewById(R.id.intervalText);
         btnLayout = (LinearLayout) findViewById(R.id.btnLayout);
 
         disableSettingsEdit();
-        createUserOnFirstRun();
+
+        User user = userService.getRegisteredUser();
+        if (user.username == null) {
+            enableSettingsEdit();
+        }
 
         loadData();
 
@@ -120,6 +122,9 @@ public class MainActivity extends FragmentActivity implements
 
         // Perform a manual sync by calling this:
         SyncAdapter.performSync();
+
+
+        // Crashlytics.getInstance().crash(); // Force a crash
     }
 
     @Override
@@ -155,16 +160,6 @@ public class MainActivity extends FragmentActivity implements
         //  } else if (s.equals(Utils.KEY_LOCATION_UPDATES_REQUESTED)) {
         //     updateButtonsState(Utils.getRequestingLocationUpdates(this));
         //   }
-    }
-
-
-    void showSnack(String text) {
-        Snackbar.make(
-                findViewById(R.id.activity_main),
-                text,//R.string.permission_denied_explanation,
-                Snackbar.LENGTH_SHORT)
-                .setAction(R.string.settings, null)
-                .show();
     }
 
     /**
@@ -209,7 +204,7 @@ public class MainActivity extends FragmentActivity implements
         //if 1st run - no user record exists.
         User user = userService.getRegisteredUser();
         //if(user ==null){
-        chvText.setText(user == null ? null : user.chvId);
+        usernameText.setText(user == null ? null : user.username);
         phoneText.setText(user == null ? null : user.phoneNumber);
         intervalText.setText(user == null ? null : "" + user.updateInterval);
         // }
@@ -231,41 +226,16 @@ public class MainActivity extends FragmentActivity implements
         mLocationUpdatesResultView.setText(data);
     }
 
-    void createUserOnFirstRun() {
-
-        //if 1st run - no user record exists.
-        User user = userService.getRegisteredUser();
-        if (user == null) {
-            user = new User();
-            user.updateInterval = PermissionsUtils.UPDATE_INTERVAL;
-            //add device info
-            String androidId = Utils.getAndroidId(this);
-            user.androidId = androidId;
-            user.createdAt = new Date();
-            if (userService.insertUser(user)) {
-                showSnack("created user settings");
-            } else {
-                showSnack("error creating user information");
-            }
-
-
-        }
-
-        if (user != null && user.chvId == null) {
-            enableSettingsEdit();
-        }
-
-    }
 
     void enableSettingsEdit() {
         btnLayout.setVisibility(View.VISIBLE);
-        chvText.setEnabled(true);
+        usernameText.setEnabled(true);
         phoneText.setEnabled(true);
     }
 
     void disableSettingsEdit() {
         btnLayout.setVisibility(View.GONE);
-        chvText.setEnabled(false);
+        usernameText.setEnabled(false);
         phoneText.setEnabled(false);
 
     }
@@ -275,21 +245,21 @@ public class MainActivity extends FragmentActivity implements
 
         User user = userService.getRegisteredUser();
 
-        String chvId = chvText.getText().toString().trim();
-        user.chvId = chvId.isEmpty() ? null : chvId;
+        String username = usernameText.getText().toString().trim();
+        user.username = username.isEmpty() ? null : username;
         user.phoneNumber = phoneText.getText().toString().trim();
 
         if (userService.insertUser(user)) {
-            showSnack("saved CHV information");
+            Utils.showSnack(this, "saved CHV information");
             findViewById(R.id.activity_main).requestFocus();
-            if (user.chvId != null) {
+            if (user.username != null) {
                 disableSettingsEdit();
             }
 
 
             hideKeyboard(this);
         } else {
-            showSnack("error saving CHV information");
+            Utils.showSnack(this, "error saving CHV information");
         }
     }
 

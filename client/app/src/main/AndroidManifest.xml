@@ -19,6 +19,11 @@
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
 
+    <meta-data
+        android:name="firebase_crashlytics_collection_enabled"
+        android:value="false" />
+
+
     <application
         android:name=".AppController"
         android:allowBackup="true"
@@ -51,6 +56,7 @@
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <category android:name="android.intent.category.HOME" />
             </intent-filter>
             <intent-filter>
                 <action android:name="android.intent.action.REBOOT" />
@@ -93,6 +99,9 @@
                 android:resource="@xml/syncadapter" />
         </service>
 
+        <meta-data
+            android:name="io.fabric.ApiKey"
+            android:value="b6187bdf165040896680be33ef38caf05d75ef7a" />
     </application>
 
 </manifest>

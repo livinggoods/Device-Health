@@ -9,11 +9,17 @@ buildscript {
             url 'https://maven.google.com/'
             name 'Google'
         }
+        maven {
+            url 'https://maven.fabric.io/public'
+        }
+
         google()
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:3.1.2'
         classpath "io.objectbox:objectbox-gradle-plugin:$objectboxVersion"
+        classpath 'io.fabric.tools:gradle:1.25.1'
+        classpath 'com.google.gms:google-services:3.2.1' // google-services plugin
 
         // Dagger Android
         //   annotationProcessor "com.google.dagger:dagger-android-processor:$daggerVersion"
