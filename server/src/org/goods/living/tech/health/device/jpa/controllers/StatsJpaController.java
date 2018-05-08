@@ -14,16 +14,16 @@ import javax.persistence.EntityNotFoundException;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Root;
 import org.goods.living.tech.health.device.jpa.controllers.exceptions.NonexistentEntityException;
-import org.goods.living.tech.health.device.jpa.dao.Stat;
-import org.goods.living.tech.health.device.jpa.dao.User;
+import org.goods.living.tech.health.device.jpa.dao.Stats;
+import org.goods.living.tech.health.device.jpa.dao.Users;
 
 /**
  *
  * @author bensonbundi
  */
-public class StatJpaController implements Serializable {
+public class StatsJpaController implements Serializable {
 
-    public StatJpaController(EntityManagerFactory emf) {
+    public StatsJpaController(EntityManagerFactory emf) {
         this.emf = emf;
     }
     private EntityManagerFactory emf = null;
@@ -32,19 +32,19 @@ public class StatJpaController implements Serializable {
         return emf.createEntityManager();
     }
 
-    public void create(Stat stat) {
+    public void create(Stats stats) {
         EntityManager em = null;
         try {
             em = getEntityManager();
             em.getTransaction().begin();
-            User userId = stat.getUserId();
+            Users userId = stats.getUserId();
             if (userId != null) {
                 userId = em.getReference(userId.getClass(), userId.getId());
-                stat.setUserId(userId);
+                stats.setUserId(userId);
             }
-            em.persist(stat);
+            em.persist(stats);
             if (userId != null) {
-                userId.getStatCollection().add(stat);
+                userId.getStatsCollection().add(stats);
                 userId = em.merge(userId);
             }
             em.getTransaction().commit();
@@ -55,34 +55,34 @@ public class StatJpaController implements Serializable {
         }
     }
 
-    public void edit(Stat stat) throws NonexistentEntityException, Exception {
+    public void edit(Stats stats) throws NonexistentEntityException, Exception {
         EntityManager em = null;
         try {
             em = getEntityManager();
             em.getTransaction().begin();
-            Stat persistentStat = em.find(Stat.class, stat.getId());
-            User userIdOld = persistentStat.getUserId();
-            User userIdNew = stat.getUserId();
+            Stats persistentStats = em.find(Stats.class, stats.getId());
+            Users userIdOld = persistentStats.getUserId();
+            Users userIdNew = stats.getUserId();
             if (userIdNew != null) {
                 userIdNew = em.getReference(userIdNew.getClass(), userIdNew.getId());
-                stat.setUserId(userIdNew);
+                stats.setUserId(userIdNew);
             }
-            stat = em.merge(stat);
+            stats = em.merge(stats);
             if (userIdOld != null && !userIdOld.equals(userIdNew)) {
-                userIdOld.getStatCollection().remove(stat);
+                userIdOld.getStatsCollection().remove(stats);
                 userIdOld = em.merge(userIdOld);
             }
             if (userIdNew != null && !userIdNew.equals(userIdOld)) {
-                userIdNew.getStatCollection().add(stat);
+                userIdNew.getStatsCollection().add(stats);
                 userIdNew = em.merge(userIdNew);
             }
             em.getTransaction().commit();
         } catch (Exception ex) {
             String msg = ex.getLocalizedMessage();
             if (msg == null || msg.length() == 0) {
-                Long id = stat.getId();
-                if (findStat(id) == null) {
-                    throw new NonexistentEntityException("The stat with id " + id + " no longer exists.");
+                Long id = stats.getId();
+                if (findStats(id) == null) {
+                    throw new NonexistentEntityException("The stats with id " + id + " no longer exists.");
                 }
             }
             throw ex;
@@ -98,19 +98,19 @@ public class StatJpaController implements Serializable {
         try {
             em = getEntityManager();
             em.getTransaction().begin();
-            Stat stat;
+            Stats stats;
             try {
-                stat = em.getReference(Stat.class, id);
-                stat.getId();
+                stats = em.getReference(Stats.class, id);
+                stats.getId();
             } catch (EntityNotFoundException enfe) {
-                throw new NonexistentEntityException("The stat with id " + id + " no longer exists.", enfe);
+                throw new NonexistentEntityException("The stats with id " + id + " no longer exists.", enfe);
             }
-            User userId = stat.getUserId();
+            Users userId = stats.getUserId();
             if (userId != null) {
-                userId.getStatCollection().remove(stat);
+                userId.getStatsCollection().remove(stats);
                 userId = em.merge(userId);
             }
-            em.remove(stat);
+            em.remove(stats);
             em.getTransaction().commit();
         } finally {
             if (em != null) {
@@ -119,19 +119,19 @@ public class StatJpaController implements Serializable {
         }
     }
 
-    public List<Stat> findStatEntities() {
-        return findStatEntities(true, -1, -1);
+    public List<Stats> findStatsEntities() {
+        return findStatsEntities(true, -1, -1);
     }
 
-    public List<Stat> findStatEntities(int maxResults, int firstResult) {
-        return findStatEntities(false, maxResults, firstResult);
+    public List<Stats> findStatsEntities(int maxResults, int firstResult) {
+        return findStatsEntities(false, maxResults, firstResult);
     }
 
-    private List<Stat> findStatEntities(boolean all, int maxResults, int firstResult) {
+    private List<Stats> findStatsEntities(boolean all, int maxResults, int firstResult) {
         EntityManager em = getEntityManager();
         try {
             CriteriaQuery cq = em.getCriteriaBuilder().createQuery();
-            cq.select(cq.from(Stat.class));
+            cq.select(cq.from(Stats.class));
             Query q = em.createQuery(cq);
             if (!all) {
                 q.setMaxResults(maxResults);
@@ -143,20 +143,20 @@ public class StatJpaController implements Serializable {
         }
     }
 
-    public Stat findStat(Long id) {
+    public Stats findStats(Long id) {
         EntityManager em = getEntityManager();
         try {
-            return em.find(Stat.class, id);
+            return em.find(Stats.class, id);
         } finally {
             em.close();
         }
     }
 
-    public int getStatCount() {
+    public int getStatsCount() {
         EntityManager em = getEntityManager();
         try {
             CriteriaQuery cq = em.getCriteriaBuilder().createQuery();
-            Root<Stat> rt = cq.from(Stat.class);
+            Root<Stats> rt = cq.from(Stats.class);
             cq.select(em.getCriteriaBuilder().count(rt));
             Query q = em.createQuery(cq);
             return ((Long) q.getSingleResult()).intValue();
