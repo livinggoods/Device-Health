@@ -31,8 +31,6 @@ import android.support.v4.app.FragmentActivity;
 import android.util.Log;
 import android.view.View;
 
-import com.google.android.gms.location.LocationRequest;
-
 import org.goods.living.tech.health.device.AppController;
 import org.goods.living.tech.health.device.BuildConfig;
 import org.goods.living.tech.health.device.R;
@@ -41,18 +39,6 @@ import org.goods.living.tech.health.device.utils.PermissionsUtils;
 
 import javax.inject.Inject;
 
-
-/**
- * The only activity in this sample. Displays UI widgets for requesting and removing location
- * updates, and for the batched location updates that are reported.
- * <p>
- * Location updates requested through this activity continue even when the activity is not in the
- * foreground. Note: apps running on "O" devices (regardless of targetSdkVersion) may receive
- * updates less frequently than the interval specified in the {@link LocationRequest} when the app
- * is no longer in the foreground.
- */
-
-//https://developers.google.com/android/reference/com/google/android/gms/location/SettingsClient
 
 public class PermissionActivity extends FragmentActivity {
 
@@ -166,7 +152,7 @@ public class PermissionActivity extends FragmentActivity {
                 Log.i(TAG, "User interaction was cancelled.");
             } else if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 // Permission was granted.
-              //  PermissionsUtils.checkAndRequestPermissions(this, userService);
+                //  PermissionsUtils.checkAndRequestPermissions(this, userService);
 
             } else {
                 // Permission denied.

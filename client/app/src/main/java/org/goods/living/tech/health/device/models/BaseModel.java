@@ -15,12 +15,11 @@ public class BaseModel {
 
     //String formattedDate = dateFormat.format(date);
 
-    public int api = 1;//server api version
 
     public JSONObject toJSONObject() throws JSONException {
 
         JSONObject JSONObject = new JSONObject();
-        JSONObject.put("api", api);
+        // JSONObject.put("addsharedfields", api);
 
         return JSONObject;
     }

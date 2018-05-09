@@ -99,6 +99,7 @@ public class AppController extends Application {
 
 
         }
+
         logUser(user);
 
     }

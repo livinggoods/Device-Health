@@ -22,6 +22,7 @@ import android.content.Intent;
 import android.location.Location;
 import android.util.Log;
 
+import com.crashlytics.android.Crashlytics;
 import com.google.android.gms.location.LocationResult;
 
 import org.goods.living.tech.health.device.AppController;
@@ -83,6 +84,7 @@ public class LocationUpdatesBroadcastReceiver extends BroadcastReceiver {
 
                     Utils.sendNotification(context, "received location updates");
                     Log.i(TAG, "received location updates");
+                    Crashlytics.log("received location updates");
 
                     statsService.insertFilteredLocationData(locations);
                 } else {
@@ -90,7 +92,7 @@ public class LocationUpdatesBroadcastReceiver extends BroadcastReceiver {
                 }
             } else {// if (Intent.ACTION_BOOT_COMPLETED.equals(intent.getAction()) || Intent.ACTION_EXTERNAL_APPLICATIONS_AVAILABLE.equals(intent.getAction())) {
                 Log.i(TAG, "Reboot occured - relaunching listeners");
-
+                Crashlytics.log("Reboot occured - relaunching listeners");
 
                 PermissionsUtils.checkAndRequestPermissions(context, userService);
 

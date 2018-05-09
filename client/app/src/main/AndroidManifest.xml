@@ -44,7 +44,9 @@
         <activity android:name=".UI.PermissionActivity">
 
         </activity>
+        <activity android:name=".UI.UpgradeActivity">
 
+        </activity>
 
         <!--  <service
               android:name=".services.LocationUpdatesIntentService"

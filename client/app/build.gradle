@@ -16,7 +16,17 @@ repositories {
 apply plugin: 'io.objectbox'
 apply plugin: 'io.fabric'
 
+ext.versionMajor = 1
+ext.versionMinor = 1
+ext.versionPatch = 2
+ext.versionClassifier = null
+ext.isSnapshot = true
+ext.minimumSdkVersion = 19
+
 android {
+    compileSdkVersion 26
+    // buildToolsVersion "26.0.0"
+
     signingConfigs {
         config {
         }
@@ -28,16 +38,15 @@ android {
 //        }
 
     }
-    compileSdkVersion 26
-    // buildToolsVersion "25.0.3"
+
     defaultConfig {
         applicationId "org.goods.living.tech.health.device"
-        minSdkVersion 19
         targetSdkVersion 24
-        versionCode 1
-        versionName "1.0"
-        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        minSdkVersion project.ext.minimumSdkVersion
+        versionCode generateVersionCode() // 15// 0010203
+        versionName generateVersionName() // 1.2.3-SNAPSHOT
     }
+
     buildTypes {
 
         release {
@@ -49,6 +58,25 @@ android {
     productFlavors {
     }
 }
+
+private Integer generateVersionCode() {
+    return /* ext.minimumSdkVersion * 10000000 + */ ext.versionMajor * 10000 + ext.versionMinor * 100 + ext.versionPatch
+}
+
+private String generateVersionName() {
+    String versionName = "${ext.versionMajor}.${ext.versionMinor}.${ext.versionPatch}"
+    if (ext.versionClassifier == null) {
+        if (ext.isSnapshot) {
+            ext.versionClassifier = "SNAPSHOT"
+        }
+    }
+
+    if (ext.versionClassifier != null) {
+        versionName += "-" + ext.versionClassifier
+    }
+    return versionName;
+}
+
 
 dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')

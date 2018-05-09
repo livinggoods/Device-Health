@@ -83,9 +83,9 @@ public class MainActivity extends FragmentActivity implements
     private Button cancelBtn;
     private Button saveBtn;
     private TextView usernameText;
-    private TextView phoneText;
+    private TextView syncTextView;
 
-    private TextView intervalText;
+    private TextView intervalTextView;
 
     private TextView mLocationUpdatesResultView;
 
@@ -104,8 +104,8 @@ public class MainActivity extends FragmentActivity implements
         cancelBtn = (Button) findViewById(R.id.cancelBtn);
         saveBtn = (Button) findViewById(R.id.saveBtn);
         usernameText = (TextView) findViewById(R.id.usernameText);
-        phoneText = (TextView) findViewById(R.id.phoneText);
-        intervalText = (TextView) findViewById(R.id.intervalText);
+        syncTextView = (TextView) findViewById(R.id.syncTextView);
+        intervalTextView = (TextView) findViewById(R.id.intervalTextView);
         btnLayout = (LinearLayout) findViewById(R.id.btnLayout);
 
         disableSettingsEdit();
@@ -205,8 +205,11 @@ public class MainActivity extends FragmentActivity implements
         User user = userService.getRegisteredUser();
         //if(user ==null){
         usernameText.setText(user == null ? null : user.username);
-        phoneText.setText(user == null ? null : user.phoneNumber);
-        intervalText.setText(user == null ? null : "" + user.updateInterval);
+
+        Long total = statsService.countRecords();
+        Long synced = statsService.countSyncedRecords();
+        syncTextView.setText("Synced data: " + synced + "/" + total);
+        intervalTextView.setText("Location Update interval (seconds): " + (user == null ? ("" + PermissionsUtils.UPDATE_INTERVAL) : "" + user.updateInterval));
         // }
 
 
@@ -230,13 +233,11 @@ public class MainActivity extends FragmentActivity implements
     void enableSettingsEdit() {
         btnLayout.setVisibility(View.VISIBLE);
         usernameText.setEnabled(true);
-        phoneText.setEnabled(true);
     }
 
     void disableSettingsEdit() {
         btnLayout.setVisibility(View.GONE);
         usernameText.setEnabled(false);
-        phoneText.setEnabled(false);
 
     }
 
@@ -247,7 +248,6 @@ public class MainActivity extends FragmentActivity implements
 
         String username = usernameText.getText().toString().trim();
         user.username = username.isEmpty() ? null : username;
-        user.phoneNumber = phoneText.getText().toString().trim();
 
         if (userService.insertUser(user)) {
             Utils.showSnack(this, "saved CHV information");

@@ -25,7 +25,6 @@ public class StatsService extends BaseService {
     Box<Stats> box;//= boxStore.boxFor(Stats.class);
 
     public static long ACCURACY_THRESHHOLD = 10;
-    static long CLEANUP_LIMIT = 100;
 
     @Inject
     public StatsService() {
@@ -90,12 +89,12 @@ public class StatsService extends BaseService {
     }
 
     public @Nonnull
-    List<Stats> getUnSyncedStats() {
+    List<Stats> getUnSyncedStats(long limit) {//limit for pagination
 
         try {
             Query<Stats> q = box.query().equal(Stats_.synced, false).order(Stats_.createdAt).build();
 
-            List<Stats> list = q.find();
+            List<Stats> list = q.find(0, limit);
 
 
             return list;
@@ -153,8 +152,6 @@ public class StatsService extends BaseService {
             }
             box.put(list);
 
-            //cleanup
-            deleteSyncedRecords(CLEANUP_LIMIT);
 
             return true;
         } catch (Exception e) {
@@ -174,6 +171,28 @@ public class StatsService extends BaseService {
         } catch (Exception e) {
             Log.wtf(TAG, e);
             return false;
+        }
+    }
+
+    public long countSyncedRecords() {
+        try {
+
+            return box.query().equal(Stats_.synced, true).build().count();//.orderDesc(User_.createdAt).build().findFirst();
+
+        } catch (Exception e) {
+            Log.wtf(TAG, e);
+            return 0l;
+        }
+    }
+
+    public long countRecords() {
+        try {
+
+            return box.query().build().count();//.orderDesc(User_.createdAt).build().findFirst();
+
+        } catch (Exception e) {
+            Log.wtf(TAG, e);
+            return 0l;
         }
     }
 }

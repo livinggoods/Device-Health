@@ -51,7 +51,7 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
         Log.e("inPerformSync", "syncing");
         // sync data or perform your action
 
-        syncService.sync();
+        syncService.sync(mContext);
 
     }
 
