@@ -19,8 +19,12 @@
 
 truncate  table events.users cascade;
 
+
 ALTER TABLE events.users
-ADD COLUMN api smallint NOT NULL DEFAULT 1;
+ADD COLUMN version_code int NOT NULL DEFAULT 1;
+ALTER TABLE events.users
+ADD COLUMN version_name character varying(128);
+
 ALTER TABLE events.users
 ADD COLUMN username character varying(128) NOT NULL;
 ALTER TABLE events.users
@@ -33,4 +37,5 @@ CREATE INDEX idx_users_username ON events.users (username ASC);
 
 ALTER TABLE events.users DROP COLUMN password;
 ALTER TABLE events.users DROP COLUMN username ;
-ALTER TABLE events.users DROP COLUMN api;
+ALTER TABLE events.users DROP COLUMN version_name;
+ALTER TABLE events.users DROP COLUMN version_code;

@@ -16,6 +16,7 @@ import org.codehaus.jackson.node.ObjectNode;
 import org.goods.living.tech.health.device.jpa.controllers.UsersJpaController;
 import org.goods.living.tech.health.device.jpa.dao.Users;
 import org.goods.living.tech.health.device.models.Result;
+import org.goods.living.tech.health.device.utility.ApplicationParameters;
 import org.goods.living.tech.health.device.utility.Constants;
 import org.goods.living.tech.health.device.utility.JSonHelper;
 
@@ -36,6 +37,9 @@ public class UserService extends BaseService {
 	@Inject
 	UsersJpaController usersJpaController;
 
+	@Inject
+	private ApplicationParameters applicationParameters;
+
 	Integer DEFAULT_UPDATE_INTERVAL = 60;
 
 	public UserService() {
@@ -49,11 +53,13 @@ public class UserService extends BaseService {
 		logger.debug("create");
 		JsonNode data = JSonHelper.getJsonNode(incomingData);
 
-		int API = data.get("api").asInt();
-
 		Users users = new Users();
-		users.setApi(data.has("api") ? Short.valueOf(data.get("api").asText()) : null);
-		users.setUsername(data.has("username") ? data.get("username").asText() : null);
+
+		int versionCode = data.has("versionCode") ? Integer.valueOf(data.get("versionCode").asText()) : 1;
+		users.setVersionCode(versionCode);
+		users.setVersionName(data.has("versionName") ? data.get("versionName").asText() : null);
+		String username = data.has("username") ? data.get("username").asText() : null;
+		users.setUsername(username);
 		users.setPassword(data.has("password") ? data.get("password").asText() : null);
 		users.setAndroidId(data.get("androidId").asText());
 		users.setChvId(data.has("chvId") ? data.get("chvId").asText() : null);
@@ -67,24 +73,31 @@ public class UserService extends BaseService {
 
 		ObjectNode o = (ObjectNode) data;
 		o.put("masterId", users.getId());
-		o.put("updateInterval", DEFAULT_UPDATE_INTERVAL);
+		o.put("updateInterval", applicationParameters.getLocationUpdateInterval());// DEFAULT_UPDATE_INTERVAL);
+
 		// NodeBean toValue = mapper.convertValue(node, NodeBean.cla
+
+		boolean shouldforceupdate = shouldForceUpdate(username, versionCode);
+		o.put("serverApi", applicationParameters.getServerApi());
+		o.put("forceUpdate", shouldforceupdate);
 
 		Result<JsonNode> result = new Result<JsonNode>(true, "", o);
 		return result;
 
 	}
 
-	@POST
-	// @Consumes(MediaType.APPLICATION_JSON)
-	@Produces(MediaType.APPLICATION_JSON)
-	@Path(Constants.URL.READ)
-	public Result<JsonNode> read(InputStream incomingData) {
-		logger.debug("read");
-		JsonNode data = JSonHelper.getJsonNode(incomingData);
+	boolean shouldForceUpdate(String username, int deviceVersion) {
 
-		Result<JsonNode> result = new Result<JsonNode>(true, "", data);
-		return result;
+		int serverApi = applicationParameters.getServerApi();
+
+		if (serverApi > deviceVersion) {
+			logger.debug("forcing an up update for user " + username);
+
+			return true;
+
+		}
+
+		return false;
 
 	}
 
@@ -96,27 +109,16 @@ public class UserService extends BaseService {
 		logger.debug("update");
 		JsonNode data = JSonHelper.getJsonNode(incomingData);
 
-		int API = data.get("api").asInt();
+		int versionCode = data.has("versionCode") ? Integer.valueOf(data.get("versionCode").asText()) : 1;
+		String username = data.has("username") ? data.get("username").asText() : null;
+
+		boolean shouldforceupdate = shouldForceUpdate(username, versionCode);
 
 		ObjectNode o = (ObjectNode) data;
-		o.put("masterId", 1);
-		o.put("updateInterval", 30);
-		// NodeBean toValue = mapper.convertValue(node, NodeBean.cla
+		o.put("serverApi", applicationParameters.getServerApi());
+		o.put("forceUpdate", shouldforceupdate);
 
 		Result<JsonNode> result = new Result<JsonNode>(true, "", o);
-		return result;
-
-	}
-
-	@POST
-	// @Consumes(MediaType.APPLICATION_JSON)
-	@Produces(MediaType.APPLICATION_JSON)
-	@Path(Constants.URL.DELETE)
-	public Result<JsonNode> delete(InputStream incomingData) {
-		logger.debug("delete");
-		JsonNode data = JSonHelper.getJsonNode(incomingData);
-
-		Result<JsonNode> result = new Result<JsonNode>(true, "", data);
 		return result;
 
 	}

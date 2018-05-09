@@ -6,7 +6,7 @@
 	<Resource name="jdbc/postgresClientDB" auth="Container" type="javax.sql.DataSource"
 		driverClassName="org.postgresql.Driver"
 		url="jdbc:postgresql://localhost:5432/device_health_development"
-		username="device_health_admin" password="admin" maxActive="30"
+		username="device_health_user" password="user" maxActive="30"
 		validationQuery="SELECT 1;" testOnBorrow="true" />
 
 
@@ -21,6 +21,10 @@
 	<!-- JWT token duration -->
 	<Parameter name="org.goods.living.tech.health.device.jwt.token.life"
 		value="123400" />
+	<Parameter name="org.goods.living.tech.health.device.api"
+		value="10102" />
+	<Parameter name="org.goods.living.tech.health.device.locationUpdateInterval"
+		value="300" />
 		
 
 

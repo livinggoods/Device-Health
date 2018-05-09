@@ -22,6 +22,7 @@ import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
+import javax.persistence.Transient;
 import javax.persistence.UniqueConstraint;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
@@ -41,7 +42,6 @@ import javax.xml.bind.annotation.XmlTransient;
 		@NamedQuery(name = "Users.findByUpdateInterval", query = "SELECT u FROM Users u WHERE u.updateInterval = :updateInterval"),
 		@NamedQuery(name = "Users.findByCreatedAt", query = "SELECT u FROM Users u WHERE u.createdAt = :createdAt"),
 		@NamedQuery(name = "Users.findByUpdatedAt", query = "SELECT u FROM Users u WHERE u.updatedAt = :updatedAt"),
-		@NamedQuery(name = "Users.findByApi", query = "SELECT u FROM Users u WHERE u.api = :api"),
 		@NamedQuery(name = "Users.findByUsername", query = "SELECT u FROM Users u WHERE u.username = :username"),
 		@NamedQuery(name = "Users.findByPassword", query = "SELECT u FROM Users u WHERE u.password = :password") })
 public class Users implements Serializable {
@@ -70,8 +70,48 @@ public class Users implements Serializable {
 	@Temporal(TemporalType.TIMESTAMP)
 	private Date updatedAt;
 	@Basic(optional = false)
-	@Column(nullable = false)
-	private short api;
+	@Column(name = "version_code")
+	private int versionCode;// = BuildConfig.VERSION_CODE;
+	@Column(name = "version_name", length = 128)
+	private String versionName;// = BuildConfig.VERSION_NAME;
+
+	public int getVersionCode() {
+		return versionCode;
+	}
+
+	public void setVersionCode(int versionCode) {
+		this.versionCode = versionCode;
+	}
+
+	public String getVersionName() {
+		return versionName;
+	}
+
+	public void setVersionName(String versionName) {
+		this.versionName = versionName;
+	}
+
+	public int getServerApi() {
+		return serverApi;
+	}
+
+	public void setServerApi(int serverApi) {
+		this.serverApi = serverApi;
+	}
+
+	public boolean isForceUpdate() {
+		return forceUpdate;
+	}
+
+	public void setForceUpdate(boolean forceUpdate) {
+		this.forceUpdate = forceUpdate;
+	}
+
+	@Transient
+	private int serverApi;
+	@Transient
+	private boolean forceUpdate = false;
+
 	@Basic(optional = false)
 	@Column(nullable = false, length = 128)
 	private String username;
@@ -87,12 +127,12 @@ public class Users implements Serializable {
 		this.id = id;
 	}
 
-	public Users(Long id, String androidId, int updateInterval, Date createdAt, short api, String username) {
+	public Users(Long id, String androidId, int updateInterval, Date createdAt, int versionCode, String username) {
 		this.id = id;
 		this.androidId = androidId;
 		this.updateInterval = updateInterval;
 		this.createdAt = createdAt;
-		this.api = api;
+		this.versionCode = versionCode;
 		this.username = username;
 	}
 
@@ -150,14 +190,6 @@ public class Users implements Serializable {
 
 	public void setUpdatedAt(Date updatedAt) {
 		this.updatedAt = updatedAt;
-	}
-
-	public short getApi() {
-		return api;
-	}
-
-	public void setApi(short api) {
-		this.api = api;
 	}
 
 	public String getUsername() {

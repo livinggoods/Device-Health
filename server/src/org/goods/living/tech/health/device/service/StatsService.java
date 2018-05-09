@@ -15,7 +15,6 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
 import org.codehaus.jackson.JsonNode;
-import org.codehaus.jackson.node.ObjectNode;
 import org.goods.living.tech.health.device.jpa.controllers.StatsJpaController;
 import org.goods.living.tech.health.device.jpa.controllers.UsersJpaController;
 import org.goods.living.tech.health.device.jpa.dao.Stats;
@@ -43,8 +42,6 @@ public class StatsService extends BaseService {
 	@Inject
 	UsersJpaController usersJpaController;
 
-	Long SYSTEM_USER_ID = 0L;
-
 	/// DateTimeFormatter formatter = DateTimeFormatter.ofPattern("ddd mmm
 	/// dd/MM/yyyy HH:mm:ss");// Mon Apr 30 08:46:10 GMT+03:00 2018
 	SimpleDateFormat dateFormat = new SimpleDateFormat("MM-dd-yyyy HH:mm:ss");
@@ -62,11 +59,9 @@ public class StatsService extends BaseService {
 		// JSONObject response = new JSONObject(responseString);
 		List<JsonNode> list = JSonHelper.getJsonNodeArray(incomingData);
 
-		Long userId = SYSTEM_USER_ID;// TODO: get this from session
-		int API = 1;
+		Long userId = null;// TODO: get this from session
 		if (list.size() > 0) {
-			userId = list.get(0).has("userMasterId") ? list.get(0).get("userMasterId").asLong() : SYSTEM_USER_ID;
-			API = list.get(0).get("api").asInt();
+			userId = list.get(0).has("userMasterId") ? list.get(0).get("userMasterId").asLong() : null;
 		}
 
 		Users user = usersJpaController.findUsers(userId);
@@ -97,47 +92,18 @@ public class StatsService extends BaseService {
 
 	}
 
-	@POST
-	// @Consumes(MediaType.APPLICATION_JSON)
-	@Produces(MediaType.APPLICATION_JSON)
-	@Path(Constants.URL.READ)
-	public Result<JsonNode> read(InputStream incomingData) {
-		logger.debug("read");
-		JsonNode data = JSonHelper.getJsonNode(incomingData);
-
-		Result<JsonNode> result = new Result<JsonNode>(true, "", data);
-		return result;
-
-	}
-
-	@POST
-	// @Consumes(MediaType.APPLICATION_JSON)
-	@Produces(MediaType.APPLICATION_JSON)
-	@Path(Constants.URL.UPDATE)
-	public Result<JsonNode> update(InputStream incomingData) {
-		logger.debug("update");
-		JsonNode data = JSonHelper.getJsonNode(incomingData);
-		ObjectNode o = (ObjectNode) data;
-		o.put("masterId", 1);
-		o.put("updateInterval", 30);
-		// NodeBean toValue = mapper.convertValue(node, NodeBean.cla
-
-		Result<JsonNode> result = new Result<JsonNode>(true, "", o);
-		return result;
-
-	}
-
-	@POST
-	// @Consumes(MediaType.APPLICATION_JSON)
-	@Produces(MediaType.APPLICATION_JSON)
-	@Path(Constants.URL.DELETE)
-	public Result<JsonNode> delete(InputStream incomingData) {
-		logger.debug("delete");
-		JsonNode data = JSonHelper.getJsonNode(incomingData);
-
-		Result<JsonNode> result = new Result<JsonNode>(true, "", data);
-		return result;
-
-	}
+	//
+	// @POST
+	// // @Consumes(MediaType.APPLICATION_JSON)
+	// @Produces(MediaType.APPLICATION_JSON)
+	// @Path(Constants.URL.DELETE)
+	// public Result<JsonNode> delete(InputStream incomingData) {
+	// logger.debug("delete");
+	// JsonNode data = JSonHelper.getJsonNode(incomingData);
+	//
+	// Result<JsonNode> result = new Result<JsonNode>(true, "", data);
+	// return result;
+	//
+	// }
 
 }

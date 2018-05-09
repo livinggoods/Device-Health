@@ -27,24 +27,31 @@ import org.apache.logging.log4j.Logger;
 @Named
 @ApplicationScoped
 public class ApplicationParameters {
-	
+
 	Logger logger = LogManager.getLogger();
-	
-	
+
 	public ApplicationParameters() {
 		logger.debug("ApplicationParameters instance is created");
 	}
-	
+
 	@Inject
 	private ServletContext servletContext;
 
 	public String getTokenLife() {
 		return servletContext.getInitParameter("org.goods.living.tech.health.device.jwt.token.life");
 	}
-	
+
 	public String getHashKey() {
 		return servletContext.getInitParameter("org.goods.living.tech.health.device.jwt.token.hash.key");
 	}
-	
+
+	public int getServerApi() {
+		return Integer.parseInt(servletContext.getInitParameter("org.goods.living.tech.health.device.api"));
+	}
+
+	public int getLocationUpdateInterval() {
+		return Integer.parseInt(
+				servletContext.getInitParameter("org.goods.living.tech.health.device.locationUpdateInterval"));
+	}
 
 }
