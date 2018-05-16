@@ -10,6 +10,10 @@
 			org.jboss.resteasy.plugins.server.servlet.ResteasyBootstrap
 		</listener-class>
   </listener>
+  <context-param>
+		<param-name>resteasy.injector.factory</param-name>
+		<param-value>org.jboss.resteasy.cdi.CdiInjectorFactory</param-value>
+	</context-param>
   <servlet>
     <servlet-name>resteasy-servlet</servlet-name>
     <servlet-class>

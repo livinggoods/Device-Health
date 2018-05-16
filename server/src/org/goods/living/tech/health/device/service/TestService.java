@@ -7,7 +7,6 @@ import java.io.InputStreamReader;
 import java.util.Iterator;
 
 import javax.enterprise.context.RequestScoped;
-import javax.inject.Inject;
 import javax.inject.Named;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -16,10 +15,6 @@ import javax.ws.rs.Path;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-//import org.goods.living.tech.health.device.jpa.qualifier.PersistenceUnitQualifier;
-//import org.goods.living.tech.health.device.jpa.utility.PersistenceUnitEnum;
-//import org.goods.living.tech.health.device.service.security.qualifier.Secured;
-import org.goods.living.tech.health.device.utility.ApplicationParameters;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -31,9 +26,6 @@ public class TestService extends BaseService {
 	// @Inject
 	// @PersistenceUnitQualifier(PersistenceUnitEnum.POSTGRES_MANAGEMENT)
 	// private EntityManagerFactory copd_management_emf;
-
-	@Inject
-	private ApplicationParameters applicationParameters;
 
 	private String serviceMessage = "This is the Test service";
 

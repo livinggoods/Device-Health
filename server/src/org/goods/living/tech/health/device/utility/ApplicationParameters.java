@@ -46,12 +46,26 @@ public class ApplicationParameters {
 	}
 
 	public int getServerApi() {
-		return Integer.parseInt(servletContext.getInitParameter("org.goods.living.tech.health.device.api"));
+		int temp = 1;
+		try {
+			temp = Integer.parseInt(servletContext.getInitParameter("org.goods.living.tech.health.device.api"));
+		} catch (NumberFormatException exp) {
+			logger.error(exp);
+		}
+		logger.debug("The temp variable value: " + temp);
+		return temp;
 	}
 
 	public int getLocationUpdateInterval() {
-		return Integer.parseInt(
-				servletContext.getInitParameter("org.goods.living.tech.health.device.locationUpdateInterval"));
+		int temp = 1;
+		try {
+			temp = Integer.parseInt(
+					servletContext.getInitParameter("org.goods.living.tech.health.device.locationUpdateInterval"));
+		} catch (NumberFormatException exp) {
+			logger.error(exp);
+		}
+		logger.debug("The temp variable value: " + temp);
+		return temp;
 	}
 
 }

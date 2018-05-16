@@ -16,7 +16,6 @@ import org.codehaus.jackson.node.ObjectNode;
 import org.goods.living.tech.health.device.jpa.controllers.UsersJpaController;
 import org.goods.living.tech.health.device.jpa.dao.Users;
 import org.goods.living.tech.health.device.models.Result;
-import org.goods.living.tech.health.device.utility.ApplicationParameters;
 import org.goods.living.tech.health.device.utility.Constants;
 import org.goods.living.tech.health.device.utility.JSonHelper;
 
@@ -37,9 +36,6 @@ public class UserService extends BaseService {
 	@Inject
 	UsersJpaController usersJpaController;
 
-	@Inject
-	private ApplicationParameters applicationParameters;
-
 	Integer DEFAULT_UPDATE_INTERVAL = 60;
 
 	public UserService() {
@@ -49,27 +45,42 @@ public class UserService extends BaseService {
 	// @Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path(Constants.URL.CREATE)
-	public Result<JsonNode> create(InputStream incomingData) {
+	public Result<JsonNode> create(InputStream incomingData) throws Exception {
 		logger.debug("create");
 		JsonNode data = JSonHelper.getJsonNode(incomingData);
 
-		Users users = new Users();
+		Users users;
+		String username = data.has("username") ? data.get("username").asText() : null;
+		String androidId = data.has("androidId") ? data.get("androidId").asText() : null;
+
+		users = usersJpaController.findByUserNameAndAndroidId(username, androidId);
+		if (users == null) {
+			users = new Users();
+		}
 
 		int versionCode = data.has("versionCode") ? Integer.valueOf(data.get("versionCode").asText()) : 1;
 		users.setVersionCode(versionCode);
 		users.setVersionName(data.has("versionName") ? data.get("versionName").asText() : null);
-		String username = data.has("username") ? data.get("username").asText() : null;
+
 		users.setUsername(username);
 		users.setPassword(data.has("password") ? data.get("password").asText() : null);
-		users.setAndroidId(data.get("androidId").asText());
+
+		users.setAndroidId(androidId);
 		users.setChvId(data.has("chvId") ? data.get("chvId").asText() : null);
 		users.setPhone(data.has("phone") ? data.get("phone").asText() : null);
 
 		users.setUpdateInterval(DEFAULT_UPDATE_INTERVAL);
 
-		users.setCreatedAt(new Date());
-
-		usersJpaController.create(users);
+		// new or update
+		if (users.getId() == null) {
+			logger.debug("create new user");
+			users.setCreatedAt(new Date());
+			usersJpaController.create(users);
+		} else { // update?
+			logger.debug("ignore create: update user");
+			users.setUpdatedAt(new Date());
+			users = usersJpaController.update(users);
+		}
 
 		ObjectNode o = (ObjectNode) data;
 		o.put("masterId", users.getId());
@@ -111,10 +122,20 @@ public class UserService extends BaseService {
 
 		int versionCode = data.has("versionCode") ? Integer.valueOf(data.get("versionCode").asText()) : 1;
 		String username = data.has("username") ? data.get("username").asText() : null;
+		String androidId = data.has("androidId") ? data.get("androidId").asText() : null;
+
+		Users user = usersJpaController.findByUserNameAndAndroidId(username, androidId);
+		if (user == null) {
+			logger.debug("no user to update");
+		} else { // update?
+			logger.debug("nothing to update for: " + username);
+		}
 
 		boolean shouldforceupdate = shouldForceUpdate(username, versionCode);
 
 		ObjectNode o = (ObjectNode) data;
+		// o.put("masterId", data.get("masterId"));
+		o.put("updateInterval", applicationParameters.getLocationUpdateInterval());// DEFAULT_UPDATE_INTERVAL);
 		o.put("serverApi", applicationParameters.getServerApi());
 		o.put("forceUpdate", shouldforceupdate);
 

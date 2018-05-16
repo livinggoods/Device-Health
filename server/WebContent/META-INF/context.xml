@@ -1,13 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<Context path="Device-Health-Server" reloadable="true" copyXML="true">
+<Context path="" reloadable="true" swallowOutput="true" copyXML="true"  override="true"> <!-- path="/"  docBase="Device_Health_Api"  -->
 
 <!--  -->
-	<Resource name="jdbc/postgresClientDB" auth="Container" type="javax.sql.DataSource"
+	 <!-- <Resource name="jdbc/postgresClientDBDeviceHealth" auth="Container" type="javax.sql.DataSource"
 		driverClassName="org.postgresql.Driver"
 		url="jdbc:postgresql://localhost:5432/device_health_development"
 		username="device_health_user" password="user" maxActive="30"
-		validationQuery="SELECT 1;" testOnBorrow="true" />
+		validationQuery="SELECT 1;" testOnBorrow="true"/> 
+		factory="org.apache.commons.dbcp2.BasicDataSource"  -->
 
 
 	<Resource name="BeanManager" auth="Container"
@@ -19,6 +20,8 @@
 	<!-- Application Parameters -->
 
 	<!-- JWT token duration -->
+	<Parameter name="org.goods.living.tech.health.device.jwt.token.hash.key"
+		value="org.goods.living.tech.health.device" />
 	<Parameter name="org.goods.living.tech.health.device.jwt.token.life"
 		value="123400" />
 	<Parameter name="org.goods.living.tech.health.device.api"
