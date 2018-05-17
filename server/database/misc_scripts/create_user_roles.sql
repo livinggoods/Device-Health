@@ -20,9 +20,7 @@ COMMENT ON SCHEMA events IS 'Events schema';
 
 ALTER DATABASE device_health_development SET search_path=public, shared, events;
 
-GRANT USAGE ON SCHEMA shared TO "device_health_admin";
 GRANT USAGE ON SCHEMA shared TO "device_health_user";
-GRANT USAGE ON SCHEMA events TO "device_health_admin";
 GRANT USAGE ON SCHEMA events TO "device_health_user";
 
 GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA shared TO "device_health_user";
@@ -30,6 +28,7 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA events TO "device_h
 
 GRANT SELECT, UPDATE ON ALL SEQUENCES IN SCHEMA shared TO "device_health_user";
 GRANT SELECT, UPDATE ON ALL SEQUENCES IN SCHEMA events TO "device_health_user";
+
 
 ALTER DEFAULT PRIVILEGES IN SCHEMA public
   GRANT ALL ON tables TO device_health_admin;
@@ -40,7 +39,7 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA public
   ALTER DEFAULT PRIVILEGES IN SCHEMA events
   GRANT ALL ON tables TO device_health_admin;
 
---GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA shared TO "device_health_admin";
---GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA events TO "device_health_admin";
+GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA shared TO "device_health_admin";
+GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA events TO "device_health_admin";
 
 ALTER ROLE "device_health_user" SET search_path= public, shared, events;

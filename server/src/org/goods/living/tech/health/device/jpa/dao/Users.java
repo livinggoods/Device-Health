@@ -42,6 +42,7 @@ import javax.xml.bind.annotation.XmlTransient;
 		@NamedQuery(name = "Users.findByUpdateInterval", query = "SELECT u FROM Users u WHERE u.updateInterval = :updateInterval"),
 		@NamedQuery(name = "Users.findByCreatedAt", query = "SELECT u FROM Users u WHERE u.createdAt = :createdAt"),
 		@NamedQuery(name = "Users.findByUpdatedAt", query = "SELECT u FROM Users u WHERE u.updatedAt = :updatedAt"),
+		@NamedQuery(name = "Users.findByRecordedAt", query = "SELECT u FROM Users u WHERE u.recordedAt = :recordedAt"),
 		@NamedQuery(name = "Users.findByUsername", query = "SELECT u FROM Users u WHERE u.username = :username"),
 		@NamedQuery(name = "Users.findByPassword", query = "SELECT u FROM Users u WHERE u.password = :password"),
 		@NamedQuery(name = "Users.findByUserNameAndAndroidId", query = "SELECT u FROM Users u WHERE u.username = :username AND u.androidId = :androidId") })
@@ -71,6 +72,18 @@ public class Users implements Serializable {
 	@Column(name = "updated_at")
 	@Temporal(TemporalType.TIMESTAMP)
 	private Date updatedAt;
+	@Column(name = "recorded_at")
+	@Temporal(TemporalType.TIMESTAMP)
+	private Date recordedAt;
+
+	public Date getRecordedAt() {
+		return recordedAt;
+	}
+
+	public void setRecordedAt(Date recordedAt) {
+		this.recordedAt = recordedAt;
+	}
+
 	@Basic(optional = false)
 	@Column(name = "version_code")
 	private int versionCode;// = BuildConfig.VERSION_CODE;

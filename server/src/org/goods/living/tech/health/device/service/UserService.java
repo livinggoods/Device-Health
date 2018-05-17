@@ -1,6 +1,7 @@
 package org.goods.living.tech.health.device.service;
 
 import java.io.InputStream;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import javax.enterprise.context.RequestScoped;
@@ -33,10 +34,12 @@ public class UserService extends BaseService {
 	// @Inject
 	// private ApplicationParameters applicationParameters;
 
+	SimpleDateFormat dateFormat = new SimpleDateFormat("MM-dd-yyyy HH:mm:ss");
+
 	@Inject
 	UsersJpaController usersJpaController;
 
-	Integer DEFAULT_UPDATE_INTERVAL = 60;
+	Integer DEFAULT_UPDATE_INTERVAL = 300;
 
 	public UserService() {
 	}
@@ -70,6 +73,12 @@ public class UserService extends BaseService {
 		users.setPhone(data.has("phone") ? data.get("phone").asText() : null);
 
 		users.setUpdateInterval(DEFAULT_UPDATE_INTERVAL);
+
+		if (data.has("recordedAt")) {
+			Date recordedAt = dateFormat.parse(data.get("recordedAt").asText());
+
+			users.setRecordedAt(recordedAt);
+		}
 
 		// new or update
 		if (users.getId() == null) {
