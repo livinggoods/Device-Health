@@ -1,0 +1,8 @@
+/**
+ * Minified by jsDelivr using UglifyJS v3.3.25.
+ * Original file: /npm/@mapbox/polyline@1.0.0/src/polyline.js
+ *
+ * Do NOT use SRI with dynamically generated files! More information: https://www.jsdelivr.com/using-sri-with-dynamic-files
+ */
+"use strict";var polyline={};function py2_round(e){return Math.floor(Math.abs(e)+.5)*(0<=e?1:-1)}function encode(e,o,n){var r=(e=py2_round(e*n))-(o=py2_round(o*n));r<<=1,e-o<0&&(r=~r);for(var t="";32<=r;)t+=String.fromCharCode(63+(32|31&r)),r>>=5;return t+=String.fromCharCode(r+63)}function flipped(e){for(var o=[],n=0;n<e.length;n++)o.push(e[n].slice().reverse());return o}polyline.decode=function(e,o){for(var n,r=0,t=0,i=0,l=[],u=0,p=0,d=null,c=Math.pow(10,o||5);r<e.length;){for(d=null,p=u=0;p|=(31&(d=e.charCodeAt(r++)-63))<<u,u+=5,32<=d;);for(n=1&p?~(p>>1):p>>1,u=p=0;p|=(31&(d=e.charCodeAt(r++)-63))<<u,u+=5,32<=d;);t+=n,i+=1&p?~(p>>1):p>>1,l.push([t/c,i/c])}return l},polyline.encode=function(e,o){if(!e.length)return"";for(var n=Math.pow(10,o||5),r=encode(e[0][0],0,n)+encode(e[0][1],0,n),t=1;t<e.length;t++){var i=e[t],l=e[t-1];r+=encode(i[0],l[0],n),r+=encode(i[1],l[1],n)}return r},polyline.fromGeoJSON=function(e,o){if(e&&"Feature"===e.type&&(e=e.geometry),!e||"LineString"!==e.type)throw new Error("Input must be a GeoJSON LineString");return polyline.encode(flipped(e.coordinates),o)},polyline.toGeoJSON=function(e,o){return{type:"LineString",coordinates:flipped(polyline.decode(e,o))}},"object"==typeof module&&module.exports&&(module.exports=polyline);
+//# sourceMappingURL=/sm/0bf557776885e970158b25624e2b8d99e117cf5a8e47b365a3499810db4afbdd.map
