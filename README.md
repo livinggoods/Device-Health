@@ -1,1 +1,0 @@
-device_health_frontend
