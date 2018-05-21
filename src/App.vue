@@ -21,6 +21,8 @@ export default {
 
   font-family: 'Avenir', Helvetica, Arial, sans-serif;
 
-
 }
+  a, a:hover{
+    text-decoration: none;
+  }
 </style>

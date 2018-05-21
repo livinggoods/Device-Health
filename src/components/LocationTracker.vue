@@ -3,13 +3,12 @@
         <div class="wrapper">
             <div class="sidebar" data-color="blue" data-image="assets/img/sidebar-1.jpg">
 
-                <!--   you can change the color of the sidebar using: data-color="blue | azure | green | orange | red | purple" -->
 
 
                 <div class="sidebar-wrapper">
                     <div class="logo">
                         <img src="../assets/img/logo.png">
-                        <a class="simple-text">
+                        <a style="font-family: Roboto; font-size: 15px" href="#" class="simple-text"> DeviceHealth Dashboard
                         </a>
                     </div>
 
@@ -56,16 +55,42 @@
                                 <span class="icon-bar"></span>
                                 <span class="icon-bar"></span>
                             </button>
-                            <a class="navbar-brand" href="#">DeviceHealth Dashboard</a>
+
                         </div>
                         <div class="collapse navbar-collapse">
                             <ul class="nav navbar-nav navbar-left">
-                                <li>
-                                    <a href="#" class="dropdown-toggle" data-toggle="dropdown">
-                                        <i class="fa fa-dashboard"></i>
-                                        <p class="hidden-lg hidden-md">Dashboard</p>
-                                    </a>
+
+                                <li style="margin-top: 10px;">
+                                    <el-autocomplete
+                                            class="inline-input"
+                                            v-model="searchParams.chvName"
+                                            placeholder="CHV Name"
+                                            :trigger-on-focus="false"
+                                            @select="selectChv"
+                                    ></el-autocomplete>
                                 </li>
+                                <li style="margin-left: 5px; margin-top: 10px;">
+                                    <el-date-picker
+                                            v-model="searchParams.date"
+                                            type="daterange"
+                                            range-separator="To"
+                                            start-placeholder="Start date"
+                                            end-placeholder="End date">
+                                    </el-date-picker>
+                                </li>
+
+                                <li>
+                                    <a href="">
+                                        <i class="fa fa-search"></i>
+                                        <p class="hidden-lg hidden-md">Search</p>
+                                    </a>
+
+                                </li>
+
+                            </ul>
+
+                            <ul class="nav navbar-nav navbar-right">
+
                                 <li class="dropdown">
                                     <a href="#" class="dropdown-toggle" data-toggle="dropdown">
                                         <i class="fa fa-globe"></i>
@@ -85,55 +110,19 @@
                                     </ul>
                                 </li>
 
-                                <li style="margin-top: 10px;">
-                                    <input type="text" class="form-control" placeholder="CHV Name">
-                                </li>
-                                <li style="margin-top: 10px; margin-left: 5px">
-                                    <select class="form-control">
-                                        <!--<option> Start Date           </option>-->
-                                        <option>16/05/2018</option>
-                                    </select>
-                                </li>
-                                <li style="margin-top: 10px; margin-left: 5px">
-                                    <select class="form-control">
-                                        <!--<option>   End Date         </option>-->
-                                        <option>16/05/2018</option>
-                                    </select>
-                                </li>
+
                                 <li>
-                                    <a href="">
-                                        <i class="fa fa-search"></i>
-                                        <p class="hidden-lg hidden-md">Search</p>
-                                    </a>
-
-                                </li>
-
-                            </ul>
-
-                            <ul class="nav navbar-nav navbar-right">
-
-                                <li class="dropdown">
                                     <a href="#" class="dropdown-toggle" data-toggle="dropdown">
-                                        <p>
-                                            Options
-                                            <b class="caret"></b>
-                                        </p>
-
+                                        <i class="fa fa-cog"></i>
+                                        <b class="caret hidden-sm hidden-xs"></b>
                                     </a>
                                     <ul class="dropdown-menu">
-                                        <li><a href="#">Action</a></li>
-                                        <li><a href="#">Another action</a></li>
-                                        <li><a href="#">Something</a></li>
-                                        <li><a href="#">Another action</a></li>
-                                        <li><a href="#">Something</a></li>
-                                        <li class="divider"></li>
-                                        <li><a href="#">Separated link</a></li>
+                                        <li><a href="#">Notification 1</a></li>
+                                        <li><a href="#">Notification 2</a></li>
+                                        <li><a href="#">Notification 3</a></li>
+                                        <li><a href="#">Notification 4</a></li>
+                                        <li><a href="#">Another notification</a></li>
                                     </ul>
-                                </li>
-                                <li>
-                                    <a href="#">
-                                        <p>Log out</p>
-                                    </a>
                                 </li>
                                 <li class="separator hidden-lg hidden-md"></li>
                             </ul>
@@ -164,6 +153,11 @@
                     style: 'mapbox://styles/mapbox/streets-v10',
                     center: [37, 0],
                     zoom: 5
+                },
+                'searchParams':{
+                    'chvName':'',
+                    'chvId':'',
+                    'dates': ''
                 },
                 'layers': [{
                     "id": "route",
@@ -224,6 +218,9 @@
              * @param {number} b - value.
              * @return {number} result.
              */
+            selectChv:function (chv) {
+
+            }
         }
 
     }
@@ -239,6 +236,10 @@
     #map {
         width: 100%;
         height: 90vh;
+    }
+
+    .el-range-separator{
+        width: 10%!important;
     }
 
     .sidebar {
