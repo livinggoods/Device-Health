@@ -221,13 +221,16 @@
             selectChv:function (chv) {
 
             }
+        },
+        mounted:function () {
+            console.log(this.$router);
         }
 
     }
 </script>
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
-<style scoped>
+<style>
     @import "../assets/css/animate.min.css";
     @import "../assets/css/light-bootstrap-dashboard.css";
     @import "../assets/css/bootstrap.min.css";
@@ -240,6 +243,15 @@
 
     .el-range-separator{
         width: 10%!important;
+    }
+
+    #app {
+
+        font-family: 'Avenir', Helvetica, Arial, sans-serif;
+
+    }
+    a, a:hover{
+        text-decoration: none;
     }
 
     .sidebar {

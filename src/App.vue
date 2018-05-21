@@ -1,7 +1,7 @@
 <template>
   <div id="app">
 
-    <LocationTracker />
+
   </div>
 </template>
 
@@ -17,12 +17,5 @@ export default {
 </script>
 
 <style>
-#app {
 
-  font-family: 'Avenir', Helvetica, Arial, sans-serif;
-
-}
-  a, a:hover{
-    text-decoration: none;
-  }
 </style>
