@@ -1,0 +1,147 @@
+{
+  "_note1": "KEEP THIS FILE! Check it into a version control system (VCS) like git.",
+  "_note2": "ObjectBox manages crucial IDs for your object model. See docs for details.",
+  "_note3": "If you have VCS merge conflicts, you must resolve them according to ObjectBox docs.",
+  "entities": [
+    {
+      "id": "1:7129388409425330234",
+      "lastPropertyId": "21:8129311537204588692",
+      "name": "User",
+      "properties": [
+        {
+          "id": "1:6436433853193013612",
+          "name": "id"
+        },
+        {
+          "id": "4:8538080153251658251",
+          "name": "createdAt"
+        },
+        {
+          "id": "5:7511104139395057880",
+          "name": "updatedAt"
+        },
+        {
+          "id": "7:2338875906699516581",
+          "name": "masterId"
+        },
+        {
+          "id": "8:5316834056100333354",
+          "name": "androidId"
+        },
+        {
+          "id": "9:1912675555456720095",
+          "name": "updateInterval"
+        },
+        {
+          "id": "11:2193548520113731273",
+          "name": "lastSync"
+        },
+        {
+          "id": "14:5695826349136708569",
+          "name": "username"
+        },
+        {
+          "id": "15:2205160910477857888",
+          "name": "password"
+        },
+        {
+          "id": "18:3239783434780376938",
+          "name": "serverApi"
+        },
+        {
+          "id": "19:3107140430698576881",
+          "name": "forceUpdate"
+        },
+        {
+          "id": "21:8129311537204588692",
+          "name": "syncSuccessful"
+        }
+      ],
+      "relations": []
+    },
+    {
+      "id": "3:8220282066785022929",
+      "lastPropertyId": "12:6494411762571363929",
+      "name": "Stats",
+      "properties": [
+        {
+          "id": "1:4945864213208961115",
+          "name": "id"
+        },
+        {
+          "id": "2:2356820046275968438",
+          "name": "userId"
+        },
+        {
+          "id": "3:7457934117764089813",
+          "name": "userMasterId"
+        },
+        {
+          "id": "4:2550860931584840353",
+          "name": "latitude"
+        },
+        {
+          "id": "5:5136409065404479514",
+          "name": "longitude"
+        },
+        {
+          "id": "6:9027590856380347863",
+          "name": "createdAt"
+        },
+        {
+          "id": "7:2773476948697976083",
+          "name": "accuracy"
+        },
+        {
+          "id": "8:6064068645603975608",
+          "name": "provider"
+        },
+        {
+          "id": "10:7440091633968435110",
+          "name": "synced"
+        },
+        {
+          "id": "11:6877773169582067236",
+          "name": "updatedAt"
+        },
+        {
+          "id": "12:6494411762571363929",
+          "name": "recordedAt"
+        }
+      ],
+      "relations": []
+    }
+  ],
+  "lastEntityId": "3:8220282066785022929",
+  "lastIndexId": "1:8535954839457018984",
+  "lastRelationId": "0:0",
+  "lastSequenceId": "0:0",
+  "modelVersion": 4,
+  "modelVersionParserMinimum": 4,
+  "retiredEntityUids": [
+    63894782750764839
+  ],
+  "retiredIndexUids": [
+    8535954839457018984
+  ],
+  "retiredPropertyUids": [
+    3447438787561684228,
+    1971035967781656321,
+    5164903683030271794,
+    3597535460307695284,
+    1576897497221263505,
+    1714762265471133756,
+    858088242375559581,
+    3918252937467039064,
+    5943429222936299493,
+    1439068190333065215,
+    3189770600759959173,
+    2844514636553912100,
+    1170443955009266688,
+    972831289198029829,
+    579299391904750719,
+    8712536923763512850
+  ],
+  "retiredRelationUids": [],
+  "version": 1
+}

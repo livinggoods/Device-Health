@@ -1,0 +1,42 @@
+{
+  "project_info": {
+    "project_number": "51285868322",
+    "firebase_url": "https://device-health.firebaseio.com",
+    "project_id": "device-health",
+    "storage_bucket": "device-health.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:51285868322:android:e2327726373c2aa2",
+        "android_client_info": {
+          "package_name": "org.goods.living.tech.health.device"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "51285868322-0qddu44nor0rjbk1g4jgu6aa6um3j07s.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyArE4G4SFMGtS3DL1TPeVA8uRgXc2uSfr0"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
