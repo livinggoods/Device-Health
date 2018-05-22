@@ -8,7 +8,7 @@
                 <div class="sidebar-wrapper">
                     <div class="logo">
                         <img src="../assets/img/logo.png">
-                        <a style="font-family: Roboto; font-size: 15px" href="#" class="simple-text"> DeviceHealth Dashboard
+                        <a style="font-family: Roboto; font-size: 15px" href="#" class="simple-text"> {{config.sideBarHeader}}
                         </a>
                     </div>
 
@@ -143,6 +143,7 @@
 <script>
     import "bootstrap"
     import LgMapViz from 'lg-map-viz'
+    import Config from '../../config/config'
 
     export default {
         name: 'LocationTracker',
@@ -154,6 +155,7 @@
                     center: [37, 0],
                     zoom: 5
                 },
+                'config':Config,
                 'searchParams':{
                     'chvName':'',
                     'chvId':'',
