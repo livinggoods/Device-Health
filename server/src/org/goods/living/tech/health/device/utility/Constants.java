@@ -13,15 +13,11 @@ public class Constants {
 		// public static final String DELETE = "/delete";
 
 		public static final String USER = "/user";
+		public static final String FIND = "/find";
 		// public static final String USER_CREATE = USER + CREATE;
 		// public static final String USER_READ = USER + READ;
 		// public static final String USER_UPDATE = USER + UPDATE;
 		// public static final String USER_DELETE = USER + DELETE;
-
 		public static final String STATS = "/stats";
-		// public static final String STATS_CREATE = STATS + CREATE;
-		// public static final String STATS_READ = STATS + READ;
-		// public static final String STATS_UPDATE = STATS + UPDATE;
-		// public static final String STATS_DELETE = STATS + DELETE;
 	}
 }

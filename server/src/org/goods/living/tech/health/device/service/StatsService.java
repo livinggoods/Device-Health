@@ -9,12 +9,17 @@ import java.util.List;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.inject.Named;
+import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
 import org.codehaus.jackson.JsonNode;
+import org.codehaus.jackson.map.ObjectMapper;
+import org.codehaus.jackson.node.ArrayNode;
+import org.codehaus.jackson.node.JsonNodeFactory;
+import org.codehaus.jackson.node.ObjectNode;
 import org.goods.living.tech.health.device.jpa.controllers.StatsJpaController;
 import org.goods.living.tech.health.device.jpa.controllers.UsersJpaController;
 import org.goods.living.tech.health.device.jpa.dao.Stats;
@@ -88,6 +93,40 @@ public class StatsService extends BaseService {
 		// NodeBean toValue = mapper.convertValue(node, NodeBean.cla
 
 		Result<String> result = new Result<String>(true, "", null);
+		return result;
+
+	}
+
+	@GET
+	// @Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path(Constants.URL.FIND)
+	public Result<JsonNode> find(InputStream incomingData) throws Exception {
+		logger.debug("find");
+		JsonNode data = JSonHelper.getJsonNode(incomingData);
+
+		String username = data.has("username") ? data.get("username").asText() : null;
+
+		String dateString = data.has("from") ? data.get("from").asText() : null;
+		Date from = dateString == null ? null : dateFormat.parse(dateString);
+
+		Users user = username == null ? null : usersJpaController.findByUserName(username);
+		if (user == null) {
+			logger.debug("no user found... " + username);
+			Result<JsonNode> result = new Result<JsonNode>(false, "", null);
+			return result;
+		}
+
+		List<Stats> list = statsJpaController.fetchStats(user.getId(), from);
+
+		ObjectMapper mapper = new ObjectMapper();
+		ArrayNode array = mapper.valueToTree(list);
+
+		ObjectNode node = JsonNodeFactory.instance.objectNode();
+
+		node.putArray("data").addAll(array);
+
+		Result<JsonNode> result = new Result<JsonNode>(true, "", node);
 		return result;
 
 	}

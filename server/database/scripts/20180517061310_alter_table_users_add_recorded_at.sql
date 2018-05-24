@@ -19,10 +19,13 @@
 
 ALTER TABLE events.users
 ADD COLUMN recorded_at timestamp with time zone;
+ALTER TABLE events.users
+ADD COLUMN disable_sync boolean not null default false;
 
 -- //@UNDO
 -- SQL to undo the change goes here.
 
 ALTER TABLE events.users DROP COLUMN recorded_at;
+ALTER TABLE events.users DROP COLUMN disable_sync;
 
 
