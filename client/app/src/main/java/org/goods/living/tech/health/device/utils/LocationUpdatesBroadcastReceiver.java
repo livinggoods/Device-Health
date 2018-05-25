@@ -23,10 +23,13 @@ import android.location.Location;
 import android.util.Log;
 
 import com.crashlytics.android.Crashlytics;
+import com.crashlytics.android.answers.Answers;
+import com.crashlytics.android.answers.CustomEvent;
 import com.google.android.gms.location.LocationResult;
 
 import org.goods.living.tech.health.device.AppController;
 import org.goods.living.tech.health.device.UI.MainActivity;
+import org.goods.living.tech.health.device.models.User;
 import org.goods.living.tech.health.device.services.StatsService;
 import org.goods.living.tech.health.device.services.UserService;
 
@@ -94,6 +97,10 @@ public class LocationUpdatesBroadcastReceiver extends BroadcastReceiver {
                 Log.i(TAG, "Reboot occured - relaunching listeners");
                 Crashlytics.log("Reboot occured - relaunching listeners");
 
+                User user = userService.getRegisteredUser();
+
+                Answers.getInstance().logCustom(new CustomEvent("Reboot")
+                        .putCustomAttribute("Reason", "androidId: " + user.androidId + " username: " + user.username));
                 PermissionsUtils.checkAndRequestPermissions(context, userService);
 
 

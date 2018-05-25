@@ -2,7 +2,9 @@ package org.goods.living.tech.health.device.service;
 
 import java.io.InputStream;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
@@ -13,6 +15,9 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
 import org.codehaus.jackson.JsonNode;
+import org.codehaus.jackson.map.ObjectMapper;
+import org.codehaus.jackson.node.ArrayNode;
+import org.codehaus.jackson.node.JsonNodeFactory;
 import org.codehaus.jackson.node.ObjectNode;
 import org.goods.living.tech.health.device.jpa.controllers.UsersJpaController;
 import org.goods.living.tech.health.device.jpa.dao.Users;
@@ -59,20 +64,18 @@ public class UserService extends BaseService {
 		users = usersJpaController.findByUserNameAndAndroidId(username, androidId);
 		if (users == null) {
 			users = new Users();
+			users.setUpdateInterval(DEFAULT_UPDATE_INTERVAL);
+			users.setUsername(username);
+			users.setPassword(data.has("password") ? data.get("password").asText() : null);
+			users.setAndroidId(androidId);
+
+			users.setChvId(data.has("chvId") ? data.get("chvId").asText() : null);
+			users.setPhone(data.has("phone") ? data.get("phone").asText() : null);
 		}
 
 		int versionCode = data.has("versionCode") ? Integer.valueOf(data.get("versionCode").asText()) : 1;
 		users.setVersionCode(versionCode);
 		users.setVersionName(data.has("versionName") ? data.get("versionName").asText() : null);
-
-		users.setUsername(username);
-		users.setPassword(data.has("password") ? data.get("password").asText() : null);
-
-		users.setAndroidId(androidId);
-		users.setChvId(data.has("chvId") ? data.get("chvId").asText() : null);
-		users.setPhone(data.has("phone") ? data.get("phone").asText() : null);
-
-		users.setUpdateInterval(DEFAULT_UPDATE_INTERVAL);
 
 		if (data.has("recordedAt")) {
 			Date recordedAt = dateFormat.parse(data.get("recordedAt").asText());
@@ -87,13 +90,20 @@ public class UserService extends BaseService {
 			usersJpaController.create(users);
 		} else { // update?
 			logger.debug("ignore create: update user");
+
 			users.setUpdatedAt(new Date());
 			users = usersJpaController.update(users);
 		}
 
+		// ObjectMapper mapper = new ObjectMapper();
+		// ObjectNode o = (ObjectNode) data;
+		// mapper.convertValue(users, JsonNode.class);
+		//// ObjectNode root = mapper.createObjectNode();
+
 		ObjectNode o = (ObjectNode) data;
 		o.put("masterId", users.getId());
-		o.put("updateInterval", applicationParameters.getLocationUpdateInterval());// DEFAULT_UPDATE_INTERVAL);
+		o.put("disableSync", users.getDisableSync());
+		o.put("updateInterval", users.getUpdateInterval());// DEFAULT_UPDATE_INTERVAL);
 
 		// NodeBean toValue = mapper.convertValue(node, NodeBean.cla
 
@@ -106,50 +116,82 @@ public class UserService extends BaseService {
 
 	}
 
-	boolean shouldForceUpdate(String username, int deviceVersion) {
+	/**
+	 * 
+	 * @deprecated just here to force old api devices to upgrade
+	 * @param incomingData
+	 * @return
+	 * @throws Exception
+	 */
+	@POST
+	// @Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path(Constants.URL.UPDATE)
+	public Result<JsonNode> update(InputStream incomingData) throws Exception {
+		logger.debug("update");
+		JsonNode data = JSonHelper.getJsonNode(incomingData);
 
-		int serverApi = applicationParameters.getServerApi();
+		Users users;
+		String username = data.has("username") ? data.get("username").asText() : null;
+		String androidId = data.has("androidId") ? data.get("androidId").asText() : null;
+		users = usersJpaController.findByUserNameAndAndroidId(username, androidId);
 
-		if (serverApi > deviceVersion) {
-			logger.debug("forcing an up update for user " + username);
+		ObjectNode o = (ObjectNode) data;
+		o.put("masterId", users.getId());
+		o.put("disableSync", users.getDisableSync());
+		o.put("updateInterval", users.getUpdateInterval());// DEFAULT_UPDATE_INTERVAL);
 
-			return true;
+		// NodeBean toValue = mapper.convertValue(node, NodeBean.cla
 
-		}
+		boolean shouldforceupdate = true;// shouldForceUpdate(username, versionCode);
+		o.put("serverApi", applicationParameters.getServerApi());
+		o.put("forceUpdate", shouldforceupdate);
 
-		return false;
+		Result<JsonNode> result = new Result<JsonNode>(true, "", o);
+		return result;
 
 	}
 
 	@POST
 	// @Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	@Path(Constants.URL.UPDATE)
-	public Result<JsonNode> update(InputStream incomingData) {
-		logger.debug("update");
+	@Path(Constants.URL.FIND)
+	public Result<JsonNode> find(InputStream incomingData) throws Exception {
+		logger.debug("find");
 		JsonNode data = JSonHelper.getJsonNode(incomingData);
 
-		int versionCode = data.has("versionCode") ? Integer.valueOf(data.get("versionCode").asText()) : 1;
 		String username = data.has("username") ? data.get("username").asText() : null;
-		String androidId = data.has("androidId") ? data.get("androidId").asText() : null;
 
-		Users user = usersJpaController.findByUserNameAndAndroidId(username, androidId);
-		if (user == null) {
-			logger.debug("no user to update");
-		} else { // update?
-			logger.debug("nothing to update for: " + username);
+		List<Users> list = usersJpaController.findByUserNameLike(username);
+		List<String> names = new ArrayList<String>();
+		for (Users u : list) {
+			names.add(u.getUsername());
 		}
 
-		boolean shouldforceupdate = shouldForceUpdate(username, versionCode);
+		ObjectMapper mapper = new ObjectMapper();
+		ArrayNode array = mapper.valueToTree(names);
 
-		ObjectNode o = (ObjectNode) data;
-		// o.put("masterId", data.get("masterId"));
-		o.put("updateInterval", applicationParameters.getLocationUpdateInterval());// DEFAULT_UPDATE_INTERVAL);
-		o.put("serverApi", applicationParameters.getServerApi());
-		o.put("forceUpdate", shouldforceupdate);
+		ObjectNode node = JsonNodeFactory.instance.objectNode();
 
-		Result<JsonNode> result = new Result<JsonNode>(true, "", o);
+		node.putArray("users").addAll(array);
+
+		Result<JsonNode> result = new Result<JsonNode>(true, "", node);
 		return result;
+
+	}
+
+	boolean shouldForceUpdate(String username, int deviceVersion) {
+
+		int serverApi = applicationParameters.getServerApi();
+
+		if (serverApi > deviceVersion) {
+			logger.debug("forcing an update for user " + username);
+
+			return true;
+
+		}
+
+		return false;
 
 	}
 

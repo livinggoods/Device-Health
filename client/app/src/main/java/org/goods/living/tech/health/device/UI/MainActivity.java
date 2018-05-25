@@ -45,6 +45,7 @@ import org.goods.living.tech.health.device.utils.PermissionsUtils;
 import org.goods.living.tech.health.device.utils.SyncAdapter;
 import org.goods.living.tech.health.device.utils.Utils;
 
+import java.util.Date;
 import java.util.List;
 
 import javax.inject.Inject;
@@ -194,7 +195,18 @@ public class MainActivity extends FragmentActivity implements
         loadData();
     }
 
+    /**
+     * Handles the triggerSync  button.
+     */
+    public void triggerSync(View view) {
+        Log.i(TAG, "triggerSync ");
 
+        SyncAdapter.performSync();
+    }
+
+    /**
+     * Handles the done  button.
+     */
     public void minimise(View view) {
         moveTaskToBack(true);
     }
@@ -248,6 +260,7 @@ public class MainActivity extends FragmentActivity implements
 
         String username = usernameText.getText().toString().trim();
         user.username = username.isEmpty() ? null : username;
+        user.recordedAt = new Date();
 
         if (userService.insertUser(user)) {
             Utils.showSnack(this, "saved CHV information");

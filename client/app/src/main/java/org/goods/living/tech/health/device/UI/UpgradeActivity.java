@@ -28,9 +28,8 @@ import com.crashlytics.android.Crashlytics;
 import com.crashlytics.android.answers.Answers;
 import com.crashlytics.android.answers.CustomEvent;
 
-import org.goods.living.tech.health.device.services.UserService;
-
-import javax.inject.Inject;
+import org.goods.living.tech.health.device.AppController;
+import org.goods.living.tech.health.device.models.User;
 
 
 public class UpgradeActivity extends FragmentActivity {
@@ -40,9 +39,6 @@ public class UpgradeActivity extends FragmentActivity {
 
     public static final String FORCE_UPDATE = "FORCE_UPDATE";
 
-
-    @Inject
-    UserService userService;
 
     /**
      * The max time before batched results are delivered by location services. Results may be
@@ -55,11 +51,16 @@ public class UpgradeActivity extends FragmentActivity {
 
         //  AppController.getInstance().getComponent().inject(this);
         Crashlytics.log("Showing UpgradeActivity");
-        Answers.getInstance().logCustom(new CustomEvent("UpgradeActivity")
-        );
+
 
         Bundle b = getIntent().getExtras();
         boolean force = b.getBoolean(FORCE_UPDATE);
+
+        User user = AppController.getInstance().getUser();
+
+        Answers.getInstance().logCustom(new CustomEvent("App Update")
+                .putCustomAttribute("Reason", "androidId: " + user.androidId + " username: " + user.username + " force:" + force));
+
 
         update(force);
     }

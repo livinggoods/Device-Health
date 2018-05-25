@@ -45,7 +45,9 @@ import javax.xml.bind.annotation.XmlTransient;
 		@NamedQuery(name = "Users.findByRecordedAt", query = "SELECT u FROM Users u WHERE u.recordedAt = :recordedAt"),
 		@NamedQuery(name = "Users.findByUsername", query = "SELECT u FROM Users u WHERE u.username = :username"),
 		@NamedQuery(name = "Users.findByPassword", query = "SELECT u FROM Users u WHERE u.password = :password"),
-		@NamedQuery(name = "Users.findByUserNameAndAndroidId", query = "SELECT u FROM Users u WHERE u.username = :username AND u.androidId = :androidId") })
+		@NamedQuery(name = "Users.findByDisableSync", query = "SELECT u FROM Users u WHERE u.disableSync = :disableSync"),
+		@NamedQuery(name = "Users.findByUserNameAndAndroidId", query = "SELECT u FROM Users u WHERE u.username = :username AND u.androidId = :androidId"),
+		@NamedQuery(name = "Users.findByUsernameLike", query = "SELECT u FROM Users u WHERE u.username like :username") })
 
 public class Users implements Serializable {
 
@@ -75,6 +77,18 @@ public class Users implements Serializable {
 	@Column(name = "recorded_at")
 	@Temporal(TemporalType.TIMESTAMP)
 	private Date recordedAt;
+
+	@Basic(optional = false)
+	@Column(name = "disable_sync", nullable = false)
+	private Boolean disableSync;
+
+	public Boolean getDisableSync() {
+		return disableSync;
+	}
+
+	public void setDisableSync(Boolean disableSync) {
+		this.disableSync = disableSync;
+	}
 
 	public Date getRecordedAt() {
 		return recordedAt;

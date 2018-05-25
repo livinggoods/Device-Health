@@ -45,7 +45,7 @@ public class PermissionsUtils {
     /**
      * The desired interval for location updates. Inexact. Updates may be more or less frequent.
      */
-    public static final long UPDATE_INTERVAL = 60; // Every 60 seconds.
+    public static final long UPDATE_INTERVAL = 300; // Every 60 seconds.
 
     private static final long MAX_WAIT_RECORDS = 2; // Every 5 items
 
@@ -122,8 +122,8 @@ public class PermissionsUtils {
      */
     public static void requestLocationUpdatesIfNotRunning(Context context, UserService userService) {
         try {
-            if (mFusedLocationClient != null) {
-                return;
+            if (mFusedLocationClient == null) {
+                mFusedLocationClient = LocationServices.getFusedLocationProviderClient(context);
             }
             long updateInterval = PermissionsUtils.UPDATE_INTERVAL * 1000;
             long fastestUpdateInterval = updateInterval / 2;
@@ -133,7 +133,6 @@ public class PermissionsUtils {
                 fastestUpdateInterval = updateInterval / 2;
             }
 
-            mFusedLocationClient = LocationServices.getFusedLocationProviderClient(context);
 
             LocationRequest mLocationRequest = createLocationRequest(updateInterval);
 

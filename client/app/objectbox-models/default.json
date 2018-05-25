@@ -5,7 +5,7 @@
   "entities": [
     {
       "id": "1:7129388409425330234",
-      "lastPropertyId": "21:8129311537204588692",
+      "lastPropertyId": "23:4587860725248218979",
       "name": "User",
       "properties": [
         {
@@ -55,6 +55,14 @@
         {
           "id": "21:8129311537204588692",
           "name": "syncSuccessful"
+        },
+        {
+          "id": "22:1363012422735160509",
+          "name": "recordedAt"
+        },
+        {
+          "id": "23:4587860725248218979",
+          "name": "disableSync"
         }
       ],
       "relations": []

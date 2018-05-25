@@ -229,6 +229,44 @@ public class UsersJpaController implements Serializable {
 
 	}
 
+	public Users findByUserName(String username) {
+
+		EntityManager em = getEntityManager();
+		try {
+			// CriteriaQuery cq = em.getCriteriaBuilder().createQuery();
+			// Root<Users> rt = cq.from(Users.class);
+			// cq.select(em.getCriteriaBuilder().count(rt));
+			// Query q = em.createQuery(cq);
+
+			List<Users> list = em.createNamedQuery("Users.findByUsername").setParameter("username", username)
+					.getResultList();
+
+			return list.size() > 0 ? list.get(0) : null;
+		} finally {
+			em.close();
+		}
+
+	}
+
+	public List<Users> findByUserNameLike(String username) {
+
+		EntityManager em = getEntityManager();
+		try {
+			// CriteriaQuery cq = em.getCriteriaBuilder().createQuery();
+			// Root<Users> rt = cq.from(Users.class);
+			// cq.select(em.getCriteriaBuilder().count(rt));
+			// Query q = em.createQuery(cq);
+
+			List<Users> list = em.createNamedQuery("Users.findByUsernameLike")
+					.setParameter("username", "%" + username + "%").getResultList();
+
+			return list;
+		} finally {
+			em.close();
+		}
+
+	}
+
 	public Users update(Users users) {
 		EntityManager em = getEntityManager();
 		try {
