@@ -7,16 +7,16 @@ Vue.use(Router)
 
 export default new Router({
 
-  routes: [
-    {
-      path: '/',
-      name: 'locationTracker',
-      component: LocationStatistics
+    routes: [
+        {
+            path: '/',
+            name: 'locationTracker',
+            component: LocationStatistics
 
-    },
-    {
-      path: '/config',
-      component: DashboardConfig
-    }
-  ]
+        },
+        {
+            path: '/config',
+            component: DashboardConfig
+        }
+    ]
 })
