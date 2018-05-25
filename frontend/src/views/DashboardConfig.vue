@@ -56,36 +56,36 @@
 <script>
 import 'bootstrap'
 import styles from '../assets/scss/element-variables.scss'
-import Config from '../../config/config'
+import {generalConfig} from '../../config/config'
 
 var themeColor = styles.primaryColor
 
 export default {
-  name: 'DashboardConfig',
-  data () {
-    return {
-      'configForm': {
-        themeColor: themeColor,
-        title: Config.title,
-        sideBarHeader: Config.sideBarHeader
-      }
-    }
-  },
-  props: {},
-  components: {
+    name: 'DashboardConfig',
+    data () {
+        return {
+            'configForm': {
+                themeColor: themeColor,
+                title: generalConfig.title,
+                sideBarHeader: Config.sideBarHeader
+            }
+        }
+    },
+    props: {},
+    components: {
 
-  },
-  methods: {
+    },
+    methods: {
     /**
              * @param {number} a - value.
              * @param {number} b - value.
              * @return {number} result.
              */
 
-  },
-  mounted: function () {
+    },
+    mounted: function () {
 
-  }
+    }
 
 }
 </script>
