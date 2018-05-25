@@ -90,7 +90,8 @@
                     </nav>
                 </div>
                 <Sidebar :sidebar-header="sidebarHeader"></Sidebar>
-                <lg-map-viz :access-token="accessToken" :layers="layers" :map-options="mapOptions"></lg-map-viz>
+                <div id="map"></div>
+                <!--<lg-map-viz :access-token="accessToken" :layers="layers" :map-options="mapOptions"></lg-map-viz>-->
             </div>
         </div>
         <loading :active.sync="isLoading" :can-cancel="false"></loading>
@@ -105,6 +106,9 @@ import Sidebar from '@/components/Sidebar'
 import LgMapViz from 'lg-map-viz'
 import moment from 'moment'
 import Loading from 'vue-loading-overlay'
+import mapboxgl from 'mapbox-gl'
+
+var map
 
 export default {
     name: 'LocationTracker',
@@ -134,6 +138,9 @@ export default {
         Loading
     },
     methods: {
+        initMap: function () {
+
+        },
         searchChv: function (username, callback) {
             api.post('/user/find', {'username': username}).then(function (response) {
                 if (response.data.status === true) {
@@ -156,7 +163,8 @@ export default {
             this.isLoading = true
             api.post('/stats/find', {
                 'username': this.searchParams.chvName,
-                'from': moment(this.searchParams.dates[0]).format('MM-DD-YYYY')
+                'from': moment(this.searchParams.dates[0]).format('MM-DD-YYYY'),
+                'to': moment(this.searchParams.dates[1]).format('MM-DD-YYYY')
             }).then(function (response) {
                 self.processLocations(response.data.data.locations)
                 self.isLoading = false
@@ -169,37 +177,67 @@ export default {
             var reducedArray = this.filterDuplicates(locations)
             var radiusedLocations = this.computeRadius(reducedArray)
             var geoJsonified = this.transformToGeoJson(radiusedLocations)
-            console.log(geoJsonified)
             this.layers = geoJsonified
         },
         transformToGeoJson: function (array) {
-            var geoJsonified = {
-                'id': 'route',
-                'type': 'line',
+            var geoJsonified
+            geoJsonified = {
+                'id': 'points',
+                'type': 'symbol',
                 'source': {
                     'type': 'geojson',
                     'data': {
-                        'type': 'Feature',
-                        'properties': {
-                        },
-                        'geometry': {
-                            'type': 'LineString',
-                            'coordinates': []
-                        }
+                        'type': 'FeatureCollection',
+                        'features': []
                     }
 
-                },
-                'layout': {
-                    'line-join': 'round',
-                    'line-cap': 'round'
-                },
-                'paint': {
-                    'line-color': '#888',
-                    'line-width': 20
                 }
+
             }
+
+            // var geoJsonified = {
+            //     'id': 'route',
+            //     'type': 'line',
+            //     'source': {
+            //         'type': 'geojson',
+            //         'data': {
+            //             'type': 'Feature',
+            //             'properties': {
+            //             },
+            //             'geometry': {
+            //                 'type': 'LineString',
+            //                 'coordinates': []
+            //             }
+            //         }
+            //
+            //     },
+            //     'layout': {
+            //         'line-join': 'round',
+            //         'line-cap': 'round'
+            //     },
+            //     'paint': {
+            //         'line-color': '#888',
+            //         'line-width': 12
+            //     }
+            // }
+
             array.forEach(function (location) {
-                geoJsonified.source.data.geometry.coordinates.push([location.coordinates.longitude, location.coordinates.latitude])
+                geoJsonified.source.data.features.push({
+
+                    'type': 'Feature',
+                    'properties': {
+                        'class': 'marker',
+                        'radius': location.radius
+                    },
+                    'geometry': {
+                        'type': 'Point',
+                        'coordinates': [
+                            location.coordinates.longitude,
+                            location.coordinates.latitude
+                        ]
+                    }
+                })
+                // geoJsonified.source.data.geometry.coordinates.push([location.coordinates.longitude, location.coordinates.latitude])
             })
             return geoJsonified
         },
@@ -273,7 +311,38 @@ export default {
 
     },
     mounted: function () {
+        mapboxgl.accessToken = this.accessToken
+        map = new mapboxgl.Map({
+            container: 'map',
+            style: 'mapbox://styles/mapbox/streets-v10',
+            center: [31, 0],
+            zoom: 3
+        })
+    },
+    watch: {
+        'layers': function (newValues) {
+            map.addLayer(newValues)
 
+            map.flyTo({
+                center: [newValues.source.data.features[0].geometry.coordinates[0], newValues.source.data.features[0].geometry.coordinates[1]],
+                // center: [newValues.source.data.geometry.coordinates[0][0], newValues.source.data.geometry.coordinates[0][1]],
+                zoom: 14
+            })
+
+            newValues.source.data.features.forEach(function (marker) {
+                // create a HTML element for each feature
+                var el = document.createElement('div')
+
+                el.className = 'marker'
+                el.style.width = marker.properties.radius * 10 + 'px'
+                el.style.height = marker.properties.radius * 10 + 'px'
+
+                // make a marker for each feature and add to the map
+                new mapboxgl.Marker(el)
+                    .setLngLat(marker.geometry.coordinates)
+                    .addTo(map)
+            })
+        }
     }
 
 }
@@ -289,6 +358,13 @@ export default {
     #map {
         width: 100%;
         height: 90vh;
+    }
+    .marker {
+        background-image: url('../assets/img/marker.png');
+        background-size: cover;
+
+        border-radius: 50%;
+        cursor: pointer;
     }
 
     .el-range-separator {
