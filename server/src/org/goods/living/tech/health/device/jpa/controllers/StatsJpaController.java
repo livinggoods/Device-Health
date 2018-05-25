@@ -13,9 +13,7 @@ import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.EntityNotFoundException;
 import javax.persistence.Query;
-import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.ParameterExpression;
 import javax.persistence.criteria.Root;
 
 import org.goods.living.tech.health.device.jpa.controllers.exceptions.NonexistentEntityException;
@@ -175,16 +173,14 @@ public class StatsJpaController implements Serializable {
 
 		EntityManager em = getEntityManager();
 		try {
-			CriteriaBuilder cb = em.getCriteriaBuilder();
-			CriteriaQuery<Stats> q = cb.createQuery(Stats.class);
-			Root<Stats> c = q.from(Stats.class);
-			q.select(c);
-			ParameterExpression<Long> p1 = cb.parameter(Long.class);
-			ParameterExpression<Date> p2 = cb.parameter(Date.class);
-			q.where(cb.equal(c.get("user_id"), p1),
+			// CriteriaBuilder cb = em.getCriteriaBuilder();
+			// CriteriaQuery<Stats> q = cb.//createQuery(Stats.class);
+			// Root<Stats> c = q.from(Stats.class);
+			Query q = em
+					.createQuery("SELECT s from Stats s WHERE s.userId.id = :userId and s.recordedAt >= :recordedAt");
+			q.setParameter("userId", userId).setParameter("recordedAt", from);
 
-					cb.greaterThan(c.get("recorded_at"), p2));
-			return em.createQuery(q).getResultList();
+			return q.getResultList();
 
 		} finally {
 			em.close();

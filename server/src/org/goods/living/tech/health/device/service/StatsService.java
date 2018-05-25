@@ -3,13 +3,13 @@ package org.goods.living.tech.health.device.service;
 import java.io.InputStream;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.inject.Named;
-import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
@@ -17,7 +17,6 @@ import javax.ws.rs.core.MediaType;
 
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jackson.node.ArrayNode;
 import org.codehaus.jackson.node.JsonNodeFactory;
 import org.codehaus.jackson.node.ObjectNode;
 import org.goods.living.tech.health.device.jpa.controllers.StatsJpaController;
@@ -97,7 +96,7 @@ public class StatsService extends BaseService {
 
 	}
 
-	@GET
+	@POST
 	// @Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path(Constants.URL.FIND)
@@ -108,7 +107,8 @@ public class StatsService extends BaseService {
 		String username = data.has("username") ? data.get("username").asText() : null;
 
 		String dateString = data.has("from") ? data.get("from").asText() : null;
-		Date from = dateString == null ? null : dateFormat.parse(dateString);
+		SimpleDateFormat dFormat = new SimpleDateFormat("MM-dd-yyyy");
+		Date from = dateString == null ? null : dFormat.parse(dateString);
 
 		Users user = username == null ? null : usersJpaController.findByUserName(username);
 		if (user == null) {
@@ -118,13 +118,21 @@ public class StatsService extends BaseService {
 		}
 
 		List<Stats> list = statsJpaController.fetchStats(user.getId(), from);
-
-		ObjectMapper mapper = new ObjectMapper();
-		ArrayNode array = mapper.valueToTree(list);
+		List<JsonNode> results = new ArrayList<>();
+		// ObjectMapper mapper = new ObjectMapper();
+		// ArrayNode array = mapper.valueToTree(list);
+		final ObjectMapper mapper = new ObjectMapper();
+		for (Stats s : list) {
+			ObjectNode root = mapper.createObjectNode();
+			root.put("latitude", s.getLatitude());
+			root.put("longitude", s.getLongitude());
+			root.put("recordedAt", mapper.convertValue(s.getRecordedAt(), JsonNode.class));
+			results.add(root);
+		}
 
 		ObjectNode node = JsonNodeFactory.instance.objectNode();
 
-		node.putArray("data").addAll(array);
+		node.putArray("locations").addAll(results);
 
 		Result<JsonNode> result = new Result<JsonNode>(true, "", node);
 		return result;
@@ -143,6 +151,17 @@ public class StatsService extends BaseService {
 	// Result<JsonNode> result = new Result<JsonNode>(true, "", data);
 	// return result;
 	//
+	// }
+
+	// public static void conv(String[] args) {
+	// final ObjectMapper mapper = new ObjectMapper();
+	// final ObjectNode root = mapper.createObjectNode();
+	// root.put("integer", mapper.convertValue(1, JsonNode.class));
+	// root.set("string", mapper.convertValue("string", JsonNode.class));
+	// root.set("bool", mapper.convertValue(true, JsonNode.class));
+	// root.set("array", mapper.convertValue(Arrays.asList("a", "b", "c"),
+	// JsonNode.class));
+	// System.out.println(root);
 	// }
 
 }

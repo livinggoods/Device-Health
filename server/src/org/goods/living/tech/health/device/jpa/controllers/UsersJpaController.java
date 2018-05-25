@@ -238,8 +238,8 @@ public class UsersJpaController implements Serializable {
 			// cq.select(em.getCriteriaBuilder().count(rt));
 			// Query q = em.createQuery(cq);
 
-			List<Users> list = em.createNamedQuery("Users.findByUserNameAndAndroidId")
-					.setParameter("username", username).getResultList();
+			List<Users> list = em.createNamedQuery("Users.findByUsername").setParameter("username", username)
+					.getResultList();
 
 			return list.size() > 0 ? list.get(0) : null;
 		} finally {
@@ -257,8 +257,8 @@ public class UsersJpaController implements Serializable {
 			// cq.select(em.getCriteriaBuilder().count(rt));
 			// Query q = em.createQuery(cq);
 
-			List<Users> list = em.createNamedQuery("Users.findByUsernameLike").setParameter("username", username)
-					.getResultList();
+			List<Users> list = em.createNamedQuery("Users.findByUsernameLike")
+					.setParameter("username", "%" + username + "%").getResultList();
 
 			return list;
 		} finally {

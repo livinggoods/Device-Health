@@ -9,7 +9,6 @@ import java.util.List;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.inject.Named;
-import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
@@ -113,7 +112,7 @@ public class UserService extends BaseService {
 
 	}
 
-	@GET
+	@POST
 	// @Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path(Constants.URL.FIND)
@@ -134,7 +133,7 @@ public class UserService extends BaseService {
 
 		ObjectNode node = JsonNodeFactory.instance.objectNode();
 
-		node.putArray("data").addAll(array);
+		node.putArray("users").addAll(array);
 
 		Result<JsonNode> result = new Result<JsonNode>(true, "", node);
 		return result;
