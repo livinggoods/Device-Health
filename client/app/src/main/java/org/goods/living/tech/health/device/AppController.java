@@ -1,12 +1,22 @@
 package org.goods.living.tech.health.device;
 
 import android.app.Application;
+import android.os.Bundle;
 
 import com.crashlytics.android.Crashlytics;
+import com.crashlytics.android.answers.Answers;
+import com.crashlytics.android.answers.CustomEvent;
+import com.firebase.jobdispatcher.FirebaseJobDispatcher;
+import com.firebase.jobdispatcher.GooglePlayDriver;
+import com.firebase.jobdispatcher.Job;
+import com.firebase.jobdispatcher.Lifetime;
+import com.firebase.jobdispatcher.RetryStrategy;
+import com.firebase.jobdispatcher.Trigger;
 import com.google.firebase.analytics.FirebaseAnalytics;
 
 import org.goods.living.tech.health.device.models.User;
 import org.goods.living.tech.health.device.services.UserService;
+import org.goods.living.tech.health.device.utils.JobService;
 import org.goods.living.tech.health.device.utils.PermissionsUtils;
 import org.goods.living.tech.health.device.utils.Utils;
 
@@ -33,6 +43,8 @@ public class AppController extends Application {
             synchronized (AppController.class) {
                 if (instance == null)
                     instance = new AppController();
+                instance.component = DaggerAppcontrollerComponent.builder().appControllerModule(new AppControllerModule(instance)).build();
+                instance.component.inject(instance);
             }
         }
         // Return the instance
@@ -42,6 +54,11 @@ public class AppController extends Application {
 
     public AppcontrollerComponent getComponent() {
         return component;
+    }
+
+    public User getUser() {
+        User user = userService.getRegisteredUser();
+        return user;
     }
 
     public FirebaseAnalytics getFirebaseAnalytics() {
@@ -60,6 +77,38 @@ public class AppController extends Application {
         mFirebaseAnalytics.logEvent(FirebaseAnalytics.Event.APP_OPEN, null);
 
         Fabric.with(this, new Crashlytics());
+
+        // Create a new dispatcher using the Google Play driver.
+        FirebaseJobDispatcher dispatcher = new FirebaseJobDispatcher(new GooglePlayDriver(this));
+        Bundle myExtrasBundle = new Bundle();
+        myExtrasBundle.putString("some_key", "some_value");
+
+        Job myJob = dispatcher.newJobBuilder()
+                // the JobService that will be called
+                .setService(JobService.class)
+                // uniquely identifies the job
+                .setTag(JobService.class.getName())
+                // one-off job
+                .setRecurring(true)
+                // don't persist past a device reboot
+                .setLifetime(Lifetime.FOREVER)
+                // Run between 30 - 60 seconds from now.
+                .setTrigger(Trigger.executionWindow(JobService.runEverySeconds, JobService.runEverySeconds + 10))
+                // don't overwrite an existing job with the same tag
+                .setReplaceCurrent(true)
+                // retry with exponential backoff
+                .setRetryStrategy(RetryStrategy.DEFAULT_LINEAR)
+                // constraints that need to be satisfied for the job to run
+                //    .setConstraints(
+                //           // only run on an unmetered network
+                ////          Constraint.ON_UNMETERED_NETWORK,
+                // only run when the device is charging
+                //           Constraint.DEVICE_CHARGING
+                //    )
+                .setExtras(myExtrasBundle)
+                .build();
+
+        dispatcher.mustSchedule(myJob);
 
         createUserOnFirstRun();
         // component = DaggerAppcontrollerComponent.builder().appModule(new AppModule(this)).build();
@@ -96,10 +145,12 @@ public class AppController extends Application {
             } else {
                 Crashlytics.log("error creating user information");
             }
-
-
         }
-
+        //TODO:remove this hack after all devices update
+        {
+            user.forceUpdate = false;
+            userService.insertUser(user);
+        }
         logUser(user);
 
     }
@@ -110,6 +161,9 @@ public class AppController extends Application {
         Crashlytics.setUserIdentifier(user.androidId);
         //  Crashlytics.setUserEmail("user@fabric.io");
         Crashlytics.setUserName(user.username);
+
+        Answers.getInstance().logCustom(new CustomEvent("App launch")
+                .putCustomAttribute("Reason", "androidId: " + user.androidId + " username: " + user.username));
     }
 
 }

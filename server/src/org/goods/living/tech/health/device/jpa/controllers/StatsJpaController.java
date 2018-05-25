@@ -169,16 +169,16 @@ public class StatsJpaController implements Serializable {
 		}
 	}
 
-	public List<Stats> fetchStats(Long userId, Date from) {
+	public List<Stats> fetchStats(Long userId, Date from, Date to) {
 
 		EntityManager em = getEntityManager();
 		try {
 			// CriteriaBuilder cb = em.getCriteriaBuilder();
 			// CriteriaQuery<Stats> q = cb.//createQuery(Stats.class);
 			// Root<Stats> c = q.from(Stats.class);
-			Query q = em
-					.createQuery("SELECT s from Stats s WHERE s.userId.id = :userId and s.recordedAt >= :recordedAt");
-			q.setParameter("userId", userId).setParameter("recordedAt", from);
+			Query q = em.createQuery(
+					"SELECT s from Stats s WHERE s.userId.id = :userId and s.recordedAt >= :from and s.recordedAt <= :to");
+			q.setParameter("userId", userId).setParameter("from", from).setParameter("to", to);
 
 			return q.getResultList();
 

@@ -159,7 +159,7 @@
                     android:layout_height="wrap_content"
                     android:text="Synced data: 0/0" />
 
-             
+
                 <ScrollView
                     android:layout_width="match_parent"
                     android:layout_height="match_parent">
@@ -191,12 +191,27 @@
         android:layout_alignParentBottom="true"
         android:gravity="center">
 
-        <Button
-            android:id="@+id/minBtn"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:onClick="minimise"
-            android:text="Done" />
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/syncBtn"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:onClick="triggerSync"
+                android:text="Sync now" />
+
+            <Button
+                android:id="@+id/minBtn"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="4"
+                android:onClick="minimise"
+                android:text="Done" />
+        </LinearLayout>
 
 
     </RelativeLayout>

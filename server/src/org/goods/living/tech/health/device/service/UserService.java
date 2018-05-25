@@ -64,20 +64,18 @@ public class UserService extends BaseService {
 		users = usersJpaController.findByUserNameAndAndroidId(username, androidId);
 		if (users == null) {
 			users = new Users();
+			users.setUpdateInterval(DEFAULT_UPDATE_INTERVAL);
+			users.setUsername(username);
+			users.setPassword(data.has("password") ? data.get("password").asText() : null);
+			users.setAndroidId(androidId);
+
+			users.setChvId(data.has("chvId") ? data.get("chvId").asText() : null);
+			users.setPhone(data.has("phone") ? data.get("phone").asText() : null);
 		}
 
 		int versionCode = data.has("versionCode") ? Integer.valueOf(data.get("versionCode").asText()) : 1;
 		users.setVersionCode(versionCode);
 		users.setVersionName(data.has("versionName") ? data.get("versionName").asText() : null);
-
-		users.setUsername(username);
-		users.setPassword(data.has("password") ? data.get("password").asText() : null);
-
-		users.setAndroidId(androidId);
-		users.setChvId(data.has("chvId") ? data.get("chvId").asText() : null);
-		users.setPhone(data.has("phone") ? data.get("phone").asText() : null);
-
-		users.setUpdateInterval(DEFAULT_UPDATE_INTERVAL);
 
 		if (data.has("recordedAt")) {
 			Date recordedAt = dateFormat.parse(data.get("recordedAt").asText());
@@ -92,18 +90,60 @@ public class UserService extends BaseService {
 			usersJpaController.create(users);
 		} else { // update?
 			logger.debug("ignore create: update user");
+
 			users.setUpdatedAt(new Date());
 			users = usersJpaController.update(users);
 		}
 
+		// ObjectMapper mapper = new ObjectMapper();
+		// ObjectNode o = (ObjectNode) data;
+		// mapper.convertValue(users, JsonNode.class);
+		//// ObjectNode root = mapper.createObjectNode();
+
 		ObjectNode o = (ObjectNode) data;
 		o.put("masterId", users.getId());
 		o.put("disableSync", users.getDisableSync());
-		o.put("updateInterval", applicationParameters.getLocationUpdateInterval());// DEFAULT_UPDATE_INTERVAL);
+		o.put("updateInterval", users.getUpdateInterval());// DEFAULT_UPDATE_INTERVAL);
 
 		// NodeBean toValue = mapper.convertValue(node, NodeBean.cla
 
 		boolean shouldforceupdate = shouldForceUpdate(username, versionCode);
+		o.put("serverApi", applicationParameters.getServerApi());
+		o.put("forceUpdate", shouldforceupdate);
+
+		Result<JsonNode> result = new Result<JsonNode>(true, "", o);
+		return result;
+
+	}
+
+	/**
+	 * 
+	 * @deprecated just here to force old api devices to upgrade
+	 * @param incomingData
+	 * @return
+	 * @throws Exception
+	 */
+	@POST
+	// @Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path(Constants.URL.UPDATE)
+	public Result<JsonNode> update(InputStream incomingData) throws Exception {
+		logger.debug("update");
+		JsonNode data = JSonHelper.getJsonNode(incomingData);
+
+		Users users;
+		String username = data.has("username") ? data.get("username").asText() : null;
+		String androidId = data.has("androidId") ? data.get("androidId").asText() : null;
+		users = usersJpaController.findByUserNameAndAndroidId(username, androidId);
+
+		ObjectNode o = (ObjectNode) data;
+		o.put("masterId", users.getId());
+		o.put("disableSync", users.getDisableSync());
+		o.put("updateInterval", users.getUpdateInterval());// DEFAULT_UPDATE_INTERVAL);
+
+		// NodeBean toValue = mapper.convertValue(node, NodeBean.cla
+
+		boolean shouldforceupdate = true;// shouldForceUpdate(username, versionCode);
 		o.put("serverApi", applicationParameters.getServerApi());
 		o.put("forceUpdate", shouldforceupdate);
 

@@ -67,6 +67,11 @@ public class StatsService extends BaseService {
 		if (list.size() > 0) {
 			userId = list.get(0).has("userMasterId") ? list.get(0).get("userMasterId").asLong() : null;
 		}
+		if (userId == null) {
+			logger.error("no userid - exit sync");
+			Result<String> result = new Result<String>(false, "no userid", null);
+			return result;
+		}
 
 		Users user = usersJpaController.findUsers(userId);
 		for (JsonNode j : list) {
@@ -106,22 +111,24 @@ public class StatsService extends BaseService {
 
 		String username = data.has("username") ? data.get("username").asText() : null;
 
-		String dateString = data.has("from") ? data.get("from").asText() : null;
+		String dateFromString = data.has("from") ? data.get("from").asText() : null;
+		String dateToString = data.has("to") ? data.get("to").asText() : null;
 		SimpleDateFormat dFormat = new SimpleDateFormat("MM-dd-yyyy");
-		Date from = dateString == null ? null : dFormat.parse(dateString);
+		Date from = dateFromString == null ? null : dFormat.parse(dateFromString);
+		Date to = dateToString == null ? null : dFormat.parse(dateToString);
 
 		Users user = username == null ? null : usersJpaController.findByUserName(username);
 		if (user == null) {
-			logger.debug("no user found... " + username);
+			logger.error("no user found... " + username);
 			Result<JsonNode> result = new Result<JsonNode>(false, "", null);
 			return result;
 		}
 
-		List<Stats> list = statsJpaController.fetchStats(user.getId(), from);
+		List<Stats> list = statsJpaController.fetchStats(user.getId(), from, to);
 		List<JsonNode> results = new ArrayList<>();
 		// ObjectMapper mapper = new ObjectMapper();
 		// ArrayNode array = mapper.valueToTree(list);
-		final ObjectMapper mapper = new ObjectMapper();
+		ObjectMapper mapper = new ObjectMapper();
 		for (Stats s : list) {
 			ObjectNode root = mapper.createObjectNode();
 			root.put("latitude", s.getLatitude());

@@ -23,13 +23,15 @@ public class User extends BaseModel {
     public long updateInterval = PermissionsUtils.UPDATE_INTERVAL; // seconds
 
     public int serverApi;
-    public boolean forceUpdate = true; //default true
+    public boolean forceUpdate = false;
     public boolean syncSuccessful = false;
-
+    public boolean disableSync = false;
 
     public Date lastSync;
     public Date createdAt;
     public Date updatedAt;
+
+    public Date recordedAt;
 
 
     public JSONObject toJSONObject() throws JSONException {
@@ -44,6 +46,10 @@ public class User extends BaseModel {
         if (createdAt != null) {
             String formattedDate = dateFormat.format(createdAt);
             JSONObject.put("createdAt", formattedDate);
+        }
+        if (recordedAt != null) {
+            String formattedDate = dateFormat.format(recordedAt);
+            JSONObject.put("recordedAt", formattedDate);
         }
 
 
@@ -70,6 +76,7 @@ public class User extends BaseModel {
             user.updateInterval = JSONObject.getLong("updateInterval"); // seconds in millis 1000=1
 
         //   JSONObject.put("versionCode", versionCode);
+        if (JSONObject.has("disableSync")) user.disableSync = JSONObject.getBoolean("disableSync");
         if (JSONObject.has("serverApi")) user.serverApi = JSONObject.getInt("serverApi");
         if (JSONObject.has("forceUpdate")) user.forceUpdate = JSONObject.getBoolean("forceUpdate");
 

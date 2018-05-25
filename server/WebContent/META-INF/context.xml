@@ -25,7 +25,7 @@
 	<Parameter name="org.goods.living.tech.health.device.jwt.token.life"
 		value="123400" />
 	<Parameter name="org.goods.living.tech.health.device.api"
-		value="10104" />
+		value="10105" />
 	<Parameter name="org.goods.living.tech.health.device.locationUpdateInterval"
 		value="300" />
 		

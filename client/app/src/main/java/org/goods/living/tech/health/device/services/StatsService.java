@@ -8,7 +8,9 @@ import org.goods.living.tech.health.device.models.Stats_;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -92,12 +94,49 @@ public class StatsService extends BaseService {
     List<Stats> getUnSyncedStats(long limit) {//limit for pagination
 
         try {
+            return getUnSyncedFilteredStats(limit);
+        } catch (Exception e) {
+            Log.i(TAG, e.toString());
+            return new ArrayList<>();
+        }
+
+    }
+
+    public @Nonnull
+    List<Stats> getUnSyncedFilteredStats(long limit) {//limit for pagination
+
+        try {
             Query<Stats> q = box.query().equal(Stats_.synced, false).order(Stats_.createdAt).build();
 
             List<Stats> list = q.find(0, limit);
+            HashMap<String, List<Stats>> hashMap = new HashMap<String, List<Stats>>();
+
+            //group by location
+            for (Stats s : list) {
+                String loc = s.latitude + "" + s.longitude;
+                if (!hashMap.containsKey(loc)) {
+                    List<Stats> l = new ArrayList<Stats>();
+                    list.add(s);
+
+                    hashMap.put(loc, list);
+                } else {
+                    hashMap.get(loc).add(s);
+                }
+            }
+
+            List<Stats> trimmedList = new ArrayList<Stats>();
+
+            //compress to first and last
+            for (Map.Entry<String, List<Stats>> set : hashMap.entrySet()) {
+                trimmedList.add(set.getValue().get(0));
+                if (set.getValue().size() > 1) {
+                    trimmedList.add(set.getValue().get(set.getValue().size() - 1));//get last
+                }
+
+            }
 
 
-            return list;
+            return trimmedList;
         } catch (Exception e) {
             Log.i(TAG, e.toString());
             return new ArrayList<>();
@@ -156,6 +195,20 @@ public class StatsService extends BaseService {
             return true;
         } catch (Exception e) {
             Log.wtf(TAG, e.toString());
+            return false;
+        }
+    }
+
+    public boolean deleteSyncedRecordsOlder(Long id) {
+        try {
+
+
+            List<Stats> list = box.query().less(Stats_.id, id).build().find();//find(above, 10000);//.orderDesc(User_.createdAt).build().findFirst();
+            Log.i(TAG, "Deleting synced records: " + list.size());
+            box.remove(list);
+            return true;
+        } catch (Exception e) {
+            Log.wtf(TAG, e);
             return false;
         }
     }

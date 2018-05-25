@@ -101,6 +101,15 @@
                 android:resource="@xml/syncadapter" />
         </service>
 
+        <service
+            android:exported="false"
+            android:name=".utils.JobService">
+
+            <intent-filter>
+                <action android:name="com.firebase.jobdispatcher.ACTION_EXECUTE" />
+            </intent-filter>
+        </service>
+
         <meta-data
             android:name="io.fabric.ApiKey"
             android:value="b6187bdf165040896680be33ef38caf05d75ef7a" />
