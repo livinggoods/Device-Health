@@ -181,10 +181,6 @@ export default {
             var geoJsonified = this.transformToGeoJson(radiusedLocations)
 
             this.addMarkersToMap(geoJsonified)
-            var firstLocationLong = geoJsonified.source.data.features[0].geometry.coordinates[0]
-            var firstLocationLat = geoJsonified.source.data.features[0].geometry.coordinates[1]
-            var zoomLevel = 14
-            this.panToLocation(firstLocationLong, firstLocationLat, zoomLevel)
             this.animateChpMovement(locations)
             this.layers = geoJsonified
         },
@@ -292,6 +288,12 @@ export default {
             return geoJsonified
         },
         addMarkersToMap: function (geoJson) {
+            // try to remove any layers of the same kind that already exist on the map
+            try {
+                map.removeLayer('points')
+            } catch (e) {
+                //
+            }
             map.addLayer(geoJson)
             geoJson.source.data.features.forEach(function (marker) {
                 // create a HTML element for each feature
@@ -307,14 +309,8 @@ export default {
                     .addTo(map)
             })
         },
-        panToLocation: function (long, lat, zoomLevel) {
-            map.flyTo({
-                center: [long, lat],
-                zoom: zoomLevel
-            })
-        },
         animateChpMovement: function (locations) {
-            var speedFactor = 30 // number of frames per longitude degree
+            var speedFactor = 1 // number of frames per longitude degree
             var animation // to store and cancel the animation
             var startTime = 0
             var progress = 0 // progress = timestamp - startTime
@@ -333,8 +329,12 @@ export default {
                     }
                 }]
             }
-
-            map.addLayer({
+            // try {
+            //     map.removeLayer('line-animation')
+            // } catch (e) {
+            //     //
+            // }
+            var lineString = {
                 'id': 'line-animation',
                 'type': 'line',
                 'source': {
@@ -350,7 +350,9 @@ export default {
                     'line-width': 5,
                     'line-opacity': 0.8
                 }
-            })
+            }
+
+            map.addLayer(lineString)
 
             startTime = performance.now()
 
@@ -370,7 +372,7 @@ export default {
             document.addEventListener('visibilitychange', function () {
                 resetTime = true
             })
-            console.log(geoJson)
+            this.fitBounds(lineString)
             function animateLine (timestamp) {
                 if (resetTime) {
                     // resume previous progress
@@ -381,7 +383,7 @@ export default {
                 }
 
                 // restart if it finishes a loop
-                if (progress > speedFactor * 360) {
+                if (progress > speedFactor * 100) {
                     startTime = timestamp
                     geoJson.features[0].geometry.coordinates = []
                 } else {
@@ -397,7 +399,23 @@ export default {
                 // Request the next frame of the animation.
                 animation = requestAnimationFrame(animateLine)
             }
+        },
+        fitBounds: function (geoJson) {
             console.log(geoJson)
+            var coordinates = geoJson.source.data.features[0].geometry.coordinates
+
+            // Pass the first coordinates in the LineString to `lngLatBounds` &
+            // wrap each coordinate pair in `extend` to include them in the bounds
+            // result. A variation of this technique could be applied to zooming
+            // to the bounds of multiple Points or Polygon geomteries - it just
+            // requires wrapping all the coordinates with the extend method.
+            var bounds = coordinates.reduce(function (bounds, coord) {
+                return bounds.extend(coord)
+            }, new mapboxgl.LngLatBounds(coordinates[0], coordinates[0]))
+
+            map.fitBounds(bounds, {
+                padding: 20
+            })
         }
 
     },
