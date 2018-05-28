@@ -141,6 +141,15 @@ export default {
     },
     methods: {
         searchChv: function (username, callback) {
+            // console.log(map.getLayer('line-animation'))
+            // try {
+            //     map.markerLayer.setGeoJSON([])
+            //     map.removeLayer('line-animation')
+            //     map.removeLayer('points')
+            // } catch (e) {
+            //     //
+            // }
+
             api.post('/user/find', {'username': username}).then(function (response) {
                 if (response.data.status === true) {
                     var users = []
@@ -180,6 +189,7 @@ export default {
             var radiusedLocations = this.computeRadius(reducedArray)
             var geoJsonified = this.transformToGeoJson(radiusedLocations)
 
+            this.fitBounds(locations)
             this.addMarkersToMap(geoJsonified)
             this.animateChpMovement(locations)
             this.layers = geoJsonified
@@ -212,7 +222,8 @@ export default {
                     radiusedLocations.push({'coordinates': {
                         'latitude': coordinates.latitude,
                         'longitude': coordinates.longitude},
-                    'radius': 3
+                    'radius': 3,
+                    'recordedAt': coordinates.recordedAt
                     })
                 } else {
                     var sortedLocation = locations[i].sort(function (a, b) {
@@ -251,7 +262,7 @@ export default {
             }
             return radiusedLocations
         },
-        transformToGeoJson: function (array) {
+        transformToGeoJson: function (locationArray) {
             var geoJsonified
             geoJsonified = {
                 'id': 'points',
@@ -266,13 +277,14 @@ export default {
                 }
 
             }
-            array.forEach(function (location) {
+            locationArray.forEach(function (location) {
                 geoJsonified.source.data.features.push({
 
                     'type': 'Feature',
                     'properties': {
                         'class': 'marker',
-                        'radius': location.radius
+                        'radius': location.radius,
+                        'recordedAt': location.recordedAt
                     },
                     'geometry': {
                         'type': 'Point',
@@ -289,12 +301,15 @@ export default {
         },
         addMarkersToMap: function (geoJson) {
             // try to remove any layers of the same kind that already exist on the map
-            try {
-                map.removeLayer('points')
-            } catch (e) {
-                //
-            }
-            map.addLayer(geoJson)
+            // try {
+            //     map.removeLayer('points')
+            // } catch (e) {
+            //     //
+            // }
+            //
+            // map.addLayer(geoJson)
+            console.log(geoJson)
+
             geoJson.source.data.features.forEach(function (marker) {
                 // create a HTML element for each feature
                 var el = document.createElement('div')
@@ -303,20 +318,19 @@ export default {
                 el.style.width = marker.properties.radius * 4 + 'px'
                 el.style.height = marker.properties.radius * 4 + 'px'
 
-                // make a marker for each feature and add to the map
+                // add popup
+                var popup = new mapboxgl.Popup({ offset: 25 })
+                    .setHTML('<h4> Location Details</h4>' +
+                        '<p>Latitude: ' + marker.geometry.coordinates[0] + ' Latitude: ' + marker.geometry.coordinates[1] + '</p>' +
+                        '<p>Time: ' + marker.properties.recordedAt + '</p>')
+
                 new mapboxgl.Marker(el)
                     .setLngLat(marker.geometry.coordinates)
+                    .setPopup(popup)
                     .addTo(map)
             })
         },
         animateChpMovement: function (locations) {
-            var speedFactor = 1 // number of frames per longitude degree
-            var animation // to store and cancel the animation
-            var startTime = 0
-            var progress = 0 // progress = timestamp - startTime
-            var resetTime = false // indicator of whether time reset is needed for the animation
-            var pauseButton = document.getElementById('pause')
-
             var geoJson = {
                 'type': 'FeatureCollection',
                 'features': [{
@@ -354,61 +368,28 @@ export default {
 
             map.addLayer(lineString)
 
-            startTime = performance.now()
-
-            animateLine()
-
             // click the button to pause or play
-            pauseButton.addEventListener('click', function () {
-                pauseButton.classList.toggle('pause')
-                if (pauseButton.classList.contains('pause')) {
-                    cancelAnimationFrame(animation)
-                } else {
-                    resetTime = true
-                    animateLine()
-                }
-            })
 
-            document.addEventListener('visibilitychange', function () {
-                resetTime = true
-            })
-            this.fitBounds(lineString)
-            function animateLine (timestamp) {
-                if (resetTime) {
-                    // resume previous progress
-                    startTime = performance.now() - progress
-                    resetTime = false
+            var i = 0
+            var timer = window.setInterval(function () {
+                if (i < locations.length) {
+                    var x = locations[i].longitude
+                    var y = locations[i].latitude
+                    geoJson.features[0].geometry.coordinates.push([x, y])
+                    map.getSource('line-animation').setData(geoJson)
+                    i++
                 } else {
-                    progress = timestamp - startTime
-                }
-
-                // restart if it finishes a loop
-                if (progress > speedFactor * 100) {
-                    startTime = timestamp
                     geoJson.features[0].geometry.coordinates = []
-                } else {
-                    locations.forEach(function (location) {
-                        var x = location.longitude
-                        var y = location.latitude
-                        // append new coordinates to the lineString
-                        geoJson.features[0].geometry.coordinates.push([x, y])
-                        // then update the map
-                        map.getSource('line-animation').setData(geoJson)
-                    })
+                    map.getSource('line-animation').setData(geoJson)
+                    i = 0
                 }
-                // Request the next frame of the animation.
-                animation = requestAnimationFrame(animateLine)
-            }
+            }, 500)
         },
-        fitBounds: function (geoJson) {
-            console.log(geoJson)
-            var coordinates = geoJson.source.data.features[0].geometry.coordinates
-
-            // Pass the first coordinates in the LineString to `lngLatBounds` &
-            // wrap each coordinate pair in `extend` to include them in the bounds
-            // result. A variation of this technique could be applied to zooming
-            // to the bounds of multiple Points or Polygon geomteries - it just
-            // requires wrapping all the coordinates with the extend method.
+        fitBounds: function (locations) {
+            var coordinates = []
+            locations.forEach(function (location) {
+                coordinates.push([location.longitude, location.latitude])
+            })
             var bounds = coordinates.reduce(function (bounds, coord) {
                 return bounds.extend(coord)
             }, new mapboxgl.LngLatBounds(coordinates[0], coordinates[0]))
