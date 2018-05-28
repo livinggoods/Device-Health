@@ -15,6 +15,7 @@
     "element-ui": "^2.3.9",
     "jquery": "^3.3.1",
     "lg-map-viz": "^0.1.0",
+    "mapbox": "^1.0.0-beta10",
     "mapbox-gl": "^0.45.0",
     "mapbox-gl-vue": "^1.9.0",
     "moment": "^2.22.1",

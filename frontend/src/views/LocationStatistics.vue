@@ -91,6 +91,7 @@
                 </div>
                 <Sidebar :sidebar-header="sidebarHeader"></Sidebar>
                 <div id="map"></div>
+                <button id='pause'></button>
                 <!--<lg-map-viz :access-token="accessToken" :layers="layers" :map-options="mapOptions"></lg-map-viz>-->
             </div>
         </div>
@@ -138,9 +139,6 @@ export default {
         Loading
     },
     methods: {
-        initMap: function () {
-
-        },
         searchChv: function (username, callback) {
             api.post('/user/find', {'username': username}).then(function (response) {
                 if (response.data.status === true) {
@@ -157,7 +155,6 @@ export default {
         selectChv: function (chvName) {
             this.searchParams.chvName = chvName.value
         },
-
         getLocationStats: function () {
             var self = this
             this.isLoading = true
@@ -177,69 +174,14 @@ export default {
             var reducedArray = this.filterDuplicates(locations)
             var radiusedLocations = this.computeRadius(reducedArray)
             var geoJsonified = this.transformToGeoJson(radiusedLocations)
+
+            this.addMarkersToMap(geoJsonified)
+            var firstLocationLong = geoJsonified.source.data.features[0].geometry.coordinates[0]
+            var firstLocationLat = geoJsonified.source.data.features[0].geometry.coordinates[1]
+            var zoomLevel = 14
+            this.panToLocation(firstLocationLong, firstLocationLat, zoomLevel)
+            this.animateChpMovement(locations)
             this.layers = geoJsonified
-        },
-        transformToGeoJson: function (array) {
-            var geoJsonified
-            geoJsonified = {
-                'id': 'points',
-                'type': 'symbol',
-                'source': {
-                    'type': 'geojson',
-                    'data': {
-                        'type': 'FeatureCollection',
-                        'features': []
-                    }
-
-                }
-
-            }
-
-            // var geoJsonified = {
-            //     'id': 'route',
-            //     'type': 'line',
-            //     'source': {
-            //         'type': 'geojson',
-            //         'data': {
-            //             'type': 'Feature',
-            //             'properties': {
-            //             },
-            //             'geometry': {
-            //                 'type': 'LineString',
-            //                 'coordinates': []
-            //             }
-            //         }
-            //
-            //     },
-            //     'layout': {
-            //         'line-join': 'round',
-            //         'line-cap': 'round'
-            //     },
-            //     'paint': {
-            //         'line-color': '#888',
-            //         'line-width': 12
-            //     }
-            // }
-
-            array.forEach(function (location) {
-                geoJsonified.source.data.features.push({
-
-                    'type': 'Feature',
-                    'properties': {
-                        'class': 'marker',
-                        'radius': location.radius
-                    },
-                    'geometry': {
-                        'type': 'Point',
-                        'coordinates': [
-                            location.coordinates.longitude,
-                            location.coordinates.latitude
-                        ]
-                    }
-                })
-                // geoJsonified.source.data.geometry.coordinates.push([location.coordinates.longitude, location.coordinates.latitude])
-            })
-            return geoJsonified
         },
         filterDuplicates: function (array) {
             var consolidatedArray = []
@@ -307,6 +249,154 @@ export default {
                 }
             }
             return radiusedLocations
+        },
+        transformToGeoJson: function (array) {
+            var geoJsonified
+            geoJsonified = {
+                'id': 'points',
+                'type': 'symbol',
+                'source': {
+                    'type': 'geojson',
+                    'data': {
+                        'type': 'FeatureCollection',
+                        'features': []
+                    }
+
+                }
+
+            }
+            array.forEach(function (location) {
+                geoJsonified.source.data.features.push({
+
+                    'type': 'Feature',
+                    'properties': {
+                        'class': 'marker',
+                        'radius': location.radius
+                    },
+                    'geometry': {
+                        'type': 'Point',
+                        'coordinates': [
+                            location.coordinates.longitude,
+                            location.coordinates.latitude
+                        ]
+                    }
+                })
+                // geoJsonified.source.data.geometry.coordinates.push([location.coordinates.longitude, location.coordinates.latitude])
+            })
+
+            return geoJsonified
+        },
+        addMarkersToMap: function (geoJson) {
+            map.addLayer(geoJson)
+            geoJson.source.data.features.forEach(function (marker) {
+                // create a HTML element for each feature
+                var el = document.createElement('div')
+
+                el.className = 'marker'
+                el.style.width = marker.properties.radius * 4 + 'px'
+                el.style.height = marker.properties.radius * 4 + 'px'
+
+                // make a marker for each feature and add to the map
+                new mapboxgl.Marker(el)
+                    .setLngLat(marker.geometry.coordinates)
+                    .addTo(map)
+            })
+        },
+        panToLocation: function (long, lat, zoomLevel) {
+            map.flyTo({
+                center: [long, lat],
+                zoom: zoomLevel
+            })
+        },
+        animateChpMovement: function (locations) {
+            var speedFactor = 30 // number of frames per longitude degree
+            var animation // to store and cancel the animation
+            var startTime = 0
+            var progress = 0 // progress = timestamp - startTime
+            var resetTime = false // indicator of whether time reset is needed for the animation
+            var pauseButton = document.getElementById('pause')
+
+            var geoJson = {
+                'type': 'FeatureCollection',
+                'features': [{
+                    'type': 'Feature',
+                    'geometry': {
+                        'type': 'LineString',
+                        'coordinates': [
+                            [locations[0].longitude, locations[0].latitude]
+                        ]
+                    }
+                }]
+            }
+
+            map.addLayer({
+                'id': 'line-animation',
+                'type': 'line',
+                'source': {
+                    'type': 'geojson',
+                    'data': geoJson
+                },
+                'layout': {
+                    'line-cap': 'round',
+                    'line-join': 'round'
+                },
+                'paint': {
+                    'line-color': '#ed6498',
+                    'line-width': 5,
+                    'line-opacity': 0.8
+                }
+            })
+
+            startTime = performance.now()
+
+            animateLine(geoJson)
+
+            // click the button to pause or play
+            pauseButton.addEventListener('click', function () {
+                pauseButton.classList.toggle('pause')
+                if (pauseButton.classList.contains('pause')) {
+                    cancelAnimationFrame(animation)
+                } else {
+                    resetTime = true
+                    animateLine(geoJson)
+                }
+            })
+
+            // reset startTime and progress once the tab loses or gains focus
+            // requestAnimationFrame also pauses on hidden tabs by default
+            document.addEventListener('visibilitychange', function () {
+                resetTime = true
+            })
+
+            // animated in a circle as a sine wave along the map.
+
+            function animateLine (timestamp) {
+                if (resetTime) {
+                    // resume previous progress
+                    startTime = performance.now() - progress
+                    resetTime = false
+                } else {
+                    progress = timestamp - startTime
+                }
+
+                // restart if it finishes a loop
+                if (progress > speedFactor * 360) {
+                    startTime = timestamp
+                    geoJson.features[0].geometry.coordinates = []
+                } else {
+                    locations.forEach(function (location) {
+                        var x = location.longitude
+                        // draw a sine wave with some math.
+                        var y = location.latitude
+                        // append new coordinates to the lineString
+                        geoJson.features[0].geometry.coordinates.push([x, y])
+                        // then update the map
+                        map.getSource('line-animation').setData(geoJson)
+                    })
+                }
+                // Request the next frame of the animation.
+                animation = requestAnimationFrame(animateLine)
+            }
         }
 
     },
@@ -320,29 +410,7 @@ export default {
         })
     },
     watch: {
-        'layers': function (newValues) {
-            map.addLayer(newValues)
 
-            map.flyTo({
-                center: [newValues.source.data.features[0].geometry.coordinates[0], newValues.source.data.features[0].geometry.coordinates[1]],
-                // center: [newValues.source.data.geometry.coordinates[0][0], newValues.source.data.geometry.coordinates[0][1]],
-                zoom: 14
-            })
-
-            newValues.source.data.features.forEach(function (marker) {
-                // create a HTML element for each feature
-                var el = document.createElement('div')
-
-                el.className = 'marker'
-                el.style.width = marker.properties.radius * 10 + 'px'
-                el.style.height = marker.properties.radius * 10 + 'px'
-
-                // make a marker for each feature and add to the map
-                new mapboxgl.Marker(el)
-                    .setLngLat(marker.geometry.coordinates)
-                    .addTo(map)
-            })
-        }
     }
 
 }
@@ -383,5 +451,17 @@ export default {
 
     .sidebar {
         background-image: url("../assets/img/sidebar-5.jpg");
+    }
+    #pause {
+        position: absolute;
+        margin: 20px;
+    }
+
+    #pause::after {
+        content: 'Pause';
+    }
+
+    #pause.pause::after {
+        content: 'Play';
     }
 </style>
