@@ -108,6 +108,7 @@ import LgMapViz from 'lg-map-viz'
 import moment from 'moment'
 import Loading from 'vue-loading-overlay'
 import mapboxgl from 'mapbox-gl'
+import toastr from 'toastr'
 
 var map
 
@@ -163,7 +164,11 @@ export default {
                 'from': moment(this.searchParams.dates[0]).format('MM-DD-YYYY'),
                 'to': moment(this.searchParams.dates[1]).format('MM-DD-YYYY')
             }).then(function (response) {
-                self.processLocations(response.data.data.locations)
+                if (response.data.status === true) {
+                    if (response.data.data.locations.length > 0) {
+                        self.processLocations(response.data.data.locations)
+                    } else toastr.info('No location statistics found for the parameters specified')
+                } else toastr.error('Oops! Something went wrong. Please try again')
                 self.isLoading = false
             }).catch(function (error) {
                 self.isLoading = false
@@ -349,7 +354,7 @@ export default {
 
             startTime = performance.now()
 
-            animateLine(geoJson)
+            animateLine()
 
             // click the button to pause or play
             pauseButton.addEventListener('click', function () {
@@ -358,18 +363,14 @@ export default {
                     cancelAnimationFrame(animation)
                 } else {
                     resetTime = true
-                    animateLine(geoJson)
+                    animateLine()
                 }
             })
 
-            // reset startTime and progress once the tab loses or gains focus
-            // requestAnimationFrame also pauses on hidden tabs by default
             document.addEventListener('visibilitychange', function () {
                 resetTime = true
             })
-
-            // animated in a circle as a sine wave along the map.
-
+            console.log(geoJson)
             function animateLine (timestamp) {
                 if (resetTime) {
                     // resume previous progress
@@ -386,7 +387,6 @@ export default {
                 } else {
                     locations.forEach(function (location) {
                         var x = location.longitude
-                        // draw a sine wave with some math.
                         var y = location.latitude
                         // append new coordinates to the lineString
                         geoJson.features[0].geometry.coordinates.push([x, y])
@@ -397,6 +397,7 @@ export default {
                 // Request the next frame of the animation.
                 animation = requestAnimationFrame(animateLine)
             }
+            console.log(geoJson)
         }
 
     },
