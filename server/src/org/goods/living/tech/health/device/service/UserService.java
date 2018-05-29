@@ -68,6 +68,7 @@ public class UserService extends BaseService {
 			users.setUsername(username);
 			users.setPassword(data.has("password") ? data.get("password").asText() : null);
 			users.setAndroidId(androidId);
+			users.setDisableSync(false);
 
 			users.setChvId(data.has("chvId") ? data.get("chvId").asText() : null);
 			users.setPhone(data.has("phone") ? data.get("phone").asText() : null);

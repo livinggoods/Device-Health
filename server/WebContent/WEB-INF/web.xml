@@ -1,32 +1,29 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <web-app xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://xmlns.jcp.org/xml/ns/javaee" xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee http://xmlns.jcp.org/xml/ns/javaee/web-app_3_1.xsd" id="WebApp_ID" version="3.1">
   <display-name>Device Health Server</display-name>
+  
   <context-param>
-    <param-name>resteasy.servlet.mapping.prefix</param-name>
-    <param-value>/api</param-value>
-  </context-param>
-  <listener>
-    <listener-class>
-			org.jboss.resteasy.plugins.server.servlet.ResteasyBootstrap
-		</listener-class>
-  </listener>
-  <context-param>
-		<param-name>resteasy.injector.factory</param-name>
-		<param-value>org.jboss.resteasy.cdi.CdiInjectorFactory</param-value>
-	</context-param>
-  <servlet>
-    <servlet-name>resteasy-servlet</servlet-name>
-    <servlet-class>
-			org.jboss.resteasy.plugins.server.servlet.HttpServletDispatcher
-		</servlet-class>
-    <init-param>
-      <param-name>javax.ws.rs.Application</param-name>
-      <param-value>org.goods.living.tech.health.device.service.app.RestApplication</param-value>
-    </init-param>
-  </servlet>
-  <servlet-mapping>
-    <servlet-name>resteasy-servlet</servlet-name>
-    <url-pattern>/api/*</url-pattern>
-  </servlet-mapping>
+        <param-name>log4jContextName</param-name>
+        <param-value>DeviceHealth</param-value>
+    </context-param>
+    
+   <listener>
+        <listener-class>org.apache.logging.log4j.web.Log4jServletContextListener</listener-class>
+    </listener>
+ 
+    <filter>
+        <filter-name>log4jServletFilter</filter-name>
+        <filter-class>org.apache.logging.log4j.web.Log4jServletFilter</filter-class>
+    </filter>
+    <filter-mapping>
+        <filter-name>log4jServletFilter</filter-name>
+        <url-pattern>/*</url-pattern>
+        <dispatcher>REQUEST</dispatcher>
+        <dispatcher>FORWARD</dispatcher>
+        <dispatcher>INCLUDE</dispatcher>
+        <dispatcher>ERROR</dispatcher>
+        <dispatcher>ASYNC</dispatcher><!-- Servlet 3.0 w/ disabled auto-initialization only; not supported in 2.5 -->
+    </filter-mapping>
+
   
 </web-app>
