@@ -270,7 +270,11 @@ public class UsersJpaController implements Serializable {
 	public Users update(Users users) {
 		EntityManager em = getEntityManager();
 		try {
-			return em.merge(users);
+			em.getTransaction().begin();
+
+			users = em.merge(users);
+			em.getTransaction().commit();
+			return users;
 		} finally {
 			em.close();
 		}

@@ -18,7 +18,7 @@ apply plugin: 'io.fabric'
 
 ext.versionMajor = 1
 ext.versionMinor = 1
-ext.versionPatch = 5
+ext.versionPatch = 6
 ext.versionClassifier = null
 ext.isSnapshot = true
 ext.minimumSdkVersion = 19

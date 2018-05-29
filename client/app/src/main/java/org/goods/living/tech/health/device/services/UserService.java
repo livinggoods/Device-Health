@@ -1,6 +1,6 @@
 package org.goods.living.tech.health.device.services;
 
-import android.util.Log;
+import com.crashlytics.android.Crashlytics;
 
 import org.goods.living.tech.health.device.models.User;
 
@@ -30,7 +30,7 @@ public class UserService extends BaseService {
             return true;
 
         } catch (Exception e) {
-            Log.i(TAG, e.toString());
+            Crashlytics.logException(e);
             return false;
         }
 
@@ -49,7 +49,7 @@ public class UserService extends BaseService {
 
             return user;
         } catch (Exception e) {
-            Log.i(TAG, e.toString());
+            Crashlytics.logException(e);
             return null;
         }
 

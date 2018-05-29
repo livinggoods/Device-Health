@@ -240,16 +240,16 @@ public class SyncService extends BaseService {
                         Crashlytics.log("Successfully synced");
                         user.syncSuccessful = true;
 
+                        for (Stats s : list) {
+                            s.synced = true;
+                        }
+                        statsService.insertStats(list);
                         //      Answers.getInstance().logCustom(new CustomEvent("Sync stats")
                         //              .putCustomAttribute("Reason", "androidId: " + user.androidId + " username: " + user.username));
 
-                        Stats lastestSyncStats = list.get(list.size() - 1);
-                        lastestSyncStats.synced = true;
-
-                        statsService.insertStats(lastestSyncStats);
 
                         //cleanup
-                        statsService.deleteSyncedRecords(lastestSyncStats.id);//deleteSyncedRecordsOlder(CLEANUP_LIMIT);
+                        statsService.deleteSyncedRecords(list);//deleteSyncedRecordsOlder(CLEANUP_LIMIT);
 
                     } else {
                         Log.d(TAG, "problem syncing stats");

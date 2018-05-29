@@ -22,6 +22,8 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.preference.PreferenceManager;
 import android.support.v4.app.FragmentActivity;
 import android.text.format.DateFormat;
@@ -201,7 +203,16 @@ public class MainActivity extends FragmentActivity implements
     public void triggerSync(View view) {
         Log.i(TAG, "triggerSync ");
 
+        Utils.showSnack(this, "Performing sync");
         SyncAdapter.performSync();
+
+        Handler handler = new Handler(Looper.getMainLooper());
+        final Runnable r = new Runnable() {
+            public void run() {
+                loadData();
+            }
+        };
+        handler.postDelayed(r, 5000);
     }
 
     /**

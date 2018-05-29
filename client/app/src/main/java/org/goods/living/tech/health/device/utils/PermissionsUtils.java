@@ -45,7 +45,7 @@ public class PermissionsUtils {
     /**
      * The desired interval for location updates. Inexact. Updates may be more or less frequent.
      */
-    public static final long UPDATE_INTERVAL = 300; // Every 60 seconds.
+    public static final long UPDATE_INTERVAL = 300; // seconds.
 
     private static final long MAX_WAIT_RECORDS = 2; // Every 5 items
 

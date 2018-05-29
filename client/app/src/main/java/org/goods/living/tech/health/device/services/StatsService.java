@@ -3,6 +3,8 @@ package org.goods.living.tech.health.device.services;
 import android.location.Location;
 import android.util.Log;
 
+import com.crashlytics.android.Crashlytics;
+
 import org.goods.living.tech.health.device.models.Stats;
 import org.goods.living.tech.health.device.models.Stats_;
 
@@ -58,7 +60,7 @@ public class StatsService extends BaseService {
             return true;
 
         } catch (Exception e) {
-            Log.i(TAG, e.toString());
+            Crashlytics.logException(e);
             return false;
         }
 
@@ -84,7 +86,7 @@ public class StatsService extends BaseService {
 
             return list;
         } catch (Exception e) {
-            Log.i(TAG, e.toString());
+            Crashlytics.logException(e);
             return new ArrayList<>();
         }
 
@@ -96,7 +98,7 @@ public class StatsService extends BaseService {
         try {
             return getUnSyncedFilteredStats(limit);
         } catch (Exception e) {
-            Log.i(TAG, e.toString());
+            Crashlytics.logException(e);
             return new ArrayList<>();
         }
 
@@ -116,9 +118,9 @@ public class StatsService extends BaseService {
                 String loc = s.latitude + "" + s.longitude;
                 if (!hashMap.containsKey(loc)) {
                     List<Stats> l = new ArrayList<Stats>();
-                    list.add(s);
+                    l.add(s);
 
-                    hashMap.put(loc, list);
+                    hashMap.put(loc, l);
                 } else {
                     hashMap.get(loc).add(s);
                 }
@@ -138,7 +140,7 @@ public class StatsService extends BaseService {
 
             return trimmedList;
         } catch (Exception e) {
-            Log.i(TAG, e.toString());
+            Crashlytics.logException(e);
             return new ArrayList<>();
         }
 
@@ -154,7 +156,7 @@ public class StatsService extends BaseService {
             return box.query().build().count();
 
         } catch (Exception e) {
-            Log.i(TAG, e.toString());
+            Crashlytics.logException(e);
             return 0;
         }
 
@@ -194,7 +196,7 @@ public class StatsService extends BaseService {
 
             return true;
         } catch (Exception e) {
-            Log.wtf(TAG, e.toString());
+            Crashlytics.logException(e);
             return false;
         }
     }
@@ -208,21 +210,27 @@ public class StatsService extends BaseService {
             box.remove(list);
             return true;
         } catch (Exception e) {
-            Log.wtf(TAG, e);
+            Crashlytics.logException(e);
             return false;
         }
     }
 
-    public boolean deleteSyncedRecords(Long above) {
+    public boolean deleteSyncedRecords(List<Stats> list) {
         try {
 
 
-            List<Stats> list = box.query().equal(Stats_.synced, true).build().find(above, 10000);//.orderDesc(User_.createdAt).build().findFirst();
+            //     List<Stats> list = box.query().equal(Stats_.synced, true).less(Stats_.id, latestId).
+            //             build().find();//.orderDesc(User_.createdAt).build().findFirst();
             Log.i(TAG, "Deleting synced records: " + list.size());
             box.remove(list);
+
+            List<Stats> l = box.query().equal(Stats_.synced, true).
+                    build().find();//.orderDesc(User_.createdAt).build().findFirst();
+            box.remove(list);
+
             return true;
         } catch (Exception e) {
-            Log.wtf(TAG, e);
+            Crashlytics.logException(e);
             return false;
         }
     }
@@ -233,7 +241,7 @@ public class StatsService extends BaseService {
             return box.query().equal(Stats_.synced, true).build().count();//.orderDesc(User_.createdAt).build().findFirst();
 
         } catch (Exception e) {
-            Log.wtf(TAG, e);
+            Crashlytics.logException(e);
             return 0l;
         }
     }
@@ -244,7 +252,7 @@ public class StatsService extends BaseService {
             return box.query().build().count();//.orderDesc(User_.createdAt).build().findFirst();
 
         } catch (Exception e) {
-            Log.wtf(TAG, e);
+            Crashlytics.logException(e);
             return 0l;
         }
     }

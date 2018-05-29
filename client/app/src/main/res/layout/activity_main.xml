@@ -95,7 +95,7 @@
                         android:layout_height="match_parent"
                         android:layout_weight="1"
                         android:gravity="center_vertical"
-                        android:text="Location Update interval (seconds): 60" />
+                        android:text="Location Update interval (seconds):" />
 
                 </LinearLayout>
 

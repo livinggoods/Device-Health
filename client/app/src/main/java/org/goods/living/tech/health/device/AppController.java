@@ -146,6 +146,7 @@ public class AppController extends Application {
                 Crashlytics.log("error creating user information");
             }
         }
+
         //TODO:remove this hack after all devices update
         {
             user.forceUpdate = false;
