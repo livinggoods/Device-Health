@@ -25,5 +25,7 @@
         <dispatcher>ASYNC</dispatcher><!-- Servlet 3.0 w/ disabled auto-initialization only; not supported in 2.5 -->
     </filter-mapping>
 
+<resource-ref><res-ref-name>jdbc/postgresClientDBDeviceHealth</res-ref-name></resource-ref>
+<resource-ref><res-ref-name>jdbc/postgresClientDBMM</res-ref-name></resource-ref>
   
 </web-app>

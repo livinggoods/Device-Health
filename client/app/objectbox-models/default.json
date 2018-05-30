@@ -5,7 +5,7 @@
   "entities": [
     {
       "id": "1:7129388409425330234",
-      "lastPropertyId": "23:4587860725248218979",
+      "lastPropertyId": "24:2079774390059220450",
       "name": "User",
       "properties": [
         {
@@ -63,6 +63,10 @@
         {
           "id": "23:4587860725248218979",
           "name": "disableSync"
+        },
+        {
+          "id": "24:2079774390059220450",
+          "name": "phone"
         }
       ],
       "relations": []

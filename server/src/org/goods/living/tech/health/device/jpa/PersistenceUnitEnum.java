@@ -11,5 +11,5 @@ public enum PersistenceUnitEnum {
 	 * same web application
 	 */
 
-	POSTGRES_DEVICE_HEALTH, POSTGRES_DATABASE_USER
+	POSTGRES_DEVICE_HEALTH, POSTGRES_MM, POSTGRES_DATABASE_USER
 }

@@ -16,10 +16,11 @@ import javax.ws.rs.core.MediaType;
 
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jackson.node.ArrayNode;
 import org.codehaus.jackson.node.JsonNodeFactory;
 import org.codehaus.jackson.node.ObjectNode;
+import org.goods.living.tech.health.device.jpa.controllers.MedicJpaController;
 import org.goods.living.tech.health.device.jpa.controllers.UsersJpaController;
+import org.goods.living.tech.health.device.jpa.dao.MedicUser;
 import org.goods.living.tech.health.device.jpa.dao.Users;
 import org.goods.living.tech.health.device.models.Result;
 import org.goods.living.tech.health.device.utility.Constants;
@@ -43,6 +44,9 @@ public class UserService extends BaseService {
 
 	@Inject
 	UsersJpaController usersJpaController;
+
+	@Inject
+	MedicJpaController medicJpaController;
 
 	Integer DEFAULT_UPDATE_INTERVAL = 300;
 
@@ -105,6 +109,7 @@ public class UserService extends BaseService {
 		o.put("masterId", users.getId());
 		o.put("disableSync", users.getDisableSync());
 		o.put("updateInterval", users.getUpdateInterval());// DEFAULT_UPDATE_INTERVAL);
+		o.put("phone", users.getPhone());
 
 		// NodeBean toValue = mapper.convertValue(node, NodeBean.cla
 
@@ -163,18 +168,27 @@ public class UserService extends BaseService {
 
 		String username = data.has("username") ? data.get("username").asText() : null;
 
-		List<Users> list = usersJpaController.findByUserNameLike(username);
-		List<String> names = new ArrayList<String>();
-		for (Users u : list) {
-			names.add(u.getUsername());
-		}
+		List<MedicUser> lists = medicJpaController.findByNameLike(username);
 
+		// List<Users> list = usersJpaController.findByUserNameLike(username);
+		// ObjectMapper mapper = new ObjectMapper();
+		// ArrayNode array = mapper.valueToTree(names);
+		List<JsonNode> results = new ArrayList<>();
+		// ObjectMapper mapper = new ObjectMapper();
+		// ArrayNode array = mapper.valueToTree(list);
 		ObjectMapper mapper = new ObjectMapper();
-		ArrayNode array = mapper.valueToTree(names);
+		for (MedicUser u : lists) {
+			ObjectNode root = mapper.createObjectNode();
+			root.put("username", u.getUsername());
+			root.put("name", u.getName());
+			root.put("branch", u.getBranch());
+			root.put("phone", u.getPhone());
+			results.add(root);
+		}
 
 		ObjectNode node = JsonNodeFactory.instance.objectNode();
 
-		node.putArray("users").addAll(array);
+		node.putArray("users").addAll(results);
 
 		Result<JsonNode> result = new Result<JsonNode>(true, "", node);
 		return result;

@@ -21,6 +21,7 @@ public class User extends BaseModel {
     public String password;
     public String androidId;
     public long updateInterval = PermissionsUtils.UPDATE_INTERVAL; // seconds
+    public String phone;
 
     public int serverApi;
     public boolean forceUpdate = false;
@@ -56,6 +57,8 @@ public class User extends BaseModel {
         if (username != null) JSONObject.put("username", username);
         if (password != null) JSONObject.put("password", password);
 
+        if (phone != null) JSONObject.put("phone", phone);
+
 
         int versionCode = BuildConfig.VERSION_CODE;
         String versionName = BuildConfig.VERSION_NAME;
@@ -72,6 +75,9 @@ public class User extends BaseModel {
         if (JSONObject.has("masterId")) user.masterId = JSONObject.getLong("masterId");
         //   if (JSONObject.has("chvId")) user.chvId = JSONObject.getString("chvId");
         if (JSONObject.has("androidId")) user.androidId = JSONObject.getString("androidId");
+        if (JSONObject.has("phone")) user.androidId = JSONObject.getString("phone");
+
+
         if (JSONObject.has("updateInterval"))
             user.updateInterval = JSONObject.getLong("updateInterval"); // seconds in millis 1000=1
 

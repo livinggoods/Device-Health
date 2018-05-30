@@ -162,6 +162,7 @@ public class SyncService extends BaseService {
                         user.updateInterval = updatedUser.updateInterval;
                         user.serverApi = updatedUser.serverApi;
                         user.forceUpdate = updatedUser.forceUpdate;
+                        user.phone = updatedUser.phone;
 
                         user.lastSync = new Date();
                         userService.insertUser(user);

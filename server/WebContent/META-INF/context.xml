@@ -1,14 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<Context path="" reloadable="true" swallowOutput="true" copyXML="true"  override="true"> <!-- path="/"  docBase="Device_Health_Api"  -->
+<Context  reloadable="true" swallowOutput="true" copyXML="true"  override="true"> <!-- path="/"  docBase="Device_Health"  -->
 
 <!--  -->
-	 <!-- <Resource name="jdbc/postgresClientDBDeviceHealth" auth="Container" type="javax.sql.DataSource"
+	 <Resource name="jdbc/postgresClientDBDeviceHealth" auth="Container" type="javax.sql.DataSource"
 		driverClassName="org.postgresql.Driver"
 		url="jdbc:postgresql://localhost:5432/device_health_development"
-		username="device_health_user" password="user" maxActive="30"
+		username="device_health_user" password="user" maxActive="20"
 		validationQuery="SELECT 1;" testOnBorrow="true"/> 
-		factory="org.apache.commons.dbcp2.BasicDataSource"  -->
+		<!--  factory="org.apache.commons.dbcp2.BasicDataSource" --> 
+		
+		<Resource name="jdbc/postgresClientDBMM" auth="Container" type="javax.sql.DataSource"
+		driverClassName="org.postgresql.Driver"
+		url="jdbc:postgresql://localhost:5434/livinggoods-ke"
+		username="victor" password="%upp0rt721" maxActive="20"
+		validationQuery="SELECT 1;" testOnBorrow="true"/> <!--  ssh -L 5434:127.0.0.1:5433 user@server -->
 
 
 	<Resource name="BeanManager" auth="Container"
@@ -25,7 +31,7 @@
 	<Parameter name="org.goods.living.tech.health.device.jwt.token.life"
 		value="123400" />
 	<Parameter name="org.goods.living.tech.health.device.api"
-		value="10106" />
+		value="10107" />
 	<Parameter name="org.goods.living.tech.health.device.locationUpdateInterval"
 		value="300" />
 		

@@ -228,6 +228,16 @@ public class StatsService extends BaseService {
                     build().find();//.orderDesc(User_.createdAt).build().findFirst();
             box.remove(list);
 
+
+            //remove older records since should have synced.
+            if (list.size() > 0) {
+                Stats s = list.get(list.size() - 1);
+                list = box.query().less(Stats_.id, s.id).
+                        build().find();//.orderDesc(User_.createdAt).build().findFirst();
+                Log.i(TAG, "Deleting older sync records under : " + s.id);
+                box.remove(list);
+            }
+
             return true;
         } catch (Exception e) {
             Crashlytics.logException(e);

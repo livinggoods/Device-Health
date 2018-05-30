@@ -26,6 +26,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.preference.PreferenceManager;
 import android.support.v4.app.FragmentActivity;
+import android.telephony.PhoneNumberUtils;
 import android.text.format.DateFormat;
 import android.util.Log;
 import android.view.View;
@@ -86,6 +87,7 @@ public class MainActivity extends FragmentActivity implements
     private Button cancelBtn;
     private Button saveBtn;
     private TextView usernameText;
+    private TextView phoneText;
     private TextView syncTextView;
 
     private TextView intervalTextView;
@@ -108,6 +110,7 @@ public class MainActivity extends FragmentActivity implements
         saveBtn = (Button) findViewById(R.id.saveBtn);
         usernameText = (TextView) findViewById(R.id.usernameText);
         syncTextView = (TextView) findViewById(R.id.syncTextView);
+        phoneText = (TextView) findViewById(R.id.phoneText);
         intervalTextView = (TextView) findViewById(R.id.intervalTextView);
         btnLayout = (LinearLayout) findViewById(R.id.btnLayout);
 
@@ -228,6 +231,7 @@ public class MainActivity extends FragmentActivity implements
         User user = userService.getRegisteredUser();
         //if(user ==null){
         usernameText.setText(user == null ? null : user.username);
+        phoneText.setText(user == null ? null : user.phone);
 
         Long total = statsService.countRecords();
         Long synced = statsService.countSyncedRecords();
@@ -256,11 +260,13 @@ public class MainActivity extends FragmentActivity implements
     void enableSettingsEdit() {
         btnLayout.setVisibility(View.VISIBLE);
         usernameText.setEnabled(true);
+        phoneText.setEnabled(true);
     }
 
     void disableSettingsEdit() {
         btnLayout.setVisibility(View.GONE);
         usernameText.setEnabled(false);
+        phoneText.setEnabled(false);
 
     }
 
@@ -271,6 +277,14 @@ public class MainActivity extends FragmentActivity implements
 
         String username = usernameText.getText().toString().trim();
         user.username = username.isEmpty() ? null : username;
+
+        String phone = phoneText.getText().toString().trim();
+        String p = PhoneNumberUtils.formatNumberToE164(phone, "");
+        phone = p == null ? phone : p;
+        phoneText.setText(phone);
+        user.phone = phone.isEmpty() ? null : phone;
+
+
         user.recordedAt = new Date();
 
         if (userService.insertUser(user)) {
@@ -297,4 +311,6 @@ public class MainActivity extends FragmentActivity implements
             }
         }
     }
+
+
 }

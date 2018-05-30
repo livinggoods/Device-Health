@@ -1,6 +1,5 @@
 package org.goods.living.tech.health.device.service.app;
 
-import javax.ws.rs.ClientErrorException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
@@ -11,7 +10,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 @Provider
-public class GenericExceptionHandler implements ExceptionMapper<ClientErrorException> {
+public class GenericExceptionHandler implements ExceptionMapper<Exception> {// ClientErrorException
 
 	Logger logger = LogManager.getLogger();
 
@@ -42,12 +41,12 @@ public class GenericExceptionHandler implements ExceptionMapper<ClientErrorExcep
 		}
 	}
 
-	public Response toResponse(ClientErrorException ex) {
+	public Response toResponse(Exception ex) {
 
 		ErrorMessage errorMessage = new ErrorMessage(Status.INTERNAL_SERVER_ERROR.getStatusCode(),
 				"An internal error has occurred|Perhaps here the REQUESTID or some reference that could help you to track the problem...");
 
-		logger.error(errorMessage);
+		logger.error(errorMessage, ex);
 		return Response.status(Status.INTERNAL_SERVER_ERROR).entity(errorMessage).type(MediaType.APPLICATION_JSON)
 				.build();
 		// Response.serverError().entity(errorMessage).build();

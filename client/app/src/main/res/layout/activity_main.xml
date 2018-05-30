@@ -18,10 +18,9 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_margin="5dp"
+            android:layout_margin="3dp"
             android:text="Settings"
-            android:textColor="#000000"
-            android:textSize="20sp" />
+            android:textSize="15sp" />
     </RelativeLayout>
 
 
@@ -49,63 +48,81 @@
                 android:gravity="top"
                 android:orientation="vertical">
 
+
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal">
 
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal">
+                    <TextView
+                        android:id="@+id/textView"
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:editable="false"
+                        android:gravity="center_vertical"
+                        android:text="Smart Health Username" />
 
-                        <TextView
-                            android:id="@+id/textView"
-                            android:layout_width="wrap_content"
-                            android:layout_height="match_parent"
-                            android:layout_weight="1"
-                            android:editable="false"
-                            android:gravity="center_vertical"
-                            android:text="Smart Health Username" />
-
-                        <EditText
-                            android:id="@+id/usernameText"
-                            android:layout_width="wrap_content"
-                            android:layout_height="match_parent"
-                            android:layout_weight="1"
-                            android:ems="10"
-                            android:hint="Username"
-                            android:inputType="textPersonName"
-                            android:singleLine="true" />
-
-                    </LinearLayout>
-
+                    <EditText
+                        android:id="@+id/usernameText"
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:ems="10"
+                        android:hint="Username"
+                        android:inputType="textPersonName"
+                        android:singleLine="true" />
 
                 </LinearLayout>
 
                 <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
                     android:orientation="horizontal">
 
                     <TextView
-                        android:id="@+id/intervalTextView"
+                        android:id="@+id/phonetextView"
                         android:layout_width="wrap_content"
                         android:layout_height="match_parent"
                         android:layout_weight="1"
+                        android:editable="false"
                         android:gravity="center_vertical"
-                        android:text="Location Update interval (seconds):" />
+                        android:text="Phone" />
+
+                    <EditText
+                        android:id="@+id/phoneText"
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:ems="10"
+                        android:hint="Phone"
+                        android:inputType="phone"
+                        android:singleLine="true" />
 
                 </LinearLayout>
 
 
-                <Space
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content" />
+            </LinearLayout>
 
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/intervalTextView"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:gravity="center_vertical"
+                    android:text="Location Update interval (seconds):" />
 
             </LinearLayout>
+
+
+            <Space
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
 
             <LinearLayout
                 android:id="@+id/btnLayout"
