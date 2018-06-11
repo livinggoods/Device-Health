@@ -19,8 +19,10 @@ import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.node.JsonNodeFactory;
 import org.codehaus.jackson.node.ObjectNode;
+import org.goods.living.tech.health.device.jpa.controllers.MedicJpaController;
 import org.goods.living.tech.health.device.jpa.controllers.StatsJpaController;
 import org.goods.living.tech.health.device.jpa.controllers.UsersJpaController;
+import org.goods.living.tech.health.device.jpa.dao.ChvActivity;
 import org.goods.living.tech.health.device.jpa.dao.Stats;
 import org.goods.living.tech.health.device.jpa.dao.Users;
 import org.goods.living.tech.health.device.models.Result;
@@ -42,6 +44,9 @@ public class StatsService extends BaseService {
 	// private ApplicationParameters applicationParameters;
 	@Inject
 	StatsJpaController statsJpaController;
+
+	@Inject
+	MedicJpaController medicJpaController;
 
 	@Inject
 	UsersJpaController usersJpaController;
@@ -109,6 +114,8 @@ public class StatsService extends BaseService {
 		logger.debug("find");
 		JsonNode data = JSonHelper.getJsonNode(incomingData);
 
+		String uuid = data.has("uuid")? data.get("uuid").asText():null;
+
 		String username = data.has("username") ? data.get("username").asText() : null;
 
 		String dateFromString = data.has("from") ? data.get("from").asText() : null;
@@ -117,23 +124,28 @@ public class StatsService extends BaseService {
 		Date from = dateFromString == null ? null : dFormat.parse(dateFromString);
 		Date to = dateToString == null ? null : dFormat.parse(dateToString);
 
-		Users user = username == null ? null : usersJpaController.findByUserName(username);
-		if (user == null) {
-			logger.error("no user found... " + username);
+		logger.info("initiating query execution");
+
+		List<ChvActivity> chvActivities = uuid == null? null: medicJpaController.findChvActivities(uuid, from, to);
+
+		if (chvActivities == null) {
+			logger.error("no activities found... " + username);
 			Result<JsonNode> result = new Result<JsonNode>(false, "", null);
 			return result;
 		}
 
-		List<Stats> list = statsJpaController.fetchStats(user.getId(), from, to);
 		List<JsonNode> results = new ArrayList<>();
 		// ObjectMapper mapper = new ObjectMapper();
 		// ArrayNode array = mapper.valueToTree(list);
 		ObjectMapper mapper = new ObjectMapper();
-		for (Stats s : list) {
+		for (ChvActivity activity : chvActivities) {
+			//get array of locations for the activity timestamp
+
+			List<Stats> list = statsJpaController.fetchStats(uuid, from, to);
 			ObjectNode root = mapper.createObjectNode();
-			root.put("latitude", s.getLatitude());
-			root.put("longitude", s.getLongitude());
-			root.put("recordedAt", mapper.convertValue(s.getRecordedAt(), JsonNode.class));
+			root.put("latitude", activity.getCoordinates().get("latitude"));
+			root.put("longitude", activity.getCoordinates().get("longitude"));
+			root.put("recordedAt", activity.getTimestamp());
 			results.add(root);
 		}
 

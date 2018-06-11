@@ -7,6 +7,7 @@ package org.goods.living.tech.health.device.jpa.controllers;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import javax.persistence.EntityManager;
@@ -14,15 +15,16 @@ import javax.persistence.EntityManagerFactory;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.goods.living.tech.health.device.jpa.dao.ChvActivity;
 import org.goods.living.tech.health.device.jpa.dao.MedicUser;
 
 /**
- *
  * @author bensonbundi
  */
 public class MedicJpaController implements Serializable {
 
-	Logger logger = LogManager.getLogger();
+    Logger logger = LogManager.getLogger();
+    private EntityManagerFactory emf = null;
 
 	public MedicJpaController(EntityManagerFactory emfKE, EntityManagerFactory emfUG) {
 		this.emfKE = emfKE;
@@ -42,6 +44,20 @@ public class MedicJpaController implements Serializable {
 
 	public List<MedicUser> findByNameLike(String username) {
 
+            List<Object[]> list = this.getEntityManagerUG().createNativeQuery("SELECT "
+                    + "doc->>'name' AS username, doc->>'contact_id' contact_id, chw_name , branch_name, chw_phone "
+                    + "FROM couchdb left join contactview_hierarchy ch on ch.chw_uuid=doc->>'contact_id' WHERE doc->>'type' = 'user-settings' "
+                    + "and chw_name like :name").setParameter("name", "%" + username + "%").getResultList();
+            List<MedicUser> l = new ArrayList<>();
+            for (Object[] o : list) {
+                MedicUser mu = new MedicUser();
+                mu.setUsername((String) o[0]);
+                mu.setUuid((String) o[1]);
+                mu.setName((String) o[2]);
+                mu.setBranch((String) o[3]);
+                mu.setPhone((String) o[4]);
+                l.add(mu);
+            }
 		EntityManager em = getEntityManagerUG();
 		try {
 			// CriteriaQuery cq = em.getCriteriaBuilder().createQuery();
@@ -49,26 +65,50 @@ public class MedicJpaController implements Serializable {
 			// cq.select(em.getCriteriaBuilder().count(rt));
 			// Query q = em.createQuery(cq);
 
-			List<Object[]> list = em.createNativeQuery("SELECT "
-					+ "doc->>'name' AS username, doc->>'contact_id' contact_id, chw_name , branch_name, chw_phone "
-					+ "FROM couchdb left join contactview_hierarchy ch on ch.chw_uuid=doc->>'contact_id' WHERE doc->>'type' = 'user-settings' "
-					+ "and chw_name like :name").setParameter("name", "%" + username + "%").getResultList();
-			List<MedicUser> l = new ArrayList<>();
-			for (Object[] o : list) {
-				MedicUser mu = new MedicUser();
-				mu.setUsername((String) o[0]);
-				mu.setUuid((String) o[1]);
-				mu.setName((String) o[2]);
-				mu.setBranch((String) o[3]);
-				mu.setPhone((String) o[4]);
-				l.add(mu);
-			}
+            return l;
+        } finally {
+            em.close();
+        }
 
-			return l;
-		} finally {
-			em.close();
-		}
+    }
 
-	}
+    public List<ChvActivity> findChvActivities(String uuid, Date from, Date to) {
+        long dateFrom = from.getTime();
+        long dateTo = to.getTime();
+        EntityManager em = getEntityManagerUG();
+        logger.debug("date From: "+ dateFrom);
+        logger.debug("date To: "+ dateTo);
+        System.out.println(dateFrom);
+
+        try {
+//            List<Object[]> queryResult = em.createNativeQuery("SELECT doc->'contact'->>'name'  FROM couchdb  WHERE doc->'contact'->>'_id' = :userId AND cast(doc->>'reported_date' as float) " +
+//                    "BETWEEN :dateFrom AND :dateTo ").setParameter("userId", uuid)
+//                    .setParameter("dateFrom", dateFrom).setParameter("dateTo", dateTo).getResultList();
+            logger.info("starting query execution");
+//            List<Object[]> queryResult = em.createNativeQuery("SELECT doc->'contact'->>'name' AS chv_name, " +
+//                    "doc->>'form' as activity, doc->'fields'->'inputs'->'contact'->>'name' as client ,cast(doc->>'reported_date' AS float) " +
+//                    "AS reported_date FROM couchdb WHERE doc #>>'{contact,_id}' = :userId AND cast(doc->>'reported_date' as float) " +
+//                    "BETWEEN :dateFrom AND :dateTo LIMIT 3").setParameter("userId", uuid)
+//                    .setParameter("dateFrom", dateFrom).setParameter("dateTo", dateTo).getResultList();
+
+            List<Object[]> queryResult = em.createNativeQuery("SELECT doc->'contact'->>'name' AS chv_name, doc->>'form' as activity, doc->'fields'->'inputs'->'contact'->>'name' as client ,cast(doc->>'reported_date' AS float) AS reported_date FROM couchdb  WHERE doc #>>'{contact,_id}' = 'd73341565fb117a6b63d9add6f7cbc6b' AND cast(doc->>'reported_date' as float) BETWEEN 1498744631019 AND 1499493489806 LIMIT 6").getResultList();
+
+            List<ChvActivity> activities = new ArrayList<>();
+            for (Object[] object : queryResult) {
+                ChvActivity activity = new ChvActivity();
+                activity.setActivityType((String) object[1]);
+                activity.setContactPerson((String) object[2]);
+                activity.setReportedDate((double) object[3]);
+                activities.add(activity);
+                System.out.println(activities);
+            }
+            logger.info(activities);
+            return activities;
+
+        } finally {
+
+        }
+
+    }
 
 }

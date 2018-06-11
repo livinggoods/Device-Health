@@ -16,6 +16,8 @@ import javax.persistence.Query;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Root;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.goods.living.tech.health.device.jpa.controllers.exceptions.NonexistentEntityException;
 import org.goods.living.tech.health.device.jpa.dao.Stats;
 import org.goods.living.tech.health.device.jpa.dao.Users;
@@ -25,6 +27,8 @@ public class StatsJpaController implements Serializable {
 	public StatsJpaController(EntityManagerFactory emf) {
 		this.emf = emf;
 	}
+	Logger logger = LogManager.getLogger();
+
 
 	private EntityManagerFactory emf = null;
 
@@ -165,17 +169,19 @@ public class StatsJpaController implements Serializable {
 		}
 	}
 
-	public List<Stats> fetchStats(Long userId, Date from, Date to) {
-
+	public List<Stats> fetchStats(String userId, Date from, Date to) {
+		long fromDate=from.getTime();
+		long toDate=to.getTime();
 		EntityManager em = getEntityManager();
 		try {
 			// CriteriaBuilder cb = em.getCriteriaBuilder();
 			// CriteriaQuery<Stats> q = cb.//createQuery(Stats.class);
 			// Root<Stats> c = q.from(Stats.class);
-			Query q = em.createQuery(
-					"SELECT s from Stats s WHERE s.userId.id = :userId and s.recordedAt >= :from and s.recordedAt <= :to");
-			q.setParameter("userId", userId).setParameter("from", from).setParameter("to", to);
 
+			Query q = em.createQuery(
+					"SELECT s from Stats s WHERE s.userId.id = :userId and s.recordedAt >= :fromDate and s.recordedAt <= :toDate");
+			q.setParameter("userId", userId).setParameter("fromDate", fromDate).setParameter("toDate", toDate);
+			q.getResultList();
 			return q.getResultList();
 
 		} finally {
