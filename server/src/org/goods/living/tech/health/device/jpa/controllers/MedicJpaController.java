@@ -24,19 +24,25 @@ public class MedicJpaController implements Serializable {
 
 	Logger logger = LogManager.getLogger();
 
-	public MedicJpaController(EntityManagerFactory emf) {
-		this.emf = emf;
+	public MedicJpaController(EntityManagerFactory emfKE, EntityManagerFactory emfUG) {
+		this.emfKE = emfKE;
+		this.emfUG = emfUG;
 	}
 
-	private EntityManagerFactory emf = null;
+	EntityManagerFactory emfUG = null;
+	EntityManagerFactory emfKE = null;
 
-	public EntityManager getEntityManager() {
-		return emf.createEntityManager();
+	public EntityManager getEntityManagerUG() {
+		return emfUG.createEntityManager();
+	}
+
+	public EntityManager getEntityManagerKE() {
+		return emfKE.createEntityManager();
 	}
 
 	public List<MedicUser> findByNameLike(String username) {
 
-		EntityManager em = getEntityManager();
+		EntityManager em = getEntityManagerUG();
 		try {
 			// CriteriaQuery cq = em.getCriteriaBuilder().createQuery();
 			// Root<Users> rt = cq.from(Users.class);

@@ -20,10 +20,6 @@ import org.goods.living.tech.health.device.jpa.controllers.exceptions.Nonexisten
 import org.goods.living.tech.health.device.jpa.dao.Stats;
 import org.goods.living.tech.health.device.jpa.dao.Users;
 
-/**
- *
- * @author bensonbundi
- */
 public class StatsJpaController implements Serializable {
 
 	public StatsJpaController(EntityManagerFactory emf) {

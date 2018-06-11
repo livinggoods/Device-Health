@@ -35,9 +35,36 @@ xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/persistence http://xmlns.jcp.org
 		</properties>
 	</persistence-unit>
 	
-	<persistence-unit name="postgresClientDBMM" transaction-type="RESOURCE_LOCAL">
+	<persistence-unit name="postgresClientDBMMKE" transaction-type="RESOURCE_LOCAL">
 			<provider>org.hibernate.jpa.HibernatePersistenceProvider</provider>
-		<non-jta-data-source>java:comp/env/jdbc/postgresClientDBMM</non-jta-data-source>
+		<non-jta-data-source>java:comp/env/jdbc/postgresClientDBMMKE</non-jta-data-source>
+
+		<properties>
+			<property name="hibernate.archive.autodetection" value="class,hbm" />
+			<property name="hibernate.dialect" value="org.hibernate.dialect.PostgreSQLDialect" />
+			 <property name="hibernate.show_sql" value="true"/>
+			<property name="hibernate.flushMode" value="FLUSH_AUTO" />
+			<property name="hibernate.hbm2ddl.auto" value="none" />
+			
+			
+			<!-- Configuring Connection Pool -->
+			<!-- <property name="hibernate.connection.provider_class" value="org.hibernate.connection.C3P0ConnectionProvider" />   --> 
+            <property name="hibernate.c3p0.acquire_increment" value="1" />     
+			<property name="hibernate.c3p0.min_size" value="5" />
+			<property name="hibernate.c3p0.max_size" value="30" />
+			<property name="hibernate.c3p0.timeout" value="300" />
+			<property name="hibernate.c3p0.max_statements" value="50" />
+			<property name="hibernate.c3p0.idle_test_period" value="3000" /> 	
+  			<property name="hibernate.c3p0.acquire_retry_attempts" value="3" />
+  			<property name="hibernate.c3p0.acquire_retry_delay" value="200" />
+			
+			
+		</properties>
+	</persistence-unit>
+	
+	<persistence-unit name="postgresClientDBMMUG" transaction-type="RESOURCE_LOCAL">
+			<provider>org.hibernate.jpa.HibernatePersistenceProvider</provider>
+		<non-jta-data-source>java:comp/env/jdbc/postgresClientDBMMUG</non-jta-data-source>
 
 		<properties>
 			<property name="hibernate.archive.autodetection" value="class,hbm" />

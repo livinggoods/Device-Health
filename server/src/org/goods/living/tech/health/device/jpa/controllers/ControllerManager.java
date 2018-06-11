@@ -28,7 +28,8 @@ public class ControllerManager {
 	// @Inject
 	// @PersistenceUnitQualifier(PersistenceUnitEnum.POSTGRES_MM)
 	// @PersistenceContext(unitName = "postgresClientDBMM")
-	EntityManagerFactory entityManagerFactoryMM;
+	EntityManagerFactory entityManagerFactoryMMKE;
+	EntityManagerFactory entityManagerFactoryMMUG;
 
 	@Produces
 	@org.goods.living.tech.health.device.jpa.PersistenceUnitQualifier(org.goods.living.tech.health.device.jpa.PersistenceUnitEnum.POSTGRES_DEVICE_HEALTH)
@@ -38,10 +39,17 @@ public class ControllerManager {
 	}
 
 	@Produces
-	@org.goods.living.tech.health.device.jpa.PersistenceUnitQualifier(org.goods.living.tech.health.device.jpa.PersistenceUnitEnum.POSTGRES_MM)
-	public EntityManagerFactory getEntityManagerFactoryMM() {
-		logger.debug("entityManagerFactoryMM() is called ...!");
-		return entityManagerFactoryMM;
+	@org.goods.living.tech.health.device.jpa.PersistenceUnitQualifier(org.goods.living.tech.health.device.jpa.PersistenceUnitEnum.POSTGRES_MMKE)
+	public EntityManagerFactory getEntityManagerFactoryMMKE() {
+		logger.debug("entityManagerFactoryMMKE() is called ...!");
+		return entityManagerFactoryMMKE;
+	}
+
+	@Produces
+	@org.goods.living.tech.health.device.jpa.PersistenceUnitQualifier(org.goods.living.tech.health.device.jpa.PersistenceUnitEnum.POSTGRES_MMUG)
+	public EntityManagerFactory getEntityManagerFactoryMMUG() {
+		logger.debug("entityManagerFactoryMMUG() is called ...!");
+		return entityManagerFactoryMMUG;
 	}
 
 	@Produces
@@ -56,12 +64,13 @@ public class ControllerManager {
 
 	@Produces
 	public MedicJpaController getMedicJpaController() {
-		return new MedicJpaController(entityManagerFactoryMM);
+		return new MedicJpaController(entityManagerFactoryMMKE, entityManagerFactoryMMUG);
 	}
 
 	void setUp() throws Exception {
 		entityManagerFactoryDH = Persistence.createEntityManagerFactory("postgresClientDBDeviceHealth");
-		entityManagerFactoryMM = Persistence.createEntityManagerFactory("postgresClientDBMM");
+		entityManagerFactoryMMKE = Persistence.createEntityManagerFactory("postgresClientDBMMKE");
+		entityManagerFactoryMMUG = Persistence.createEntityManagerFactory("postgresClientDBMMUG");
 	}
 
 }

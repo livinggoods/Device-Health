@@ -180,6 +180,7 @@ public class UserService extends BaseService {
 		for (MedicUser u : lists) {
 			ObjectNode root = mapper.createObjectNode();
 			root.put("username", u.getUsername());
+			root.put("uuid", u.getUuid());
 			root.put("name", u.getName());
 			root.put("branch", u.getBranch());
 			root.put("phone", u.getPhone());

@@ -22,9 +22,13 @@ public class DatabaseManager {
 	@PersistenceContext(unitName = "postgresClientDBDeviceHealth")
 	EntityManagerFactory entityManagerFactoryDH;
 
-	@PersistenceUnitQualifier(PersistenceUnitEnum.POSTGRES_MM)
-	@PersistenceContext(unitName = "postgresClientDBMM")
-	EntityManagerFactory entityManagerFactoryMM;
+	@PersistenceUnitQualifier(PersistenceUnitEnum.POSTGRES_MMKE)
+	@PersistenceContext(unitName = "postgresClientDBMMKE")
+	EntityManagerFactory entityManagerFactoryMMKE;
+
+	@PersistenceUnitQualifier(PersistenceUnitEnum.POSTGRES_MMUG)
+	@PersistenceContext(unitName = "postgresClientDBMMUG")
+	EntityManagerFactory entityManagerFactoryMMUG;
 
 	Logger logger = LogManager.getLogger();
 

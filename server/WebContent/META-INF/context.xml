@@ -10,11 +10,17 @@
 		validationQuery="SELECT 1;" testOnBorrow="true"/> 
 		<!--  factory="org.apache.commons.dbcp2.BasicDataSource" --> 
 		
-		<Resource name="jdbc/postgresClientDBMM" auth="Container" type="javax.sql.DataSource"
+		<Resource name="jdbc/postgresClientDBMMUG" auth="Container" type="javax.sql.DataSource"
+		driverClassName="org.postgresql.Driver"
+		url="jdbc:postgresql://localhost:5434/livinggoods-ug"
+		username="victor" password="%upp0rt721" maxActive="20"
+		validationQuery="SELECT 1;" testOnBorrow="true"/> <!--  ssh -L 5434:127.0.0.1:5433 user@server -->
+
+	<Resource name="jdbc/postgresClientDBMMKE" auth="Container" type="javax.sql.DataSource"
 		driverClassName="org.postgresql.Driver"
 		url="jdbc:postgresql://localhost:5434/livinggoods-ke"
 		username="victor" password="%upp0rt721" maxActive="20"
-		validationQuery="SELECT 1;" testOnBorrow="true"/> <!--  ssh -L 5434:127.0.0.1:5433 user@server -->
+		validationQuery="SELECT 1;" testOnBorrow="true"/>
 
 
 	<Resource name="BeanManager" auth="Container"
@@ -31,7 +37,7 @@
 	<Parameter name="org.goods.living.tech.health.device.jwt.token.life"
 		value="123400" />
 	<Parameter name="org.goods.living.tech.health.device.api"
-		value="10107" />
+		value="10108" />
 	<Parameter name="org.goods.living.tech.health.device.locationUpdateInterval"
 		value="300" />
 		
