@@ -30,11 +30,17 @@
                                     </li>
                                     <li style="margin-left: 5px; margin-top: 10px;">
                                         <el-date-picker
-                                                v-model="searchParams.dates"
-                                                type="daterange"
-                                                range-separator="To"
-                                                start-placeholder="Start date"
-                                                end-placeholder="End date"
+                                                v-model="searchParams.dates[0]"
+                                                type="date"
+                                                placeholder="Start Date"
+                                        >
+                                        </el-date-picker>
+                                    </li>
+                                    <li style="margin-left: 5px; margin-top: 10px;">
+                                        <el-date-picker
+                                                v-model="searchParams.dates[1]"
+                                                type="date"
+                                                placeholder="End date"
                                         >
                                         </el-date-picker>
                                     </li>
@@ -141,15 +147,6 @@ export default {
     },
     methods: {
         searchChv: function (username, callback) {
-            // console.log(map.getLayer('line-animation'))
-            // try {
-            //     map.markerLayer.setGeoJSON([])
-            //     map.removeLayer('line-animation')
-            //     map.removeLayer('points')
-            // } catch (e) {
-            //     //
-            // }
-
             api.post('/user/find', {'username': username}).then(function (response) {
                 if (response.data.status === true) {
                     var users = []
@@ -223,7 +220,7 @@ export default {
                         'latitude': coordinates.latitude,
                         'longitude': coordinates.longitude},
                     'radius': 3,
-                    'recordedAt': coordinates.recordedAt
+                    'recordedAt': locations[i][0].recordedAt
                     })
                 } else {
                     var sortedLocation = locations[i].sort(function (a, b) {
