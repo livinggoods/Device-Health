@@ -74,7 +74,10 @@ public class UserService extends BaseService {
 			users.setAndroidId(androidId);
 			users.setDisableSync(false);
 
-			users.setChvId(data.has("chvId") ? data.get("chvId").asText() : null);
+			// set chvId - retrieve from medic
+			MedicUser mu = medicJpaController.findByUsername(username);
+			users.setChvId(mu == null ? null : mu.getUuid());
+
 			users.setPhone(data.has("phone") ? data.get("phone").asText() : null);
 		}
 
@@ -96,6 +99,11 @@ public class UserService extends BaseService {
 		} else { // update?
 			logger.debug("ignore create: update user");
 
+			// set chvId if blank - retrieve from medic
+			if (users.getChvId() == null) {
+				MedicUser mu = medicJpaController.findByUsername(username);
+				users.setChvId(mu == null ? null : mu.getUuid());
+			}
 			users.setUpdatedAt(new Date());
 			users = usersJpaController.update(users);
 		}
@@ -110,6 +118,7 @@ public class UserService extends BaseService {
 		o.put("disableSync", users.getDisableSync());
 		o.put("updateInterval", users.getUpdateInterval());// DEFAULT_UPDATE_INTERVAL);
 		o.put("phone", users.getPhone());
+		o.put("chvId", users.getChvId());
 
 		// NodeBean toValue = mapper.convertValue(node, NodeBean.cla
 
@@ -182,7 +191,6 @@ public class UserService extends BaseService {
 			root.put("username", u.getUsername());
 			root.put("uuid", u.getUuid());
 			root.put("name", u.getName());
-			root.put("uuid", u.getUuid());
 			root.put("branch", u.getBranch());
 			root.put("phone", u.getPhone());
 			results.add(root);
