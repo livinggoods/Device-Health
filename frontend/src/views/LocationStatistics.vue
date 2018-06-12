@@ -154,8 +154,13 @@ export default {
                         users.push({'value': user})
                         callback(users)
                     })
+                } else {
+                    var errorResult = [{'value': 'No user found'}]
+                    callback(errorResult)
                 }
             }).catch(function (error) {
+                var errorResult = [{'value': 'No user found'}]
+                callback(errorResult)
                 console.log(error)
             })
         },
