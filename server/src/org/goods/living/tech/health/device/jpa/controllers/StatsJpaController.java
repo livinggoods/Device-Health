@@ -6,7 +6,9 @@
 package org.goods.living.tech.health.device.jpa.controllers;
 
 import java.io.Serializable;
+import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 
 import javax.persistence.EntityManager;
@@ -19,6 +21,7 @@ import javax.persistence.criteria.Root;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.goods.living.tech.health.device.jpa.controllers.exceptions.NonexistentEntityException;
+import org.goods.living.tech.health.device.jpa.dao.ChvActivity;
 import org.goods.living.tech.health.device.jpa.dao.Stats;
 import org.goods.living.tech.health.device.jpa.dao.Users;
 
@@ -178,11 +181,38 @@ public class StatsJpaController implements Serializable {
 			// CriteriaQuery<Stats> q = cb.//createQuery(Stats.class);
 			// Root<Stats> c = q.from(Stats.class);
 
-			Query q = em.createQuery(
-					"SELECT s from Stats s WHERE s.userId.id = :userId and s.recordedAt >= :fromDate and s.recordedAt <= :toDate");
-			q.setParameter("userId", userId).setParameter("fromDate", fromDate).setParameter("toDate", toDate);
-			q.getResultList();
-			return q.getResultList();
+			List<Stats> statistics = em.createQuery(
+					"SELECT s from Stats s WHERE s.userId.id = :userId and s.recordedAt >= :fromDate and " +
+							"s.recordedAt <= :toDate").setParameter("userId", userId)
+					.setParameter("fromDate", fromDate).setParameter("toDate", toDate).getResultList();
+			return statistics;
+
+		} finally {
+			em.close();
+		}
+	}
+	public ChvActivity fetchLocationStatistics(String uuid, ChvActivity activity) {
+		long timestamp=activity.getTimestamp();
+		long upperLimit=timestamp+600;
+		long lowerLimit=timestamp-600;
+
+		Date to = new Date(upperLimit);
+		Date from = new Date(lowerLimit);
+
+		Date d = new Date(timestamp);
+
+
+		EntityManager em = getEntityManager();
+		try {
+
+			List<Object[]> statistics = em.createQuery(
+					"SELECT s.latitude as latitude, s.longitude as longitude, s.recordedAt as recorded_at from Stats s LEFT JOIN Users u ON (u.id=s.userId) WHERE u.chvId= :uuid ORDER BY abs(cast(s.recordedAt as date) - :d) ASC").setMaxResults(1).setParameter("uuid", uuid).setParameter("d", d).getResultList();
+			HashMap<String, String> coordinates= new HashMap<>();
+
+			coordinates.put("latitude", Double.toString((Double)statistics.get(0)[0]));
+			coordinates.put("longitude", Double.toString((Double)statistics.get(0)[1]));
+			activity.setCoordinates(coordinates);
+			return activity;
 
 		} finally {
 			em.close();

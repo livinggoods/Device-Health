@@ -5,6 +5,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 
 import javax.enterprise.context.RequestScoped;
@@ -141,11 +142,13 @@ public class StatsService extends BaseService {
 		for (ChvActivity activity : chvActivities) {
 			//get array of locations for the activity timestamp
 
-			List<Stats> list = statsJpaController.fetchStats(uuid, from, to);
+			ChvActivity activityWithStats = statsJpaController.fetchLocationStatistics(uuid, activity);
 			ObjectNode root = mapper.createObjectNode();
-			root.put("latitude", activity.getCoordinates().get("latitude"));
-			root.put("longitude", activity.getCoordinates().get("longitude"));
-			root.put("recordedAt", activity.getTimestamp());
+
+			root.put("timestamp", activityWithStats.getReportedDate());
+			root.put("longitude", activityWithStats.getCoordinates().get("longitude"));
+			root.put("latitude", activityWithStats.getCoordinates().get("latitude"));
+			root.put("activity", activityWithStats.getActivityType());
 			results.add(root);
 		}
 

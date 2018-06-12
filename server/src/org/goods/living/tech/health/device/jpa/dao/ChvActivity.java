@@ -21,9 +21,9 @@ public class ChvActivity implements Serializable {
     private String uuid;
     private HashMap<String,String> coordinates;
     private String activityType;
-    private double timestamp;
+    private long timestamp;
     private String contactPerson;
-    private double reportedDate;
+    private long reportedDate;
 
     public HashMap<String, String> getCoordinates() {
         return coordinates;
@@ -35,11 +35,11 @@ public class ChvActivity implements Serializable {
         this.coordinates = coordinates;
     }
 
-    public double getReportedDate() {
+    public long getReportedDate() {
         return reportedDate;
     }
 
-    public void setReportedDate(double reportedDate) {
+    public void setReportedDate(long reportedDate) {
         this.reportedDate = reportedDate;
     }
 
@@ -51,11 +51,11 @@ public class ChvActivity implements Serializable {
         this.activityType = activityType;
     }
 
-    public double getTimestamp() {
+    public long getTimestamp() {
         return timestamp;
     }
 
-    public void setTimestamp(double timestamp) {
+    public void setTimestamp(long timestamp) {
         this.timestamp = timestamp;
     }
 
