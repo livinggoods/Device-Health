@@ -12,13 +12,13 @@
 		
 		<Resource name="jdbc/postgresClientDBMMUG" auth="Container" type="javax.sql.DataSource"
 		driverClassName="org.postgresql.Driver"
-		url="jdbc:postgresql://localhost:5434/livinggoods-ug"
+		url="jdbc:postgresql://localhost:5433/livinggoods-ug"
 		username="victor" password="%upp0rt721" maxActive="20"
-		validationQuery="SELECT 1;" testOnBorrow="true"/> <!--  ssh -L 5434:127.0.0.1:5433 user@server -->
+		validationQuery="SELECT 1;" testOnBorrow="true"/> <!--  ssh -L 5433:127.0.0.1:5433 user@server -->
 
 	<Resource name="jdbc/postgresClientDBMMKE" auth="Container" type="javax.sql.DataSource"
 		driverClassName="org.postgresql.Driver"
-		url="jdbc:postgresql://localhost:5434/livinggoods-ke"
+		url="jdbc:postgresql://localhost:5433/livinggoods-ke"
 		username="victor" password="%upp0rt721" maxActive="20"
 		validationQuery="SELECT 1;" testOnBorrow="true"/>
 
