@@ -206,12 +206,17 @@ public class StatsJpaController implements Serializable {
 		try {
 
 			List<Object[]> statistics = em.createQuery(
-					"SELECT s.latitude as latitude, s.longitude as longitude, s.recordedAt as recorded_at from Stats s LEFT JOIN Users u ON (u.id=s.userId) WHERE u.chvId= :uuid ORDER BY abs(cast(s.recordedAt as date) - :d) ASC").setMaxResults(1).setParameter("uuid", uuid).setParameter("d", d).getResultList();
+					"SELECT s.latitude as latitude, s.longitude as longitude, s.recordedAt as recorded_at from Stats s LEFT JOIN Users u ON (u.id=s.userId) WHERE u.chvId= :uuid ORDER BY abs(cast(s.recordedAt as date) - :d) ASC").setParameter("uuid", uuid).setParameter("d", d).getResultList();
 			HashMap<String, String> coordinates= new HashMap<>();
 
-			coordinates.put("latitude", Double.toString((Double)statistics.get(0)[0]));
-			coordinates.put("longitude", Double.toString((Double)statistics.get(0)[1]));
-			activity.setCoordinates(coordinates);
+			//Add restriction on max and min timings
+
+			if(!statistics.isEmpty()){
+				coordinates.put("latitude", Double.toString((Double)statistics.get(0)[0]));
+				coordinates.put("longitude", Double.toString((Double)statistics.get(0)[1]));
+				activity.setCoordinates(coordinates);
+			}
+
 			return activity;
 
 		} finally {

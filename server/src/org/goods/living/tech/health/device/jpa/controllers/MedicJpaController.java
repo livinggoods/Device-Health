@@ -6,6 +6,7 @@
 package org.goods.living.tech.health.device.jpa.controllers;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -99,48 +100,46 @@ public class MedicJpaController implements Serializable {
 	}
 
 	public List<ChvActivity> findChvActivities(String uuid, Date from, Date to) {
-		long dateFrom = from.getTime();
-		long dateTo = to.getTime();
+		long dateFrom = from.getTime()/1000;
+		long dateTo = to.getTime()/1000;
 		EntityManager em = getEntityManagerUG();
-		logger.debug("date From: " + dateFrom);
-		logger.debug("date To: " + dateTo);
+		logger.debug("date From: "+ dateFrom);
+		logger.debug("date To: "+ dateTo);
 		System.out.println(dateFrom);
 
 		try {
-			// List<Object[]> queryResult = em.createNativeQuery("SELECT
-			// doc->'contact'->>'name' FROM couchdb WHERE doc->'contact'->>'_id' = :userId
-			// AND cast(doc->>'reported_date' as float) " +
-			// "BETWEEN :dateFrom AND :dateTo ").setParameter("userId", uuid)
-			// .setParameter("dateFrom", dateFrom).setParameter("dateTo",
-			// dateTo).getResultList();
+//            List<Object[]> queryResult = em.createNativeQuery("SELECT doc->'contact'->>'name'  FROM couchdb  WHERE doc->'contact'->>'_id' = :userId AND cast(doc->>'reported_date' as float) " +
+//                    "BETWEEN :dateFrom AND :dateTo ").setParameter("userId", uuid)
+//                    .setParameter("dateFrom", dateFrom).setParameter("dateTo", dateTo).getResultList();
 			logger.info("starting query execution");
-			// List<Object[]> queryResult = em.createNativeQuery("SELECT
-			// doc->'contact'->>'name' AS chv_name, " +
-			// "doc->>'form' as activity, doc->'fields'->'inputs'->'contact'->>'name' as
-			// client ,cast(doc->>'reported_date' AS float) " +
-			// "AS reported_date FROM couchdb WHERE doc #>>'{contact,_id}' = :userId AND
-			// cast(doc->>'reported_date' as float) " +
-			// "BETWEEN :dateFrom AND :dateTo LIMIT 3").setParameter("userId", uuid)
-			// .setParameter("dateFrom", dateFrom).setParameter("dateTo",
-			// dateTo).getResultList();
+//            List<Object[]> queryResult = em.createNativeQuery("SELECT doc->'contact'->>'name' AS chv_name, " +
+//                    "doc->>'form' as activity, doc->'fields'->'inputs'->'contact'->>'name' as client ,cast(doc->>'reported_date' AS float) " +
+//                    "AS reported_date FROM couchdb WHERE doc #>>'{contact,_id}' = :userId AND cast(doc->>'reported_date' as float) " +
+//                    "BETWEEN :dateFrom AND :dateTo LIMIT 3").setParameter("userId", uuid)
+//                    .setParameter("dateFrom", dateFrom).setParameter("dateTo", dateTo).getResultList();
 
-			List<Object[]> queryResult = em.createNativeQuery(
-					"SELECT doc->'contact'->>'name' AS chv_name, doc->>'form' as activity, doc->'fields'->'inputs'->'contact'->>'name' as client ,doc->>'reported_date'"
-							+ " AS reported_date FROM couchdb  WHERE doc #>>'{contact,_id}' = :uuid AND cast(doc->>'reported_date' as float) BETWEEN :fromDate AND :toDate LIMIT 6")
-					.setParameter("uuid", uuid).setParameter("fromDate", dateFrom).setParameter("toDate", dateTo)
-					.getResultList();
+//            List<Object[]> queryResult = em.createNativeQuery("SELECT doc->'contact'->>'name' AS chv_name, doc->>'form' as activity, doc->'fields'->'inputs'->'contact'->>'name' as client ,doc->>'reported_date'" +
+//                    " AS reported_date FROM couchdb  WHERE doc #>>'{contact,_id}' = :uuid AND cast(doc->>'reported_date' as float) BETWEEN :fromDate AND :toDate LIMIT 6")
+//                    .setParameter("uuid", uuid).setParameter("fromDate", dateFrom).setParameter("toDate", dateTo).getResultList();
+
+			List<Object[]> queryResult = em.createNativeQuery("SELECT * from (SELECT doc->'contact'->>'name' AS " +
+					"chv_name, doc->>'form' as activity, doc->'fields'->'inputs'->'contact'->>'name' as client, cast(LEFT (doc->>'reported_date' ,-3) as numeric) as reported_date " +
+					"FROM couchdb  WHERE doc #>>'{contact,_id}' = :uuid) as a where reported_date > :fromDate and reported_date < :toDate")
+					.setMaxResults(70).setParameter("uuid", uuid).setParameter("fromDate", 1498744631)
+					.setParameter("toDate", 1509744631).getResultList();
+
+
 
 			List<ChvActivity> activities = new ArrayList<>();
 			for (Object[] object : queryResult) {
+				String reportedDate=(String)object[3];
 				ChvActivity activity = new ChvActivity();
 				activity.setActivityType((String) object[1]);
 				activity.setContactPerson((String) object[2]);
 				activity.setUuid(uuid);
-				activity.setReportedDate(Long.parseLong((String) object[3]));
+//                activity.setReportedDate(Long.parseLong((Long)object[3]));
 				activities.add(activity);
-				System.out.println(activities);
 			}
-			logger.info(activities);
 			return activities;
 
 		} finally {
@@ -150,3 +149,4 @@ public class MedicJpaController implements Serializable {
 	}
 
 }
+

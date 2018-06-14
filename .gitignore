@@ -23,3 +23,5 @@ yarn-error.log*
 frontend/dist\.zip
 
 frontend/dist/
+
+server/Device_Health\.iml
