@@ -15,21 +15,20 @@
                         <p>Location Statistics</p>
                     </a>
                 </li>
-
                 <li>
-                    <a href="table.html">
-                        <i class="pe-7s-battery"></i>
-                        <p>Battery Statistics</p>
-                    </a>
-                </li>
-                <li>
-                    <a href="typography.html">
+                    <a href="/#/error">
                         <i class="pe-7s-graph1"></i>
                         <p>Data Usage Statistics</p>
                     </a>
                 </li>
                 <li>
-                    <a href="user.html">
+                    <a href="/#/error">
+                        <i class="pe-7s-battery"></i>
+                        <p>Battery Statistics</p>
+                    </a>
+                </li>
+                <li>
+                    <a href="/#/error">
                         <i class="pe-7s-user"></i>
                         <p>User Profile</p>
                     </a>

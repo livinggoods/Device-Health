@@ -12,10 +12,17 @@ Vue.config.productionTip = false
 
 //  Router guard to check whether route is allowed
 router.beforeEach((to, from, next) => {
+    console.log((to))
     if (generalConfig.siteModules.includes(from.name) === false) {
         next()
-    } else next()
+    }
+    else if (!to.matched[0].length) {
+        next('/error')
+    } else {
+        next()
+    }
 })
+
 Vue.use(ElementUI, {locale})
 
 new Vue({
