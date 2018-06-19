@@ -131,7 +131,7 @@ export default {
             },
             'sidebarHeader': generalConfig.sidebarHeader,
             'searchParams': {
-                'chvName': '',
+                'uuid': '',
                 'chvId': '',
                 'dates': []
             },
@@ -148,14 +148,18 @@ export default {
     methods: {
         searchChv: function (username, callback) {
             api.post('/user/find', {'username': username}).then(function (response) {
+                var errorResult = [{'value': 'No user found'}]
                 if (response.data.status === true) {
                     var users = []
-                    response.data.data.users.forEach(function (user) {
-                        users.push({'value': user})
-                        callback(users)
-                    })
+                    if (response.data.data.users.length > 0) {
+                        response.data.data.users.forEach(function (user) {
+                            users.push({'value': user.username, 'userObject': user})
+                            callback(users)
+                        })
+                    } else {
+                        callback(errorResult)
+                    }
                 } else {
-                    var errorResult = [{'value': 'No user found'}]
                     callback(errorResult)
                 }
             }).catch(function (error) {
@@ -164,14 +168,15 @@ export default {
                 console.log(error)
             })
         },
-        selectChv: function (chvName) {
-            this.searchParams.chvName = chvName.value
+        selectChv: function (chv) {
+            this.searchParams.uuid = chv.userObject.uuid
         },
         getLocationStats: function () {
             var self = this
             this.isLoading = true
+            console.log(this.searchParams)
             api.post('/stats/find', {
-                'username': this.searchParams.chvName,
+                'uuid': this.searchParams.uuid,
                 'from': moment(this.searchParams.dates[0]).format('MM-DD-YYYY'),
                 'to': moment(this.searchParams.dates[1]).format('MM-DD-YYYY')
             }).then(function (response) {
@@ -182,6 +187,7 @@ export default {
                 } else toastr.error('Oops! Something went wrong. Please try again')
                 self.isLoading = false
             }).catch(function (error) {
+                toastr.error('Oops! Something went wrong. Please try again')
                 self.isLoading = false
                 console.log(error)
             })
@@ -205,6 +211,7 @@ export default {
                         'latitude': entry.latitude,
                         'longitude': entry.longitude
                     }),
+                    'activity': entry.activity,
                     'recordedAt': entry.recordedAt
                 })
             })
@@ -225,6 +232,8 @@ export default {
                         'latitude': coordinates.latitude,
                         'longitude': coordinates.longitude},
                     'radius': 3,
+                    'activity': locations[i][0].activity,
+                    'client': locations[i][0].client,
                     'recordedAt': locations[i][0].recordedAt
                     })
                 } else {
@@ -286,6 +295,8 @@ export default {
                     'properties': {
                         'class': 'marker',
                         'radius': location.radius,
+                        'activity': location.activity,
+                        'client': location.client,
                         'recordedAt': location.recordedAt
                     },
                     'geometry': {
@@ -324,7 +335,10 @@ export default {
                 var popup = new mapboxgl.Popup({ offset: 25 })
                     .setHTML('<h4> Location Details</h4>' +
                         '<p>Latitude: ' + marker.geometry.coordinates[0] + ' Latitude: ' + marker.geometry.coordinates[1] + '</p>' +
-                        '<p>Time: ' + marker.properties.recordedAt + '</p>')
+                        '<p>Time: ' + marker.properties.recordedAt + '</p>' +
+                        '<p>Activity: ' + marker.properties.activity + '</p>' +
+                        '<p>Client: ' + marker.properties.client + '</p>'
+                    )
 
                 new mapboxgl.Marker(el)
                     .setLngLat(marker.geometry.coordinates)

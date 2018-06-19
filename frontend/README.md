@@ -30,3 +30,17 @@ You can run tests using Karma
  
  ##### 3. Should get
  
+ 
+ ### Running on Docker
+ 
+ - Run the following command to create a docker image: 
+ 
+ ```docker build -t lgapps/devicehealth_frontend ```  
+ 
+ - Then create a container from the image using the following command:
+ 
+ ```$xslt
+    docker run -d --name devicehealth_frontend -p 80:80 -v /opt/device-health-front/dist:/Device-Health/frontend lgapps/devicehealth_frontend
+```
+ 
+
