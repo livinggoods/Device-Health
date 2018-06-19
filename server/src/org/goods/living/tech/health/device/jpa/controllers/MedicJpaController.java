@@ -6,7 +6,6 @@
 package org.goods.living.tech.health.device.jpa.controllers;
 
 import java.io.Serializable;
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -18,6 +17,10 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.goods.living.tech.health.device.jpa.dao.ChvActivity;
 import org.goods.living.tech.health.device.jpa.dao.MedicUser;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
+
 
 /**
  * @author bensonbundi
@@ -98,46 +101,52 @@ public class MedicJpaController implements Serializable {
 		}
 
 	}
+	public List<ChvActivity> findChvActivities(String chvId, Date from, Date to) {
+		long dateFrom=from.getTime()/1000;
+		long dateTo=to.getTime()/1000;
 
-	public List<ChvActivity> findChvActivities(String uuid, Date from, Date to) {
-		long dateFrom = from.getTime()/1000;
-		long dateTo = to.getTime()/1000;
 		EntityManager em = getEntityManagerUG();
-		logger.debug("date From: "+ dateFrom);
-		logger.debug("date To: "+ dateTo);
-		System.out.println(dateFrom);
 
 		try {
-//            List<Object[]> queryResult = em.createNativeQuery("SELECT doc->'contact'->>'name'  FROM couchdb  WHERE doc->'contact'->>'_id' = :userId AND cast(doc->>'reported_date' as float) " +
-//                    "BETWEEN :dateFrom AND :dateTo ").setParameter("userId", uuid)
-//                    .setParameter("dateFrom", dateFrom).setParameter("dateTo", dateTo).getResultList();
+
 			logger.info("starting query execution");
-//            List<Object[]> queryResult = em.createNativeQuery("SELECT doc->'contact'->>'name' AS chv_name, " +
-//                    "doc->>'form' as activity, doc->'fields'->'inputs'->'contact'->>'name' as client ,cast(doc->>'reported_date' AS float) " +
-//                    "AS reported_date FROM couchdb WHERE doc #>>'{contact,_id}' = :userId AND cast(doc->>'reported_date' as float) " +
-//                    "BETWEEN :dateFrom AND :dateTo LIMIT 3").setParameter("userId", uuid)
-//                    .setParameter("dateFrom", dateFrom).setParameter("dateTo", dateTo).getResultList();
 
-//            List<Object[]> queryResult = em.createNativeQuery("SELECT doc->'contact'->>'name' AS chv_name, doc->>'form' as activity, doc->'fields'->'inputs'->'contact'->>'name' as client ,doc->>'reported_date'" +
-//                    " AS reported_date FROM couchdb  WHERE doc #>>'{contact,_id}' = :uuid AND cast(doc->>'reported_date' as float) BETWEEN :fromDate AND :toDate LIMIT 6")
-//                    .setParameter("uuid", uuid).setParameter("fromDate", dateFrom).setParameter("toDate", dateTo).getResultList();
-
-			List<Object[]> queryResult = em.createNativeQuery("SELECT * from (SELECT doc->'contact'->>'name' AS " +
-					"chv_name, doc->>'form' as activity, doc->'fields'->'inputs'->'contact'->>'name' as client, cast(LEFT (doc->>'reported_date' ,-3) as numeric) as reported_date " +
-					"FROM couchdb  WHERE doc #>>'{contact,_id}' = :uuid) as a where reported_date > :fromDate and reported_date < :toDate")
-					.setMaxResults(70).setParameter("uuid", uuid).setParameter("fromDate", 1498744631)
-					.setParameter("toDate", 1509744631).getResultList();
-
-
+			List<Object[]> queryResult = em.createNativeQuery("SELECT cast(uuid as text) as recordId, cast(chw as text) as chwId,  formname as formname, extract(epoch from reported) as reported, cast(doc as text) as jsonRecord from (SELECT * from form_metadata fm where chw = :chvId and extract(epoch from reported) between :fromDate and :toDate) as a inner join couchdb cb on (a.uuid = cb.doc->>'_id')")
+					.setParameter("chvId", chvId)
+					.setParameter("fromDate", dateFrom)
+					.setParameter("toDate", dateTo)
+					.getResultList();
 
 			List<ChvActivity> activities = new ArrayList<>();
 			for (Object[] object : queryResult) {
-				String reportedDate=(String)object[3];
 				ChvActivity activity = new ChvActivity();
-				activity.setActivityType((String) object[1]);
-				activity.setContactPerson((String) object[2]);
-				activity.setUuid(uuid);
-//                activity.setReportedDate(Long.parseLong((Long)object[3]));
+				JSONParser parser = new JSONParser();
+				Object obj=null;
+				try{
+					obj=parser.parse((String)object[4]);
+				}
+				catch (ParseException e){
+
+				}
+				JSONObject chvActivty=(JSONObject)obj;
+				JSONObject fields=(JSONObject)chvActivty.get("fields");
+				JSONObject inputs=(JSONObject)fields.get("inputs");
+				JSONObject contact=(JSONObject)inputs.get("contact");
+				String clientName=null;
+				try{
+					clientName=(String)contact.get("name");
+				}catch (Exception e){
+					e.printStackTrace();
+				}
+
+				activity.setActivityType((String) object[2]);
+				activity.setActivityId((String) object[0]);
+				activity.setClientName(clientName);
+
+				activity.setChvUuid((String)object[1]);
+				Date date=new Date(((Double)object[3]).longValue()*1000);
+
+				activity.setReportedDate(date);
 				activities.add(activity);
 			}
 			return activities;

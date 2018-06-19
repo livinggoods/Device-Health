@@ -26,6 +26,7 @@ import org.goods.living.tech.health.device.jpa.dao.Stats;
 import org.goods.living.tech.health.device.jpa.dao.Users;
 
 public class StatsJpaController implements Serializable {
+	public static float timeRangeLimitConstant= 600;
 
 	public StatsJpaController(EntityManagerFactory emf) {
 		this.emf = emf;
@@ -192,29 +193,26 @@ public class StatsJpaController implements Serializable {
 		}
 	}
 	public ChvActivity fetchLocationStatistics(String uuid, ChvActivity activity) {
-		long timestamp=activity.getTimestamp();
-		long upperLimit=timestamp+600;
-		long lowerLimit=timestamp-600;
-
-		Date to = new Date(upperLimit);
-		Date from = new Date(lowerLimit);
-
-		Date d = new Date(timestamp);
-
+		long timestamp=activity.getReportedDate().getTime()/1000;
 
 		EntityManager em = getEntityManager();
 		try {
 
 			List<Object[]> statistics = em.createQuery(
-					"SELECT s.latitude as latitude, s.longitude as longitude, s.recordedAt as recorded_at from Stats s LEFT JOIN Users u ON (u.id=s.userId) WHERE u.chvId= :uuid ORDER BY abs(cast(s.recordedAt as date) - :d) ASC").setParameter("uuid", uuid).setParameter("d", d).getResultList();
+					"SELECT s.latitude as latitude, s.longitude as longitude, s.recordedAt as recorded_time," +
+							" abs(extract(epoch from s.recordedAt)  - cast(:timestamp as float)) as absoluteValue from " +
+							"Stats s LEFT JOIN Users u ON (u.id=s.userId) WHERE u.chvId= :uuid ORDER BY abs(extract(epoch " +
+							"from s.recordedAt)  - cast(:timestamp as float)) ASC").setMaxResults(1).setParameter("uuid", uuid).setParameter("timestamp", timestamp).getResultList();
 			HashMap<String, String> coordinates= new HashMap<>();
 
-			//Add restriction on max and min timings
+		//Add restriction on max and min timings
 
 			if(!statistics.isEmpty()){
-				coordinates.put("latitude", Double.toString((Double)statistics.get(0)[0]));
-				coordinates.put("longitude", Double.toString((Double)statistics.get(0)[1]));
-				activity.setCoordinates(coordinates);
+				if((Float)statistics.get(0)[3]<timeRangeLimitConstant){
+					activity.setLongitude((Double)statistics.get(0)[0]);
+					activity.setLatitude((Double)statistics.get(0)[1]);
+				}
+
 			}
 
 			return activity;

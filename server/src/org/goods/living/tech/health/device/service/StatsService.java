@@ -129,34 +129,29 @@ public class StatsService extends BaseService {
 
 		List<ChvActivity> chvActivities = uuid == null? null: medicJpaController.findChvActivities(uuid, from, to);
 
-//		if (chvActivities == null) {
-//			logger.error("no activities found... " + username);
-//			Result<JsonNode> result = new Result<JsonNode>(false, "", null);
-//			return result;
-//		}
+		if (chvActivities == null) {
+			logger.error("no activities found... " + username);
+			Result<JsonNode> result = new Result<JsonNode>(false, "", null);
+			return result;
+		}
 
 		List<JsonNode> results = new ArrayList<>();
 		// ObjectMapper mapper = new ObjectMapper();
 		// ArrayNode array = mapper.valueToTree(list);
 		ObjectMapper mapper = new ObjectMapper();
-//		for (ChvActivity activity : chvActivities) {
+		for (ChvActivity activity : chvActivities) {
 			//get array of locations for the activity timestamp
 
-//			ChvActivity activityWithStats = statsJpaController.fetchLocationStatistics(uuid, activity);
+			ChvActivity activityWithStats = statsJpaController.fetchLocationStatistics(uuid, activity);
 			ObjectNode root = mapper.createObjectNode();
 
-//			root.put("timestamp", activityWithStats.getReportedDate());
-			root.put("timestamp", 128732);
-//			root.put("longitude", activityWithStats.getCoordinates().get("longitude"));
-			root.put("longitude", 31);
-//			root.put("latitude", activityWithStats.getCoordinates().get("latitude"));
-			root.put("latitude", 1);
-//			root.put("activity", activityWithStats.getActivityType());
-			root.put("activity", "diagnosis");
-//			root.put("client", activityWithStats.getContactPerson());
-			root.put("client", "Some Client");
+			root.put("timestamp", activityWithStats.getReportedDate().toString());
+			root.put("longitude", activityWithStats.getLongitude());
+			root.put("latitude", activityWithStats.getLatitude());
+			root.put("activity", activityWithStats.getActivityType());
+			root.put("client", activityWithStats.getClientName());
 			results.add(root);
-//		}
+		}
 
 		ObjectNode node = JsonNodeFactory.instance.objectNode();
 

@@ -5,11 +5,8 @@
  */
 package org.goods.living.tech.health.device.jpa.dao;
 
-import org.codehaus.jackson.JsonNode;
-
 import java.io.Serializable;
-import java.lang.reflect.Array;
-import java.util.HashMap;
+import java.util.Date;
 
 /**
  * @author kevinkorir
@@ -18,28 +15,43 @@ public class ChvActivity implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    private String uuid;
-    private HashMap<String,String> coordinates;
+    private String chvUuid;
+    private String activityId;
     private String activityType;
-    private long timestamp;
-    private String contactPerson;
-    private long reportedDate;
+    private Double latitude;
+    private Double longitude;
+    private String clientName;
+    private Date reportedDate;
 
-    public HashMap<String, String> getCoordinates() {
-        return coordinates;
+    public String getClientName() {
+        return clientName;
     }
 
-    //location coordinates
-
-    public void setCoordinates(HashMap<String, String> coordinates) {
-        this.coordinates = coordinates;
+    public void setClientName(String clientName) {
+        this.clientName = clientName;
     }
 
-    public long getReportedDate() {
+    public Double getLatitude() {
+        return latitude;
+    }
+
+    public void setLatitude(Double latitude) {
+        this.latitude = latitude;
+    }
+
+    public Double getLongitude() {
+        return longitude;
+    }
+
+    public void setLongitude(Double longitude) {
+        this.longitude = longitude;
+    }
+
+    public Date getReportedDate() {
         return reportedDate;
     }
 
-    public void setReportedDate(long reportedDate) {
+    public void setReportedDate(Date reportedDate) {
         this.reportedDate = reportedDate;
     }
 
@@ -51,28 +63,20 @@ public class ChvActivity implements Serializable {
         this.activityType = activityType;
     }
 
-    public long getTimestamp() {
-        return timestamp;
+    public String getActivityId() {
+        return activityId;
     }
 
-    public void setTimestamp(long timestamp) {
-        this.timestamp = timestamp;
+    public void setActivityId(String activityId) {
+        this.activityId = activityId;
     }
 
-    public String getContactPerson() {
-        return contactPerson;
+    public String getChvUuid() {
+        return chvUuid;
     }
 
-    public void setContactPerson(String contactPerson) {
-        this.contactPerson = contactPerson;
-    }
-
-    public String getUuid() {
-        return uuid;
-    }
-
-    public void setUuid(String uuid) {
-        this.uuid = uuid;
+    public void setChvUuid(String chvUuid) {
+        this.chvUuid = chvUuid;
     }
 
 }
