@@ -1,5 +1,7 @@
 package org.goods.living.tech.health.device.service;
 
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
 import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -9,10 +11,13 @@ import java.util.List;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.inject.Named;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.FormParam;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
+import javax.xml.bind.annotation.XmlRootElement;
 
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
@@ -166,7 +171,14 @@ public class UserService extends BaseService {
 		return result;
 
 	}
-
+        
+        //use the @Secured annotation for your secured methods
+        //use the @RolesAllowed({"ADMIN"})  annotation to specify what level of authority has access to your resources
+        
+        //Roles can be found at org.goods.living.tech.health.device.service.security.qualifier
+        
+        //@Secured
+        //@RolesAllowed({"ADMIN"}) 
 	@POST
 	// @Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
@@ -218,6 +230,69 @@ public class UserService extends BaseService {
 
 		return false;
 
+	}
+        
+        @POST
+	@Consumes("application/x-www-form-urlencoded")
+	@Produces("application/json")
+	@Path(Constants.URL.LOGIN)
+	public LoginResponse login(@FormParam("username") String username, @FormParam("password") String password) throws Exception {
+
+		System.out.println("Username is: " + username); // prints output
+		System.out.println("Password is: " + password); // prints output
+
+
+		if (username != null && password != null) {
+			LoginResponse loginResponse = getLoginResposeForJWT(username, password);
+
+			return loginResponse;
+		} else {
+			throw new Exception("Username/Password is wrong");
+		}
+	}
+        
+        private LoginResponse getLoginResposeForJWT(String username, String password) {
+		LoginResponse loginResponse = null;
+                 
+                //You can plug in Database user Authorization here....at the moment we are generating a token as 
+                //long as username and password are not empty
+		if (username != null && password != null) {
+			System.out.println("user.getPassword(): " + username);
+			System.out.println("user.getPassword(): " + password);
+			
+			long tokenLife;
+			try {
+				tokenLife = Integer.parseInt(applicationParameters.getTokenLife()) * 1000;
+			} catch (NumberFormatException nfe) {
+				tokenLife = 3600 * 1000;
+			}
+
+			long nowMillis = System.currentTimeMillis();
+			Date now = new Date(nowMillis);
+
+			long expMillis = nowMillis + tokenLife;
+			Date expireDate = new Date(expMillis);
+
+			System.out.println(expireDate.toString());
+
+			loginResponse = new LoginResponse(Jwts.builder().setSubject(username).setId("Unique_ID")
+					.claim("roles", "ADMIN").claim("first name", "firstName")
+					.claim("site", "site").setIssuedAt(new Date())
+					.signWith(SignatureAlgorithm.HS256, applicationParameters.getHashKey()).setExpiration(expireDate).compact());
+		}
+
+		return loginResponse;
+	}
+	
+	@SuppressWarnings("unused")
+	@XmlRootElement
+	private static class LoginResponse {
+
+		public String token;
+
+		public LoginResponse(final String token) {
+			this.token = token;
+		}
 	}
 
 }

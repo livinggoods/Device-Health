@@ -25,3 +25,4 @@ frontend/dist\.zip
 frontend/dist/
 
 server/Device_Health\.iml
+/frontend/nbproject/private/
