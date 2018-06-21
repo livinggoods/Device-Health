@@ -97,14 +97,15 @@
                 </div>
                 <Sidebar :sidebar-header="sidebarHeader"></Sidebar>
                 <el-card class="box-card" style="position: absolute; float: right;margin-right:
-                0px;max-width: 350px; z-index: 9999; right: 0;max-height: 200px;overflow-y: scroll;overflow-x: scroll;overflow: -moz-scrollbars-vertical;">
+                0px;max-width: 400px; z-index: 9999; right: 0;max-height: 200px;overflow-y: scroll;overflow-x: scroll;overflow: -moz-scrollbars-vertical;">
                     <h4 style="margin-bottom: 5px">Unmapped Activities</h4>
                     <div style="border-bottom: 1px gainsboro solid; margin-bottom:5px" v-for="unmappedActivity in unmappedActivities" class="text item">
-                        <strong>Activity:</strong> {{unmappedActivity.activity}} <br/> <strong>Client :</strong> {{unmappedActivity.client}} <br/> <strong>Reported At:</strong> {{unmappedActivity.recordedAt}}
+                        <strong>Activity:</strong> {{unmappedActivity.activity}} <br/> <strong>Client :</strong> {{unmappedActivity.client}}\
+                        <br/> <strong>Reported At:</strong> {{unmappedActivity.recordedAt}}
+                        <br/> <strong>Activity Id:</strong> {{unmappedActivity.activityId}}
                     </div>
                 </el-card>
                 <div id="map"></div>
-                <button id='pause'></button>
                 <!--<lg-map-viz :access-token="accessToken" :layers="layers" :map-options="mapOptions"></lg-map-viz>-->
             </div>
         </div>
@@ -161,7 +162,7 @@ export default {
                     var users = []
                     if (response.data.data.users.length > 0) {
                         response.data.data.users.forEach(function (user) {
-                            users.push({'value': user.username, 'userObject': user})
+                            users.push({'value': user.name, 'userObject': user})
                             callback(users)
                         })
                     } else {
@@ -222,7 +223,8 @@ export default {
                         'activity': entry.activity,
                         'radius': 5,
                         'client': entry.client,
-                        'recordedAt': entry.timestamp
+                        'recordedAt': entry.timestamp,
+                        'activityId': entry.activityId
                     })
                 } else {
                     filteredArray.push({
@@ -254,26 +256,28 @@ export default {
                 }
 
             }
-            locationArray.forEach(function (location) {
-                geoJsonified.source.data.features.push({
-                    'type': 'Feature',
-                    'properties': {
-                        'class': 'marker',
-                        'radius': location.radius,
-                        'activity': location.activity,
-                        'client': location.client,
-                        'recordedAt': location.recordedAt
-                    },
-                    'geometry': {
-                        'type': 'Point',
-                        'coordinates': [
-                            location.coordinates.longitude,
-                            location.coordinates.latitude
-                        ]
-                    }
+            if (locationArray.length > 0) {
+                locationArray.forEach(function (location) {
+                    geoJsonified.source.data.features.push({
+                        'type': 'Feature',
+                        'properties': {
+                            'class': 'marker',
+                            'radius': location.radius,
+                            'activity': location.activity,
+                            'client': location.client,
+                            'recordedAt': location.recordedAt
+                        },
+                        'geometry': {
+                            'type': 'Point',
+                            'coordinates': [
+                                location.coordinates.longitude,
+                                location.coordinates.latitude
+                            ]
+                        }
+                    })
+                    // geoJsonified.source.data.geometry.coordinates.push([location.coordinates.longitude, location.coordinates.latitude])
                 })
-                // geoJsonified.source.data.geometry.coordinates.push([location.coordinates.longitude, location.coordinates.latitude])
-            })
+            }
             return geoJsonified
         },
         addMarkersToMap: function (geoJson) {
@@ -285,100 +289,104 @@ export default {
             // }
             //
             // map.addLayer(geoJson)
-            geoJson.source.data.features.forEach(function (marker) {
-                // create a HTML element for each feature
-                var el = document.createElement('div')
+            if (geoJson.source.data.features.length > 0) {
+                geoJson.source.data.features.forEach(function (marker) {
+                    // create a HTML element for each feature
+                    var el = document.createElement('div')
 
-                el.className = 'marker'
-                el.style.width = marker.properties.radius * 4 + 'px'
-                el.style.height = marker.properties.radius * 4 + 'px'
+                    el.className = 'marker'
+                    el.style.width = marker.properties.radius * 4 + 'px'
+                    el.style.height = marker.properties.radius * 4 + 'px'
 
-                // add popup
-                var popup = new mapboxgl.Popup({ offset: 25 })
-                    .setHTML('<h4> Location Details</h4>' +
+                    // add popup
+                    var popup = new mapboxgl.Popup({offset: 25})
+                        .setHTML('<h4> Location Details</h4>' +
                             '<p>Latitude: ' + marker.geometry.coordinates[1] + ' Longitude: ' + marker.geometry.coordinates[0] + '</p>' +
                             '<p>Time: ' + marker.properties.recordedAt + '</p>' +
                             '<p>Activity: ' + marker.properties.activity + '</p>' +
                             '<p>Client: ' + marker.properties.client + '</p>'
-                    )
+                        )
 
-                new mapboxgl.Marker(el)
-                    .setLngLat({'lat': marker.geometry.coordinates[1], 'lng': marker.geometry.coordinates[0]})
-                    .setPopup(popup)
-                    .addTo(map)
-            })
+                    new mapboxgl.Marker(el)
+                        .setLngLat({'lat': marker.geometry.coordinates[1], 'lng': marker.geometry.coordinates[0]})
+                        .setPopup(popup)
+                        .addTo(map)
+                })
+            }
         },
         animateChpMovement: function (locations) {
-            console.log('location')
-            console.log(locations)
-            var geoJson = {
-                'type': 'FeatureCollection',
-                'features': [{
-                    'type': 'Feature',
-                    'geometry': {
-                        'type': 'LineString',
-                        'coordinates': [
-                            [locations[0].longitude, locations[0].latitude]
-                        ]
+            if (locations.length > 0) {
+                var geoJson = {
+                    'type': 'FeatureCollection',
+                    'features': [{
+                        'type': 'Feature',
+                        'geometry': {
+                            'type': 'LineString',
+                            'coordinates': [
+                                [locations[0].longitude, locations[0].latitude]
+                            ]
+                        }
+                    }]
+                }
+                // try {
+                //     map.removeLayer('line-animation')
+                // } catch (e) {
+                //     //
+                // }
+                var lineString = {
+                    'id': 'line-animation',
+                    'type': 'line',
+                    'source': {
+                        'type': 'geojson',
+                        'data': geoJson
+                    },
+                    'layout': {
+                        'line-cap': 'round',
+                        'line-join': 'round'
+                    },
+                    'paint': {
+                        'line-color': '#ed6498',
+                        'line-width': 5,
+                        'line-opacity': 0.8
                     }
-                }]
-            }
-            // try {
-            //     map.removeLayer('line-animation')
-            // } catch (e) {
-            //     //
-            // }
-            var lineString = {
-                'id': 'line-animation',
-                'type': 'line',
-                'source': {
-                    'type': 'geojson',
-                    'data': geoJson
-                },
-                'layout': {
-                    'line-cap': 'round',
-                    'line-join': 'round'
-                },
-                'paint': {
-                    'line-color': '#ed6498',
-                    'line-width': 5,
-                    'line-opacity': 0.8
                 }
+
+                map.addLayer(lineString)
+
+                // click the button to pause or play
+
+                var i = 0
+                var timer = window.setInterval(function () {
+                    if (i < locations.length) {
+                        var x = locations[i].longitude
+                        var y = locations[i].latitude
+                        geoJson.features[0].geometry.coordinates.push([x, y])
+                        map.getSource('line-animation').setData(geoJson)
+                        i++
+                    } else {
+                        geoJson.features[0].geometry.coordinates = []
+                        map.getSource('line-animation').setData(geoJson)
+                        i = 0
+                    }
+                }, 500)
             }
-
-            map.addLayer(lineString)
-
-            // click the button to pause or play
-
-            var i = 0
-            var timer = window.setInterval(function () {
-                if (i < locations.length) {
-                    var x = locations[i].longitude
-                    var y = locations[i].latitude
-                    geoJson.features[0].geometry.coordinates.push([x, y])
-                    map.getSource('line-animation').setData(geoJson)
-                    i++
-                } else {
-                    geoJson.features[0].geometry.coordinates = []
-                    map.getSource('line-animation').setData(geoJson)
-                    i = 0
-                }
-            }, 500)
         },
         fitBounds: function (locations) {
             var coordinates = []
             console.log('boundsLocation')
             console.log(locations)
-            locations.forEach(function (location) {
-                coordinates.push([location.coordinates.longitude, location.coordinates.latitude])
-            })
-            var bounds = coordinates.reduce(function (bounds, coord) {
-                return bounds.extend(coord)
-            }, new mapboxgl.LngLatBounds(coordinates[0], coordinates[1]))
+            if (locations.length > 0) {
+                locations.forEach(function (location) {
+                    coordinates.push([location.coordinates.longitude, location.coordinates.latitude])
+                })
+                var bounds = coordinates.reduce(function (bounds, coord) {
+                    return bounds.extend(coord)
+                }, new mapboxgl.LngLatBounds(coordinates[0], coordinates[1]))
 
-            map.fitBounds(bounds, {
-                padding: 20
-            })
+                map.fitBounds(bounds, {
+                    padding: 20
+                })
+            }
         }
 
     },
@@ -445,15 +453,5 @@ export default {
 
     #pause.pause::after {
         content: 'Play';
-    }
-    .unmapped-activities{
-       position: absolute;
-        float: right;
-        margin-right: 0px;
-        max-width: 200px;
-        background-color: white;
-        z-index: 9999;
-        max-height: 200px;
-        overflow: scroll;
     }
 </style>
