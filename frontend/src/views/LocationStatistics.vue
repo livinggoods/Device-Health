@@ -96,6 +96,13 @@
                     </nav>
                 </div>
                 <Sidebar :sidebar-header="sidebarHeader"></Sidebar>
+                <el-card class="box-card" style="position: absolute; float: right;margin-right:
+                0px;max-width: 350px; z-index: 9999; right: 0;max-height: 200px;overflow-y: scroll;overflow-x: scroll;overflow: -moz-scrollbars-vertical;">
+                    <h4 style="margin-bottom: 5px">Unmapped Activities</h4>
+                    <div style="border-bottom: 1px gainsboro solid; margin-bottom:5px" v-for="unmappedActivity in unmappedActivities" class="text item">
+                        <strong>Activity:</strong> {{unmappedActivity.activity}} <br/> <strong>Client :</strong> {{unmappedActivity.client}} <br/> <strong>Reported At:</strong> {{unmappedActivity.recordedAt}}
+                    </div>
+                </el-card>
                 <div id="map"></div>
                 <button id='pause'></button>
                 <!--<lg-map-viz :access-token="accessToken" :layers="layers" :map-options="mapOptions"></lg-map-viz>-->
@@ -135,7 +142,8 @@ export default {
                 'chvId': '',
                 'dates': []
             },
-            'layers': ''
+            'layers': '',
+            'unmappedActivities': []
 
         }
     },
@@ -193,85 +201,43 @@ export default {
             })
         },
         processLocations: function (locations) {
-            var reducedArray = this.filterDuplicates(locations)
-            var radiusedLocations = this.computeRadius(reducedArray)
-            var geoJsonified = this.transformToGeoJson(radiusedLocations)
+            var reducedArray = this.filterActivities(locations)
+            var geoJsonified = this.transformToGeoJson(reducedArray)
 
-            this.fitBounds(locations)
+            this.fitBounds(reducedArray)
             this.addMarkersToMap(geoJsonified)
-            this.animateChpMovement(locations)
+            this.animateChpMovement(reducedArray)
             this.layers = geoJsonified
         },
-        filterDuplicates: function (array) {
-            var consolidatedArray = []
+        filterActivities: function (array) {
             var filteredArray = []
+            var self = this
             array.forEach(function (entry) {
-                consolidatedArray.push({
-                    'coordinates': JSON.stringify({
-                        'latitude': entry.latitude,
-                        'longitude': entry.longitude
-                    }),
-                    'activity': entry.activity,
-                    'recordedAt': entry.recordedAt
-                })
-            })
-            var reducedObject = consolidatedArray.reduce(function (hash, entry) {
-                if (!hash.hasOwnProperty(entry.coordinates)) hash[entry.coordinates] = []
-                hash[entry.coordinates].push(entry)
-                return hash
-            }, {})
-            filteredArray = Object.keys(reducedObject).map(i => reducedObject[i])
-            return filteredArray
-        },
-        computeRadius: function (locations) {
-            var radiusedLocations = []
-            for (var i = 0; i < locations.length; i++) {
-                var coordinates = JSON.parse(locations[i][0].coordinates)
-                if (locations[i].length <= 1) {
-                    radiusedLocations.push({'coordinates': {
-                        'latitude': coordinates.latitude,
-                        'longitude': coordinates.longitude},
-                    'radius': 3,
-                    'activity': locations[i][0].activity,
-                    'client': locations[i][0].client,
-                    'recordedAt': locations[i][0].recordedAt
+                if (entry.latitude == null || entry.longitude == null) {
+                    self.unmappedActivities.push({
+                        'coordinates': {
+                            'latitude': entry.latitude,
+                            'longitude': entry.longitude
+                        },
+                        'activity': entry.activity,
+                        'radius': 5,
+                        'client': entry.client,
+                        'recordedAt': entry.timestamp
                     })
                 } else {
-                    var sortedLocation = locations[i].sort(function (a, b) {
-                        return a.recordedAt - b.recordedAt
-                    })
-                    var timeSpent = moment.duration((moment.unix(sortedLocation[sortedLocation.length - 1].recordedAt)
-                        .diff(moment.unix(sortedLocation[0].recordedAt)) / 1000)).asHours()
-                    var radius
-                    switch (Math.floor(timeSpent)) {
-                    case 0:
-
-                        radius = 5
-                        break
-                    case 1:
-                        radius = 6
-                        break
-                    case 3:
-                        radius = 7
-                        break
-                    case 4:
-                        radius = 8
-                        break
-                    case 5:
-                        radius = 9
-                        break
-                    default:
-                        radius = 10
-                        break
-                    }
-                    radiusedLocations.push({'coordinates': {
-                        'latitude': coordinates.latitude,
-                        'longitude': coordinates.longitude},
-                    'radius': radius
+                    filteredArray.push({
+                        'coordinates': {
+                            'latitude': entry.latitude,
+                            'longitude': entry.longitude
+                        },
+                        'activity': entry.activity,
+                        'radius': 5,
+                        'client': entry.client,
+                        'recordedAt': entry.timestamp
                     })
                 }
-            }
-            return radiusedLocations
+            })
+            return filteredArray
         },
         transformToGeoJson: function (locationArray) {
             var geoJsonified
@@ -290,7 +256,6 @@ export default {
             }
             locationArray.forEach(function (location) {
                 geoJsonified.source.data.features.push({
-
                     'type': 'Feature',
                     'properties': {
                         'class': 'marker',
@@ -309,7 +274,6 @@ export default {
                 })
                 // geoJsonified.source.data.geometry.coordinates.push([location.coordinates.longitude, location.coordinates.latitude])
             })
-
             return geoJsonified
         },
         addMarkersToMap: function (geoJson) {
@@ -321,8 +285,6 @@ export default {
             // }
             //
             // map.addLayer(geoJson)
-            console.log(geoJson)
-
             geoJson.source.data.features.forEach(function (marker) {
                 // create a HTML element for each feature
                 var el = document.createElement('div')
@@ -334,19 +296,21 @@ export default {
                 // add popup
                 var popup = new mapboxgl.Popup({ offset: 25 })
                     .setHTML('<h4> Location Details</h4>' +
-                        '<p>Latitude: ' + marker.geometry.coordinates[0] + ' Latitude: ' + marker.geometry.coordinates[1] + '</p>' +
-                        '<p>Time: ' + marker.properties.recordedAt + '</p>' +
-                        '<p>Activity: ' + marker.properties.activity + '</p>' +
-                        '<p>Client: ' + marker.properties.client + '</p>'
+                            '<p>Latitude: ' + marker.geometry.coordinates[1] + ' Longitude: ' + marker.geometry.coordinates[0] + '</p>' +
+                            '<p>Time: ' + marker.properties.recordedAt + '</p>' +
+                            '<p>Activity: ' + marker.properties.activity + '</p>' +
+                            '<p>Client: ' + marker.properties.client + '</p>'
                     )
 
                 new mapboxgl.Marker(el)
-                    .setLngLat(marker.geometry.coordinates)
+                    .setLngLat({'lat': marker.geometry.coordinates[1], 'lng': marker.geometry.coordinates[0]})
                     .setPopup(popup)
                     .addTo(map)
             })
         },
         animateChpMovement: function (locations) {
+            console.log('location')
+            console.log(locations)
             var geoJson = {
                 'type': 'FeatureCollection',
                 'features': [{
@@ -403,12 +367,14 @@ export default {
         },
         fitBounds: function (locations) {
             var coordinates = []
+            console.log('boundsLocation')
+            console.log(locations)
             locations.forEach(function (location) {
-                coordinates.push([location.longitude, location.latitude])
+                coordinates.push([location.coordinates.longitude, location.coordinates.latitude])
             })
             var bounds = coordinates.reduce(function (bounds, coord) {
                 return bounds.extend(coord)
-            }, new mapboxgl.LngLatBounds(coordinates[0], coordinates[0]))
+            }, new mapboxgl.LngLatBounds(coordinates[0], coordinates[1]))
 
             map.fitBounds(bounds, {
                 padding: 20
@@ -479,5 +445,15 @@ export default {
 
     #pause.pause::after {
         content: 'Play';
+    }
+    .unmapped-activities{
+       position: absolute;
+        float: right;
+        margin-right: 0px;
+        max-width: 200px;
+        background-color: white;
+        z-index: 9999;
+        max-height: 200px;
+        overflow: scroll;
     }
 </style>
