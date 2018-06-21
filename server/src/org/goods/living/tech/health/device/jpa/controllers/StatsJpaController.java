@@ -209,8 +209,8 @@ public class StatsJpaController implements Serializable {
 
 			if(!statistics.isEmpty()){
 				if((Float)statistics.get(0)[3]<timeRangeLimitConstant){
-					activity.setLongitude((Double)statistics.get(0)[0]);
-					activity.setLatitude((Double)statistics.get(0)[1]);
+					activity.setLongitude((Double)statistics.get(0)[1]);
+					activity.setLatitude((Double)statistics.get(0)[0]);
 				}
 
 			}
