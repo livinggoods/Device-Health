@@ -51,7 +51,7 @@ public class MedicJpaController implements Serializable {
 		List<Object[]> list = this.getEntityManagerUG().createNativeQuery("SELECT "
 				+ "doc->>'name' AS username, doc->>'contact_id' contact_id, chw_name , branch_name, chw_phone "
 				+ "FROM couchdb left join contactview_hierarchy ch on ch.chw_uuid=doc->>'contact_id' WHERE doc->>'type' = 'user-settings' "
-				+ "and chw_name like :name").setParameter("name", "%" + username + "%").getResultList();
+				+ "and chw_name ilike :name").setParameter("name", "%" + username + "%").getResultList();
 		List<MedicUser> l = new ArrayList<>();
 		for (Object[] o : list) {
 			MedicUser mu = new MedicUser();

@@ -150,6 +150,7 @@ public class StatsService extends BaseService {
 			root.put("latitude", activityWithStats.getLatitude());
 			root.put("activity", activityWithStats.getActivityType());
 			root.put("client", activityWithStats.getClientName());
+			root.put("activityId", activityWithStats.getActivityId());
 			results.add(root);
 		}
 

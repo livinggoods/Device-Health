@@ -2,8 +2,8 @@
     <div>
         <div class="wrapper">
             <div class="main-panel">
-                <div class="topbar">
-                    <nav class="navbar navbar-default navbar-fixed">
+                <div class="topbar" style="position: static">
+                    <nav class="navbar navbar-default navbar-fixed" style="position: fixed; z-index: 100; width:83%; ">
                         <div class="container-fluid">
                             <div class="navbar-header">
                                 <button type="button" class="navbar-toggle" data-toggle="collapse"
@@ -20,13 +20,22 @@
 
                                     <li style="margin-top: 10px;">
                                         <el-autocomplete
+                                                popper-class="my-autocomplete"
                                                 class="inline-input"
                                                 v-model="searchParams.chvName"
                                                 placeholder="CHV Name"
                                                 :trigger-on-focus="false"
                                                 @select="selectChv"
-                                                :fetch-suggestions="searchChv"
-                                        ></el-autocomplete>
+                                                :fetch-suggestions="searchChv">
+                                            <i
+                                                    class="el-icon-edit el-input__icon"
+                                                    slot="suffix">
+                                            </i>
+                                            <template slot-scope="{ item }">
+                                                <div class="value"><strong>Name:</strong> {{ item.value }}</div>
+                                                <div class="link"><strong>Branch:</strong> {{ item.branch }}</div>
+                                            </template>
+                                        </el-autocomplete>
                                     </li>
                                     <li style="margin-left: 5px; margin-top: 10px;">
                                         <el-date-picker
@@ -97,10 +106,10 @@
                 </div>
                 <Sidebar :sidebar-header="sidebarHeader"></Sidebar>
                 <el-card class="box-card" style="position: absolute; float: right;margin-right:
-                0px;max-width: 400px; z-index: 9999; right: 0;max-height: 200px;overflow-y: scroll;overflow-x: scroll;overflow: -moz-scrollbars-vertical;">
+                0px;max-width: 400px; z-index: 9999;  top: 60px; right: 0;max-height: 200px;overflow-y: scroll;overflow-x: scroll;overflow: -moz-scrollbars-vertical;">
                     <h4 style="margin-bottom: 5px">Unmapped Activities</h4>
                     <div style="border-bottom: 1px gainsboro solid; margin-bottom:5px" v-for="unmappedActivity in unmappedActivities" class="text item">
-                        <strong>Activity:</strong> {{unmappedActivity.activity}} <br/> <strong>Client :</strong> {{unmappedActivity.client}}\
+                        <strong>Activity:</strong> {{unmappedActivity.activity}} <br/> <strong>Client :</strong> {{unmappedActivity.client}}
                         <br/> <strong>Reported At:</strong> {{unmappedActivity.recordedAt}}
                         <br/> <strong>Activity Id:</strong> {{unmappedActivity.activityId}}
                     </div>
@@ -162,7 +171,8 @@ export default {
                     var users = []
                     if (response.data.data.users.length > 0) {
                         response.data.data.users.forEach(function (user) {
-                            users.push({'value': user.name, 'userObject': user})
+                            console.log(user)
+                            users.push({'value': user.name, 'branch': user.branch, 'userObject': user})
                             callback(users)
                         })
                     } else {
@@ -453,5 +463,20 @@ export default {
 
     #pause.pause::after {
         content: 'Play';
+    }
+    .my-autocomplete {
+        li {
+            line-height: normal;
+            padding: 7px;
+
+            .value {
+                text-overflow: ellipsis;
+                overflow: hidden;
+            }
+            .link {
+                font-size: 12px;
+                color: #b4b4b4;
+            }
+        }
     }
 </style>
