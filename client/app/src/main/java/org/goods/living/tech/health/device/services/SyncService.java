@@ -81,7 +81,7 @@ public class SyncService extends BaseService {
                 //  show update dialog ?
 
                 Intent intent = new Intent(context, UpgradeActivity.class);
-                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                 intent.putExtra(UpgradeActivity.FORCE_UPDATE, user.forceUpdate);
                 context.startActivity(intent);
 
@@ -111,10 +111,10 @@ public class SyncService extends BaseService {
         final User user = userService.getRegisteredUser();
 
         //only sync after username is registered on device, else just collect data
-        if (user.username == null) {
-            Crashlytics.log("cancel sync. username not registered on device yet");
+        if (user.username == null || user.phone == null) {
+            Crashlytics.log("cancel sync. username/phone not registered on device yet");
             Answers.getInstance().logCustom(new CustomEvent("Sync failed")
-                    .putCustomAttribute("Reason", "username missing"));
+                    .putCustomAttribute("Reason", "username/phone missing"));
             return user;
         }
 
@@ -163,6 +163,7 @@ public class SyncService extends BaseService {
                         user.serverApi = updatedUser.serverApi;
                         user.forceUpdate = updatedUser.forceUpdate;
                         user.phone = updatedUser.phone;
+                        user.balanceCode = updatedUser.balanceCode;
 
                         user.lastSync = new Date();
                         userService.insertUser(user);
@@ -174,7 +175,7 @@ public class SyncService extends BaseService {
                     }
 
                     if (updateInterval) {
-                        PermissionsUtils.checkAndRequestPermissions(c, userService);
+                        PermissionsUtils.requestLocationUpdates(c, userService, true);
                     }
 
                 } catch (JSONException e) {

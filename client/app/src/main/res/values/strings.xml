@@ -1,16 +1,14 @@
 <resources>
     <string name="app_name">LG Device Health</string>
 
+    <string name="app_package">org.goods.living.tech.health.device</string>
     <string name="account_type">org.goods.living.tech.health.device.utils.SyncAdapter.account</string>
     <string name="content_authority">org.goods.living.tech.health.device.utils.SyncAdapter</string>
 
 
     <string name="server_url">https://device-health.lg-apps.com/api</string><!-- http://lg-apps.com:8081/api http://lg-apps.com:8081/api http://192.168.88.226:8080/api  -->
 
-
-    <string name="permission_rationale">Location permission is needed for core functionality</string>
-    <string name="permission_denied_explanation">Permission was denied, but is needed for core
-        functionality.</string>
+    <string name="permission_denied_explanation">Core Permission denied but is needed: \n %1$s </string>
     <string name="settings">Settings</string>
 
     <plurals name="num_locations_reported">
@@ -18,4 +16,6 @@
         <item quantity="one">One location reported</item>
         <item quantity="other">%d locations reported</item>
     </plurals>
+
+    <string name="accessibility_desc">This service records pop ups sent by your mobile operator, and saves them</string>
 </resources>

@@ -18,23 +18,31 @@ package org.goods.living.tech.health.device.utils;
 
 
 import android.Manifest;
+import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.PendingIntent;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.LocationManager;
 import android.os.Build;
 import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
 import android.util.Log;
 
+import com.crashlytics.android.Crashlytics;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 
 import org.goods.living.tech.health.device.UI.PermissionActivity;
 import org.goods.living.tech.health.device.models.User;
+import org.goods.living.tech.health.device.services.USSDService;
 import org.goods.living.tech.health.device.services.UserService;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * Utility methods used in this sample.
@@ -63,82 +71,38 @@ public class PermissionsUtils {
 
     }
 
-    /**
-     * Return the current state of the permissions needed.
-     */
-    public static boolean checkPermissions(Context context) {
-        int permissionState = ActivityCompat.checkSelfPermission(context,
-                Manifest.permission.ACCESS_FINE_LOCATION);
-        return permissionState == PackageManager.PERMISSION_GRANTED;
-    }
-
-    public static void checkAndRequestPermissions(final Context context, UserService userService) {
-
-        try {
-
-            //enable reboot receiver
-            //     ComponentName receiver = new ComponentName(context, LocationUpdatesBroadcastReceiver.class);
-            //     PackageManager pm = context.getPackageManager();
-
-            //      pm.setComponentEnabledSetting(receiver,
-            //             PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
-            //             PackageManager.DONT_KILL_APP);
-
-            int hasPermission = ContextCompat.checkSelfPermission(context, Manifest.permission.RECEIVE_BOOT_COMPLETED);
-            if (hasPermission != PackageManager.PERMISSION_GRANTED) {//cant relaunch
-//show message?
-                Log.i(TAG, "no relaunch on boot permissions");
-            }
-
-            // Check if the user revoked runtime permissions.
-            if (!checkPermissions(context)) {
-                // requestPermissions;
-                //fire dialog activity - coz this method is used in both background activity and activity class
-                Intent intent = new Intent(context, PermissionActivity.class);
-                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                context.startActivity(intent);
-
-            } else {
-                //do nothing since activity will request permissions
-                requestLocationUpdatesIfNotRunning(context, userService);
-            }
-
-            if (!isLocationOn(context)) {
-                //fire dialog activity - coz this method is used in both background activity and activity class
-                Intent intent = new Intent(context, PermissionActivity.class);
-                context.startActivity(intent);
-            }
-
-        } catch (SecurityException e) {
-
-            e.printStackTrace();
-        }
-
-
-    }
 
     /**
      * request updates if not already setup
      */
-    public static void requestLocationUpdatesIfNotRunning(Context context, UserService userService) {
+    public static void requestLocationUpdates(Context context, UserService userService, boolean forceUpdate) {
         try {
+
+            long updateInterval = PermissionsUtils.UPDATE_INTERVAL * 1000;
+
             if (mFusedLocationClient == null) {
                 mFusedLocationClient = LocationServices.getFusedLocationProviderClient(context);
+
+
+                User user = userService.getRegisteredUser();
+                if (user != null) {
+                    updateInterval = user.updateInterval * 1000;
+                }
+
+
+            } else {
+
+                if (forceUpdate) {
+                    LocationRequest mLocationRequest = createLocationRequest(updateInterval);
+
+                    mFusedLocationClient.requestLocationUpdates(mLocationRequest, getPendingIntent(context));
+                }
             }
-            long updateInterval = PermissionsUtils.UPDATE_INTERVAL * 1000;
-            long fastestUpdateInterval = updateInterval / 2;
-            User user = userService.getRegisteredUser();
-            if (user != null) {
-                updateInterval = user.updateInterval * 1000;
-                fastestUpdateInterval = updateInterval / 2;
-            }
 
 
-            LocationRequest mLocationRequest = createLocationRequest(updateInterval);
-
-            mFusedLocationClient.requestLocationUpdates(mLocationRequest, getPendingIntent(context));
         } catch (SecurityException e) {
             Log.wtf(TAG, e);
+            Crashlytics.logException(e);
         }
     }
 
@@ -201,10 +165,10 @@ public class PermissionsUtils {
         return PendingIntent.getBroadcast(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
     }
 
-    public static boolean isStoragePermissionGranted(Context context) {
+    static boolean isPermissionGranted(Context context, String perm) {
         if (Build.VERSION.SDK_INT >= 23) {
-            if (context.checkSelfPermission(android.Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                    == PackageManager.PERMISSION_GRANTED) {
+            //    if (context.checkSelfPermission(android.Manifest.permission.ACCESS_FINE_LOCATION)
+            if (context.checkSelfPermission(perm) == PackageManager.PERMISSION_GRANTED) {
                 Log.v(TAG, "Permission is granted");
                 return true;
             } else {
@@ -217,5 +181,124 @@ public class PermissionsUtils {
             Log.v(TAG, "Permission is granted");
             return true;
         }
+    }
+
+
+    public static boolean checkAllPermissionsGrantedAndRequestIfNot(Context context) {
+        if (!PermissionsUtils.areAllPermissionsGranted(context)) {
+            Intent intent = new Intent(context, PermissionActivity.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            //  intent.putExtra("forceUpdate", forceUpdate);
+            context.startActivity(intent);
+            return false;
+        }
+        return true;
+    }
+
+    public static boolean areAllSettingPermissionsGranted(Context context) {
+        boolean enabled = USSDService.isAccessibilityServiceEnabled(context);
+
+        enabled = enabled && isLocationOn(context);
+
+        return enabled;
+    }
+
+    public static boolean checkAllSettingPermissionsGrantedAndRequestIfNot(Context context) {
+
+        if (!areAllSettingPermissionsGranted(context)) {
+            Intent intent = new Intent(context, PermissionActivity.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            //  intent.putExtra("forceUpdate", forceUpdate);
+            context.startActivity(intent);
+            return false;
+        }
+        return true;
+    }
+
+    public static boolean checkAllSettingPermissionsGrantedAndDialogRequestIfNot(final Context context) {
+
+        try {
+            boolean enabled = USSDService.isAccessibilityServiceEnabled(context);
+            Log.i(TAG, "isAccessibilityServiceEnabled " + enabled);
+
+            if (!enabled) {
+                requestSettingPermissionsWithDialog(context, android.provider.Settings.ACTION_ACCESSIBILITY_SETTINGS, "Accessibility");
+                return false;
+            }
+
+            if (!isLocationOn(context)) {
+                requestSettingPermissionsWithDialog(context, android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS, "Location");
+                return false;
+            }
+        } catch (Exception e) {
+            Log.wtf(TAG, e);
+            Crashlytics.logException(e);
+        }
+
+        return true;
+    }
+
+    public static void requestSettingPermissionsWithDialog(final Context context, String permission, String title) {
+        final AlertDialog.Builder builder = new AlertDialog.Builder(context);
+        builder.setTitle(title + " Permission");
+        builder.setMessage("The app needs permissions. Please grant this permission to continue using the features of the app.");
+        builder.setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                Intent intent = new Intent(android.provider.Settings.ACTION_ACCESSIBILITY_SETTINGS);
+                context.startActivity(intent);
+            }
+        });
+        // builder.setNegativeButton(android.R.string.no, null);
+        builder.setCancelable(false);
+        builder.setNegativeButton(null, null);
+        builder.show();
+    }
+
+    public static boolean areAllPermissionsGranted(Context c) {
+
+
+        List<String> perms = Arrays.asList(getRequiredPermissions());
+        for (String perm : perms) {
+            if (!isPermissionGranted(c, perm)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public static String[] getRequiredPermissions() {
+
+        return new String[]{Manifest.permission.RECEIVE_BOOT_COMPLETED,
+                Manifest.permission.CALL_PHONE,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                Manifest.permission.ACCESS_FINE_LOCATION,
+                Manifest.permission.SEND_SMS,
+                Manifest.permission.READ_SMS
+        };
+    }
+
+    public static void requestAllPermissions(Activity c) {
+
+        Log.v("TAG", "Requesting All non granted Permission");
+
+        List<String> perms = Arrays.asList(getRequiredPermissions());
+        List<String> nonGranted = new ArrayList<String>();
+        for (String perm : perms) {
+            if (!isPermissionGranted(c, perm)) {
+                nonGranted.add(perm);
+            }
+        }
+        if (nonGranted.size() > 0) {
+            requestPermissions(c, nonGranted.toArray(new String[nonGranted.size()]));
+        }
+
+    }
+
+    //new String[]{Manifest.permission.RECEIVE_BOOT_COMPLETED}
+    static void requestPermissions(Activity context, String[] perms) {
+
+        Log.v("TAG", "Requesting Permission " + perms.toString());
+        ActivityCompat.requestPermissions(context, perms, 1);
     }
 }

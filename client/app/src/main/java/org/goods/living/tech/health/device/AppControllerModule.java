@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.location.Location;
 
+import org.goods.living.tech.health.device.models.DataBalance;
 import org.goods.living.tech.health.device.models.MyObjectBox;
 import org.goods.living.tech.health.device.models.Stats;
 import org.goods.living.tech.health.device.models.User;
@@ -72,6 +73,12 @@ public class AppControllerModule {
     @Singleton
     Box<User> provideBoxUser(BoxStore boxStore) {
         return boxStore.boxFor(User.class);
+    }
+
+    @Provides
+    @Singleton
+    Box<DataBalance> provideBoxDataBalance(BoxStore boxStore) {
+        return boxStore.boxFor(DataBalance.class);
     }
 
     //  @Provides

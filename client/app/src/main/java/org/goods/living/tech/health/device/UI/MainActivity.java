@@ -20,13 +20,16 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.preference.PreferenceManager;
 import android.support.v4.app.FragmentActivity;
-import android.telephony.PhoneNumberUtils;
+import android.support.v7.widget.AppCompatEditText;
+import android.telephony.SmsManager;
 import android.text.format.DateFormat;
 import android.util.Log;
 import android.view.View;
@@ -35,18 +38,22 @@ import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import com.crashlytics.android.answers.Answers;
+import com.crashlytics.android.answers.CustomEvent;
 import com.google.android.gms.location.LocationRequest;
+import com.hbb20.CountryCodePicker;
 
 import org.goods.living.tech.health.device.AppController;
 import org.goods.living.tech.health.device.R;
 import org.goods.living.tech.health.device.models.Stats;
 import org.goods.living.tech.health.device.models.User;
 import org.goods.living.tech.health.device.services.StatsService;
+import org.goods.living.tech.health.device.services.USSDService;
 import org.goods.living.tech.health.device.services.UserService;
 import org.goods.living.tech.health.device.utils.AuthenticatorService;
 import org.goods.living.tech.health.device.utils.PermissionsUtils;
+import org.goods.living.tech.health.device.utils.SnackbarUtil;
 import org.goods.living.tech.health.device.utils.SyncAdapter;
-import org.goods.living.tech.health.device.utils.Utils;
 
 import java.util.Date;
 import java.util.List;
@@ -87,7 +94,9 @@ public class MainActivity extends FragmentActivity implements
     private Button cancelBtn;
     private Button saveBtn;
     private TextView usernameText;
-    private TextView phoneText;
+    CountryCodePicker ccp;
+    AppCompatEditText edtPhoneNumber;
+
     private TextView syncTextView;
 
     private TextView intervalTextView;
@@ -110,14 +119,17 @@ public class MainActivity extends FragmentActivity implements
         saveBtn = (Button) findViewById(R.id.saveBtn);
         usernameText = (TextView) findViewById(R.id.usernameText);
         syncTextView = (TextView) findViewById(R.id.syncTextView);
-        phoneText = (TextView) findViewById(R.id.phoneText);
+        ccp = (CountryCodePicker) findViewById(R.id.ccp);
+        edtPhoneNumber = (AppCompatEditText) findViewById(R.id.phone_number_edt);
+        ccp.registerCarrierNumberEditText(edtPhoneNumber);
+
         intervalTextView = (TextView) findViewById(R.id.intervalTextView);
         btnLayout = (LinearLayout) findViewById(R.id.btnLayout);
 
         disableSettingsEdit();
 
         User user = userService.getRegisteredUser();
-        if (user.username == null) {
+        if (user.username == null || user.phone == null) {
             enableSettingsEdit();
         }
 
@@ -129,8 +141,10 @@ public class MainActivity extends FragmentActivity implements
         // Perform a manual sync by calling this:
         SyncAdapter.performSync();
 
-
+        AppController.getInstance().checkAndRequestPerms();
         // Crashlytics.getInstance().crash(); // Force a crash
+
+
     }
 
     @Override
@@ -138,14 +152,16 @@ public class MainActivity extends FragmentActivity implements
         super.onStart();
         PreferenceManager.getDefaultSharedPreferences(this)
                 .registerOnSharedPreferenceChangeListener(this);
+
+
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        PermissionsUtils.checkAndRequestPermissions(this, userService);
 
         loadData();
+
     }
 
 
@@ -175,8 +191,8 @@ public class MainActivity extends FragmentActivity implements
         Log.i(TAG, "registrationSave updates");
 
         final AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Register Details");
-        builder.setMessage("This is a one time registration.\n Confirm save");
+        builder.setTitle("Register User");
+        builder.setMessage("Please confirm username and phone number.\n\n\n * This is a one time registration.");
         builder.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialogInterface, int i) {
@@ -201,12 +217,94 @@ public class MainActivity extends FragmentActivity implements
     }
 
     /**
+     * Handles the cancel registration button.
+     */
+    public void checkBalance(View view) {
+        Log.i(TAG, "checkBalance ");
+
+        checkBalanceThroughUSSD();
+        // checkBalanceThroughSMS();
+    }
+
+
+    public void checkBalanceThroughSMS() {
+        Log.i(TAG, "checkBalanceThroughSMS ");
+
+        String strMessage = "bal";
+        User user = userService.getRegisteredUser();
+
+        SmsManager sms = SmsManager.getDefault();
+
+        String ussd = USSDService.getUSSDCode(user.balanceCode);
+        ussd = "100";
+
+        sms.sendTextMessage(ussd, null, strMessage, null, null);
+
+    }
+
+
+    public void checkBalanceThroughUSSD() {
+
+        final Context c = this;
+
+
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    User user = userService.getRegisteredUser();
+
+                    Answers.getInstance().logCustom(new CustomEvent("USSD Balance check")
+                            .putCustomAttribute("Reason", "androidId: " + user.androidId + " username: " + user.username));
+
+
+                    if (PermissionsUtils.checkAllPermissionsGrantedAndRequestIfNot(c)) {
+                        //   startService(new Intent(c.getApplicationContext(), USSDService.class));//not needed
+
+
+                        String ussd = USSDService.getUSSDCode(user.balanceCode);
+                        String ussdCode = ussd.replace("#", "") + Uri.encode("#");
+                        startActivityForResult(new Intent("android.intent.action.CALL", Uri.parse("tel:" + ussdCode)), 1);
+
+                        //well timed ones also work - but how much time ?
+                        //startActivity(new Intent("android.intent.action.CALL", Uri.parse("tel:" + ussdCode)));
+                        //        String nxt = USSDService.getNextUSSDInput();
+
+                        //         do {
+
+                        //             Thread.sleep(1500);
+
+
+                        //             startActivity(new Intent("android.intent.action.CALL", Uri.parse("tel:" + nxt)));
+
+                        //            nxt = USSDService.getNextUSSDInput();
+
+                        //         } while (nxt != null);
+
+                    } else {
+                        // ActivityCompat.requestPermissions(c, new String[]{android.Manifest.permission.CALL_PHONE}, 1);
+                        Log.i(TAG, "USSDJobService permissions not granted yet ...");
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    Log.e(TAG, "checkBalance ", e);
+                }
+            }
+        }).start();
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        Log.i(TAG, "onActivityResult ...");
+    }
+
+    /**
      * Handles the triggerSync  button.
      */
     public void triggerSync(View view) {
         Log.i(TAG, "triggerSync ");
 
-        Utils.showSnack(this, "Performing sync");
+        SnackbarUtil.showSnack(this, "Performing sync");
         SyncAdapter.performSync();
 
         Handler handler = new Handler(Looper.getMainLooper());
@@ -222,6 +320,7 @@ public class MainActivity extends FragmentActivity implements
      * Handles the done  button.
      */
     public void minimise(View view) {
+
         moveTaskToBack(true);
     }
 
@@ -231,7 +330,8 @@ public class MainActivity extends FragmentActivity implements
         User user = userService.getRegisteredUser();
         //if(user ==null){
         usernameText.setText(user == null ? null : user.username);
-        phoneText.setText(user == null ? null : user.phone);
+        if (user.phone != null)
+            ccp.setFullNumber(user.phone);
 
         Long total = statsService.countRecords();
         Long synced = statsService.countSyncedRecords();
@@ -260,13 +360,17 @@ public class MainActivity extends FragmentActivity implements
     void enableSettingsEdit() {
         btnLayout.setVisibility(View.VISIBLE);
         usernameText.setEnabled(true);
-        phoneText.setEnabled(true);
+        ccp.setClickable(true);
+        ccp.setCcpClickable(true);
+        edtPhoneNumber.setEnabled(true);
     }
 
     void disableSettingsEdit() {
         btnLayout.setVisibility(View.GONE);
         usernameText.setEnabled(false);
-        phoneText.setEnabled(false);
+        ccp.setClickable(false);
+        ccp.setCcpClickable(false);
+        edtPhoneNumber.setEnabled(false);
 
     }
 
@@ -278,26 +382,26 @@ public class MainActivity extends FragmentActivity implements
         String username = usernameText.getText().toString().trim();
         user.username = username.isEmpty() ? null : username;
 
-        String phone = phoneText.getText().toString().trim();
-        String p = PhoneNumberUtils.formatNumberToE164(phone, "");
-        phone = p == null ? phone : p;
-        phoneText.setText(phone);
+        String phone = ccp.getFullNumberWithPlus().trim();
+        //  PhoneNumberUtil pnu = PhoneNumberUtil.getInstance();
+
         user.phone = phone.isEmpty() ? null : phone;
+        ccp.setFullNumber(user.phone);
 
 
         user.recordedAt = new Date();
 
         if (userService.insertUser(user)) {
-            Utils.showSnack(this, "saved CHV information");
+            SnackbarUtil.showSnack(this, "saved CHV information");
             findViewById(R.id.activity_main).requestFocus();
-            if (user.username != null) {
+            if (user.username != null && user.phone != null) {
                 disableSettingsEdit();
             }
 
 
             hideKeyboard(this);
         } else {
-            Utils.showSnack(this, "error saving CHV information");
+            SnackbarUtil.showSnack(this, "error saving CHV information");
         }
     }
 

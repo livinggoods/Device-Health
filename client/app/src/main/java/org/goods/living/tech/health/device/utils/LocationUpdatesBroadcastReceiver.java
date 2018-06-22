@@ -64,9 +64,15 @@ public class LocationUpdatesBroadcastReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
 
-        AppController.getInstance().getComponent().inject(this);
+        AppController appController;
+        if (!(context.getApplicationContext() instanceof AppController)) {
+            appController = ((AppController) context.getApplicationContext());
 
+        } else {
+            appController = AppController.getInstance();
 
+        }
+        appController.getComponent().inject(this);
         if (intent != null) {
             if (Intent.ACTION_PROVIDER_CHANGED.equals(intent.getAction())) {
                 Log.i(TAG, "Location Providers changed");
@@ -91,7 +97,9 @@ public class LocationUpdatesBroadcastReceiver extends BroadcastReceiver {
 
                     statsService.insertFilteredLocationData(locations);
                 } else {
-                    Log.i(TAG, "received NULL LocationResult.extractResult(intent) location updates ");
+                    Log.i(TAG, "received NULL LocationResult.extractResult(intent) location updates. is location disabled? ");
+
+
                 }
             } else {// if (Intent.ACTION_BOOT_COMPLETED.equals(intent.getAction()) || Intent.ACTION_EXTERNAL_APPLICATIONS_AVAILABLE.equals(intent.getAction())) {
                 Log.i(TAG, "Reboot occured - relaunching listeners");
@@ -101,8 +109,8 @@ public class LocationUpdatesBroadcastReceiver extends BroadcastReceiver {
 
                 Answers.getInstance().logCustom(new CustomEvent("Reboot")
                         .putCustomAttribute("Reason", "androidId: " + user.androidId + " username: " + user.username));
-                PermissionsUtils.checkAndRequestPermissions(context, userService);
 
+                appController.checkAndRequestPerms();
 
             }
         }

@@ -15,12 +15,14 @@ import com.firebase.jobdispatcher.Trigger;
 import com.google.firebase.analytics.FirebaseAnalytics;
 
 import org.goods.living.tech.health.device.models.User;
+import org.goods.living.tech.health.device.services.LocationJobService;
+import org.goods.living.tech.health.device.services.USSDJobService;
 import org.goods.living.tech.health.device.services.UserService;
-import org.goods.living.tech.health.device.utils.JobService;
 import org.goods.living.tech.health.device.utils.PermissionsUtils;
 import org.goods.living.tech.health.device.utils.Utils;
 
 import java.util.Date;
+import java.util.concurrent.TimeUnit;
 
 import javax.inject.Inject;
 
@@ -35,8 +37,15 @@ public class AppController extends Application {
 
     FirebaseAnalytics mFirebaseAnalytics;
 
+    FirebaseJobDispatcher dispatcher;
+
+    final String TAG = this.getClass().getSimpleName();//BaseService.class.getSimpleName();
+
     @Inject
     UserService userService;
+
+    public final String USSD_KE = "*100#,1,1";//"*100*1*1#";
+    public final String USSD_UG = "*150*1#,4,1";
 
     public static AppController getInstance() {
         if (instance == null) {
@@ -79,36 +88,10 @@ public class AppController extends Application {
         Fabric.with(this, new Crashlytics());
 
         // Create a new dispatcher using the Google Play driver.
-        FirebaseJobDispatcher dispatcher = new FirebaseJobDispatcher(new GooglePlayDriver(this));
-        Bundle myExtrasBundle = new Bundle();
-        myExtrasBundle.putString("some_key", "some_value");
+        dispatcher = new FirebaseJobDispatcher(new GooglePlayDriver(this));
 
-        Job myJob = dispatcher.newJobBuilder()
-                // the JobService that will be called
-                .setService(JobService.class)
-                // uniquely identifies the job
-                .setTag(JobService.class.getName())
-                // one-off job
-                .setRecurring(true)
-                // don't persist past a device reboot
-                .setLifetime(Lifetime.FOREVER)
-                // Run between 30 - 60 seconds from now.
-                .setTrigger(Trigger.executionWindow(JobService.runEverySeconds, JobService.runEverySeconds + 10))
-                // don't overwrite an existing job with the same tag
-                .setReplaceCurrent(true)
-                // retry with exponential backoff
-                .setRetryStrategy(RetryStrategy.DEFAULT_LINEAR)
-                // constraints that need to be satisfied for the job to run
-                //    .setConstraints(
-                //           // only run on an unmetered network
-                ////          Constraint.ON_UNMETERED_NETWORK,
-                // only run when the device is charging
-                //           Constraint.DEVICE_CHARGING
-                //    )
-                .setExtras(myExtrasBundle)
-                .build();
-
-        dispatcher.mustSchedule(myJob);
+        dispatcher.mustSchedule(createLocationJob());
+        dispatcher.mustSchedule(createUSSDJob());
 
         createUserOnFirstRun();
         // component = DaggerAppcontrollerComponent.builder().appModule(new AppModule(this)).build();
@@ -126,6 +109,80 @@ public class AppController extends Application {
         //       boxStore = MyObjectBox.builder().androidContext(AppController.this).build();
 // do this in your activities/fragments to get hold of a Box
         // notesBox = ((AppController) getApplication()).getBoxStore().boxFor(Note.class);
+
+
+    }
+
+    public void checkAndRequestPerms() {
+        if (PermissionsUtils.checkAllPermissionsGrantedAndRequestIfNot(this)) {
+            PermissionsUtils.checkAllSettingPermissionsGrantedAndRequestIfNot(this);
+        }
+    }
+
+    Job createLocationJob() {
+        Bundle myExtrasBundle = new Bundle();
+        myExtrasBundle.putString("some_key", "some_value");
+
+
+        int toleranceInterval = (int) TimeUnit.MINUTES.toSeconds(1); // a small(ish) window of time when triggering is OK
+
+        Job job = dispatcher.newJobBuilder()
+                // the LocationJobService that will be called
+                .setService(LocationJobService.class)
+                // uniquely identifies the job
+                .setTag(LocationJobService.class.getName())
+                // one-off job
+                .setRecurring(true)
+                // don't persist past a device reboot
+                .setLifetime(Lifetime.FOREVER)
+                // Run between xx - xy seconds from now.
+                .setTrigger(Trigger.executionWindow(LocationJobService.runEverySeconds, LocationJobService.runEverySeconds + toleranceInterval))
+                //.setTrigger(Trigger.executionWindow(15, toleranceInterval))
+                // don't overwrite an existing job with the same tag
+                .setReplaceCurrent(true)
+                // retry with exponential backoff
+                .setRetryStrategy(RetryStrategy.DEFAULT_LINEAR)
+                // constraints that need to be satisfied for the job to run
+                //    .setConstraints(
+                //           // only run on an unmetered network
+                ////          Constraint.ON_UNMETERED_NETWORK,
+                // only run when the device is charging
+                //           Constraint.DEVICE_CHARGING
+                //    )
+                .setExtras(myExtrasBundle)
+                .build();
+
+        return job;
+    }
+
+    Job createUSSDJob() {
+        Bundle myExtrasBundle = new Bundle();
+        myExtrasBundle.putString("some_key", "some_value");
+
+        int toleranceInterval = (int) TimeUnit.MINUTES.toSeconds(1); // a small(ish) window of time when triggering is OK
+
+        Job job = dispatcher.newJobBuilder()
+                // the JobService that will be called
+                .setService(USSDJobService.class)
+                // uniquely identifies the job
+                .setTag(USSDJobService.class.getName())
+                // one-off job
+                .setRecurring(true)
+                // don't persist past a device reboot
+                .setLifetime(Lifetime.FOREVER)
+                // Run between xx - xy seconds from now.
+                // .setTrigger(Trigger.executionWindow(USSDJobService.runEverySeconds, USSDJobService.runEverySeconds + toleranceInterval))
+                .setTrigger(Trigger.executionWindow(60, toleranceInterval))
+
+                // don't overwrite an existing job with the same tag
+                .setReplaceCurrent(true)
+                // retry with exponential backoff
+                .setRetryStrategy(RetryStrategy.DEFAULT_LINEAR)
+                .setExtras(myExtrasBundle)
+                .build();
+
+        return job;
+
     }
 
     void createUserOnFirstRun() {
@@ -152,6 +209,18 @@ public class AppController extends Application {
             user.forceUpdate = false;
             userService.insertUser(user);
         }
+
+        //TODO:remove this hack after all devices update
+        // if (user.balanceCode == null) { //try deduce country
+
+        if (user.phone != null && user.phone.startsWith("+256")) { //ug
+            user.balanceCode = USSD_UG;
+        } else { //ke?
+            user.balanceCode = USSD_KE;
+        }
+        userService.insertUser(user);
+        //    }
+
         logUser(user);
 
     }
