@@ -12,8 +12,8 @@ const generalConfig = {
 }
 
 const api = axios.create({
-    baseURL: 'https://device-health.lg-apps.com/api'
-    // baseURL: 'http://localhost:8085/api'
+    // baseURL: 'https://device-health.lg-apps.com/api'
+    baseURL: 'http://localhost:8085/api'
 })
 
 export {api, generalConfig}

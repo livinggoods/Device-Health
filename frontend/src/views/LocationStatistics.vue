@@ -17,8 +17,18 @@
                             </div>
                             <div class="collapse navbar-collapse">
                                 <ul class="nav navbar-nav navbar-left">
-
                                     <li style="margin-top: 10px;">
+                                        <el-select v-model="searchParams.country" filterable default-first-option placeholder="Country">
+                                            <el-option
+                                                    v-for="item in countryOptions"
+                                                    :key="item.code"
+                                                    :label="item.name"
+                                                    :value="item.code">
+                                            </el-option>
+                                        </el-select>
+                                    </li>
+
+                                    <li style="margin-top: 10px;margin-left: 5px;">
                                         <el-autocomplete
                                                 popper-class="my-autocomplete"
                                                 class="inline-input"
@@ -31,9 +41,8 @@
                                                     class="el-icon-edit el-input__icon"
                                                     slot="suffix">
                                             </i>
-                                            <template slot-scope="{ item }">
-                                                <div class="value"><strong>Name:</strong> {{ item.value }}</div>
-                                                <div class="link"><strong>Branch:</strong> {{ item.branch }}</div>
+                                            <template slot-scope="{ item }" style="width: 50px">
+                                                <div class="value"><strong></strong> {{ item.value }} <strong> - </strong> {{ item.branch }}</div>
                                             </template>
                                         </el-autocomplete>
                                     </li>
@@ -107,14 +116,21 @@
                 <Sidebar :sidebar-header="sidebarHeader"></Sidebar>
                 <el-card class="box-card" style="position: absolute; float: right;margin-right:
                 0px;max-width: 400px; z-index: 9999;  top: 60px; right: 0;max-height: 200px;overflow-y: scroll;overflow-x: scroll;overflow: -moz-scrollbars-vertical;">
-                    <h4 style="margin-bottom: 5px">Unmapped Activities</h4>
-                    <div style="border-bottom: 1px gainsboro solid; margin-bottom:5px" v-for="unmappedActivity in unmappedActivities" class="text item">
+                    <h4 style="margin-bottom: 5px;">Unmapped Activities : {{unmatchedActivities.length}}</h4>
+                    <div style="border-bottom: 1px gainsboro solid; margin-bottom:5px" v-for="unmappedActivity in unmatchedActivities" class="text item">
                         <strong>Activity:</strong> {{unmappedActivity.activity}} <br/> <strong>Client :</strong> {{unmappedActivity.client}}
                         <br/> <strong>Reported At:</strong> {{unmappedActivity.recordedAt}}
                         <br/> <strong>Activity Id:</strong> {{unmappedActivity.activityId}}
                     </div>
                 </el-card>
                 <div id="map"></div>
+                <div style="position: absolute;margin-bottom: 20px;z-index: 1000; bottom:30px; right: 0px"
+                     id="menu" class="btn-group" role="group" aria-label="">
+                    <button @click="toggleMedicData"  :class="medicDataSelected?'':'btn-neutral'" type="button" class="btn btn-fill btn-secondary">Medic Data</button>
+                    <button @click="toggleDeviceHealthData" :class="deviceHealthDataSelected?'':'btn-neutral'" type="button"
+                            class="btn btn-fill btn-secondary">DeviceHealth Data</button>
+                </div>
+
                 <!--<lg-map-viz :access-token="accessToken" :layers="layers" :map-options="mapOptions"></lg-map-viz>-->
             </div>
         </div>
@@ -139,6 +155,12 @@ export default {
     name: 'LocationTracker',
     data () {
         return {
+            'countryOptions': [
+                {'name': 'Uganda', 'code': 'UG'},
+                {'name': 'Kenya', 'code': 'KE'},
+                {'name': 'USA', 'code': 'USA'},
+                {'name': 'Sierra Leonne', 'code': 'SE'}
+            ],
             'isLoading': false,
             'accessToken': generalConfig.mapboxApiKey,
             'mapOptions': {
@@ -148,12 +170,16 @@ export default {
             },
             'sidebarHeader': generalConfig.sidebarHeader,
             'searchParams': {
+                'country': '',
                 'uuid': '',
                 'chvId': '',
                 'dates': []
             },
             'layers': '',
-            'unmappedActivities': []
+            'unmatchedActivities': [],
+            'matchedActivities': [],
+            'medicDataSelected': false,
+            'deviceHealthDataSelected': true
 
         }
     },
@@ -165,13 +191,12 @@ export default {
     },
     methods: {
         searchChv: function (username, callback) {
-            api.post('/user/find', {'username': username}).then(function (response) {
+            api.post('/user/find', {'username': username, 'country': this.searchParams.country}).then(function (response) {
                 var errorResult = [{'value': 'No user found'}]
                 if (response.data.status === true) {
                     var users = []
                     if (response.data.data.users.length > 0) {
                         response.data.data.users.forEach(function (user) {
-                            console.log(user)
                             users.push({'value': user.name, 'branch': user.branch, 'userObject': user})
                             callback(users)
                         })
@@ -187,17 +212,35 @@ export default {
                 console.log(error)
             })
         },
+        reinitializeMap: function () {
+            if (map.getLayer('device-health-data-layer')) {
+                map.removeLayer('device-health-data-layer')
+                if (map.getSource('device-health-data-source')) {
+                    map.removeSource('device-health-data-source')
+                }
+            }
+            if (map.getLayer('medic-data-layer')) {
+                map.removeLayer('medic-data-layer')
+                if (map.getSource('medic-data-source')) {
+                    map.removeSource('medic-data-source')
+                }
+            }
+            map.setZoom(3)
+        },
         selectChv: function (chv) {
             this.searchParams.uuid = chv.userObject.uuid
         },
         getLocationStats: function () {
+            this.reinitializeMap()
+            this.matchedActivities = []
+            this.unmatchedActivities = []
             var self = this
             this.isLoading = true
-            console.log(this.searchParams)
             api.post('/stats/find', {
                 'uuid': this.searchParams.uuid,
                 'from': moment(this.searchParams.dates[0]).format('MM-DD-YYYY'),
-                'to': moment(this.searchParams.dates[1]).format('MM-DD-YYYY')
+                'to': moment(this.searchParams.dates[1]).format('MM-DD-YYYY'),
+                'country': this.searchParams.country
             }).then(function (response) {
                 if (response.data.status === true) {
                     if (response.data.data.locations.length > 0) {
@@ -212,32 +255,32 @@ export default {
             })
         },
         processLocations: function (locations) {
-            var reducedArray = this.filterActivities(locations)
-            var geoJsonified = this.transformToGeoJson(reducedArray)
-
-            this.fitBounds(reducedArray)
-            this.addMarkersToMap(geoJsonified)
-            this.animateChpMovement(reducedArray)
-            this.layers = geoJsonified
+            this.filterActivities(locations)
+            this.createDataSources()
+            // this.addLayersToMap()
+            this.fitBounds()
+            // this.animateChpMovement(reducedArray)
+            // this.layers = geoJsonified
         },
         filterActivities: function (array) {
-            var filteredArray = []
             var self = this
             array.forEach(function (entry) {
                 if (entry.latitude == null || entry.longitude == null) {
-                    self.unmappedActivities.push({
+                    var coordinates = JSON.parse(entry.medicCoordinates)
+                    self.unmatchedActivities.push({
                         'coordinates': {
-                            'latitude': entry.latitude,
-                            'longitude': entry.longitude
+                            'latitude': coordinates.lat,
+                            'longitude': coordinates.long
                         },
                         'activity': entry.activity,
                         'radius': 5,
+                        'medicCoordinates': entry.medicCoordinates,
                         'client': entry.client,
                         'recordedAt': entry.timestamp,
                         'activityId': entry.activityId
                     })
                 } else {
-                    filteredArray.push({
+                    self.matchedActivities.push({
                         'coordinates': {
                             'latitude': entry.latitude,
                             'longitude': entry.longitude
@@ -249,26 +292,15 @@ export default {
                     })
                 }
             })
-            return filteredArray
         },
-        transformToGeoJson: function (locationArray) {
-            var geoJsonified
-            geoJsonified = {
-                'id': 'points',
-                'type': 'symbol',
-                'source': {
-                    'type': 'geojson',
-                    'data': {
-                        'type': 'FeatureCollection',
-                        'features': []
-                    }
-
+        createDataSources: function () {
+            if (this.matchedActivities.length > 0) {
+                var deviceHealthData = {
+                    'type': 'FeatureCollection',
+                    'features': []
                 }
-
-            }
-            if (locationArray.length > 0) {
-                locationArray.forEach(function (location) {
-                    geoJsonified.source.data.features.push({
+                this.matchedActivities.forEach(function (location) {
+                    deviceHealthData.features.push({
                         'type': 'Feature',
                         'properties': {
                             'class': 'marker',
@@ -276,6 +308,7 @@ export default {
                             'activity': location.activity,
                             'client': location.client,
                             'recordedAt': location.recordedAt
+
                         },
                         'geometry': {
                             'type': 'Point',
@@ -285,45 +318,84 @@ export default {
                             ]
                         }
                     })
-                    // geoJsonified.source.data.geometry.coordinates.push([location.coordinates.longitude, location.coordinates.latitude])
                 })
+                map.addSource('device-health-data-source',
+                    {
+                        'type': 'geojson',
+                        'data': deviceHealthData
+                    })
             }
-            return geoJsonified
-        },
-        addMarkersToMap: function (geoJson) {
-            // try to remove any layers of the same kind that already exist on the map
-            // try {
-            //     map.removeLayer('points')
-            // } catch (e) {
-            //     //
-            // }
-            //
-            // map.addLayer(geoJson)
-            if (geoJson.source.data.features.length > 0) {
-                geoJson.source.data.features.forEach(function (marker) {
-                    // create a HTML element for each feature
-                    var el = document.createElement('div')
+            if (this.unmatchedActivities.length > 0) {
+                var medicData = {
+                    'type': 'FeatureCollection',
+                    'features': []
+                }
+                this.unmatchedActivities.forEach(function (location) {
+                    medicData.features.push({
+                        'type': 'Feature',
+                        'properties': {
+                            'class': 'marker',
+                            'radius': location.radius,
+                            'activity': location.activity,
+                            'client': location.client,
+                            'recordedAt': location.recordedAt
 
-                    el.className = 'marker'
-                    el.style.width = marker.properties.radius * 4 + 'px'
-                    el.style.height = marker.properties.radius * 4 + 'px'
-
-                    // add popup
-                    var popup = new mapboxgl.Popup({offset: 25})
-                        .setHTML('<h4> Location Details</h4>' +
-                            '<p>Latitude: ' + marker.geometry.coordinates[1] + ' Longitude: ' + marker.geometry.coordinates[0] + '</p>' +
-                            '<p>Time: ' + marker.properties.recordedAt + '</p>' +
-                            '<p>Activity: ' + marker.properties.activity + '</p>' +
-                            '<p>Client: ' + marker.properties.client + '</p>'
-                        )
-
-                    new mapboxgl.Marker(el)
-                        .setLngLat({'lat': marker.geometry.coordinates[1], 'lng': marker.geometry.coordinates[0]})
-                        .setPopup(popup)
-                        .addTo(map)
+                        },
+                        'geometry': {
+                            'type': 'Point',
+                            'coordinates': [
+                                location.coordinates.longitude,
+                                location.coordinates.latitude
+                            ]
+                        }
+                    })
                 })
+                map.addSource('medic-data-source',
+                    {
+                        'type': 'geojson',
+                        'data': medicData
+                    })
+            }
+            this.addLayersToMap()
+        },
+        addLayersToMap: function () {
+            console.log(this.matchedActivities)
+            var deviceHealthLayer = {
+                'id': 'device-health-data-layer',
+                'type': 'circle',
+                'interactive': true,
+                'source': 'device-health-data-source',
+                'layout': {
+                    'visibility': 'visible'
+                },
+                'paint': {
+                    'circle-radius': 8,
+                    'circle-color': 'rgba(66, 166, 138, 1)'
+                }
+
+            }
+            var medicLayer = {
+                'id': 'medic-data-layer',
+                'type': 'circle',
+                'interactive': true,
+                'source': 'medic-data-source',
+                'layout': {
+                    'visibility': 'none'
+                },
+                'paint': {
+                    'circle-radius': 8,
+                    'circle-color': 'rgba(58, 89, 255, 1)'
+                }
+
+            }
+            if (this.matchedActivities.length > 0) {
+                map.addLayer(deviceHealthLayer)
+            }
+            if (this.unmatchedActivities.length > 0) {
+                map.addLayer(medicLayer)
             }
         },
+
         animateChpMovement: function (locations) {
             if (locations.length > 0) {
                 var geoJson = {
@@ -381,12 +453,10 @@ export default {
                 }, 500)
             }
         },
-        fitBounds: function (locations) {
+        fitBounds: function () {
             var coordinates = []
-            console.log('boundsLocation')
-            console.log(locations)
-            if (locations.length > 0) {
-                locations.forEach(function (location) {
+            if (this.matchedActivities.length > 0) {
+                this.matchedActivities.forEach(function (location) {
                     coordinates.push([location.coordinates.longitude, location.coordinates.latitude])
                 })
                 var bounds = coordinates.reduce(function (bounds, coord) {
@@ -397,16 +467,67 @@ export default {
                     padding: 20
                 })
             }
+        },
+        showPopup: function (location, layer) {
+            var popup = new mapboxgl.Popup({
+                closeButton: true,
+                closeOnClick: true
+            })
+            var identifiedFeatures = map.queryRenderedFeatures(location.point, layer)
+            console.log(location)
+            popup.remove()
+            if (identifiedFeatures !== '') {
+                popup.setLngLat(location.lngLat)
+                    .setHTML('<h4> Location Details</h4>' +
+                    '<p>Latitude: ' + location.lngLat.lat + '</p>' +
+                        '<p>Longitude: ' + location.lngLat.lng + '</p>' +
+                    '<p>Time: ' + identifiedFeatures[0].properties.recordedAt + '</p>' +
+                    '<p>Activity: ' + identifiedFeatures[0].properties.activity + '</p>' +
+                    '<p>Client: ' + identifiedFeatures[0].properties.client + '</p>'
+                    )
+                    .addTo(map)
+            }
+        },
+        toggleMedicData: function () {
+            var visibility = map.getLayoutProperty('medic-data-layer', 'visibility')
+            console.log(map.getLayoutProperty('medic-data-layer', 'visibility'))
+
+            if (visibility === 'visible') {
+                map.setLayoutProperty('medic-data-layer', 'visibility', 'none')
+                this.medicDataSelected = false
+            } else {
+                this.medicDataSelected = true
+                map.setLayoutProperty('medic-data-layer', 'visibility', 'visible')
+            }
+        },
+        toggleDeviceHealthData: function () {
+            if (map.getLayer('device-health-data-layer') !== undefined) {
+                var visibility = map.getLayoutProperty('device-health-data-layer', 'visibility')
+
+                if (visibility === 'visible') {
+                    map.setLayoutProperty('device-health-data-layer', 'visibility', 'none')
+                    // map.setLayoutProperty('line-animation', 'visibility', 'none')
+                    this.deviceHealthDataSelected = false
+                } else {
+                    this.deviceHealthDataSelected = true
+                    map.setLayoutProperty('device-health-data-layer', 'visibility', 'visible')
+                }
+            }
         }
 
     },
     mounted: function () {
+        var self = this
         mapboxgl.accessToken = this.accessToken
         map = new mapboxgl.Map({
             container: 'map',
             style: 'mapbox://styles/mapbox/streets-v10',
             center: [31, 0],
             zoom: 3
+        })
+
+        map.on('click', function (e) {
+            self.showPopup(e, 'device-health-data-layer')
         })
     },
     watch: {
@@ -425,12 +546,13 @@ export default {
 
     #map {
         width: 100%;
-        height: 90vh;
+        height: 100vh;
     }
     .marker {
         background-image: url('../assets/img/marker.png');
         background-size: cover;
-
+        width: 50px;
+        height: 50px;
         border-radius: 50%;
         cursor: pointer;
     }
@@ -478,5 +600,8 @@ export default {
                 color: #b4b4b4;
             }
         }
+    }
+    .el-autocomplete-suggestion{
+        width: 300px!important;
     }
 </style>
