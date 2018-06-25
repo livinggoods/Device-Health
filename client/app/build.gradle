@@ -25,7 +25,10 @@ ext.minimumSdkVersion = 19
 android {
     compileSdkVersion 27
     // buildToolsVersion "26.0.0"
-
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
     signingConfigs {
         config {
         }
@@ -100,6 +103,13 @@ dependencies {
     implementation 'com.google.firebase:firebase-core:15.0.0'
     implementation 'com.crashlytics.sdk.android:crashlytics:2.9.2'
     implementation 'com.firebase:firebase-jobdispatcher:0.8.5'
+
+    // https://mvnrepository.com/artifact/org.slf4j/slf4j-api
+    implementation group: 'org.slf4j', name: 'slf4j-api', version: '1.7.25'
+    // https://mvnrepository.com/artifact/org.slf4j/slf4j-android
+    implementation group: 'org.slf4j', name: 'slf4j-android', version: '1.7.25'
+
+
 }
 
 // ADD THIS AT THE BOTTOM

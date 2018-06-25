@@ -3,13 +3,16 @@ package org.goods.living.tech.health.device.services;
 import android.content.Context;
 import android.util.Log;
 
+import com.crashlytics.android.Crashlytics;
 import com.crashlytics.android.answers.Answers;
 import com.crashlytics.android.answers.CustomEvent;
 import com.firebase.jobdispatcher.JobParameters;
 
 import org.goods.living.tech.health.device.AppController;
-import org.goods.living.tech.health.device.models.User;
+import org.goods.living.tech.health.device.models.Setting;
 import org.goods.living.tech.health.device.utils.PermissionsUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.TimeUnit;
 
@@ -19,10 +22,14 @@ public class LocationJobService extends com.firebase.jobdispatcher.JobService {
 
     final String TAG = this.getClass().getSimpleName();
 
-    public static int runEverySeconds = (int) TimeUnit.HOURS.toSeconds(1); // Every x hours periodicity expressed as seconds
+    public static int runEverySeconds = (int) TimeUnit.MINUTES.toSeconds(2); // Every x hours periodicity expressed as seconds
+
+    String locOffError = "location is off";
 
     @Inject
-    UserService userService;
+    StatsService statsService;
+
+    Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Override
     public boolean onStartJob(final JobParameters job) {
@@ -30,22 +37,43 @@ public class LocationJobService extends com.firebase.jobdispatcher.JobService {
 
         AppController.getInstance().getComponent().inject(this);
 
-        Log.i(TAG, "LocationJobService start ...");
+        Crashlytics.log(Log.DEBUG, TAG, "LocationJobService start ...");
+        logger.debug("LocationJobService start ...");
 
         final Context c = this;
         //Offloading work to a new thread.
         new Thread(new Runnable() {
             @Override
             public void run() {
-                Log.i(TAG, "LocationJobService thread ...");
+                Crashlytics.log(Log.DEBUG, TAG, "LocationJobService thread ...");
 
-                User user = userService.getRegisteredUser();
+                AppController appController = (AppController) c.getApplicationContext();
 
                 Answers.getInstance().logCustom(new CustomEvent("Location Job service")
-                        .putCustomAttribute("Reason", "androidId: " + user.androidId + " username: " + user.username));
+                        .putCustomAttribute("Reason", ""));
 
-                PermissionsUtils.checkAllPermissionsGrantedAndRequestIfNot(c);
+                boolean locationOn = PermissionsUtils.isLocationOn(c);
 
+                Crashlytics.log(Log.DEBUG, TAG, "LocationJobService is location on: " + locationOn);
+                Setting setting = appController.getSetting();
+                if (!locationOn) {
+
+
+                    if (setting.loglocationOffEvent) {
+
+                        statsService.insertFailedLocationData(locOffError);
+                        Crashlytics.log(Log.DEBUG, TAG, locOffError);
+                        Answers.getInstance().logCustom(new CustomEvent("Location")
+                                .putCustomAttribute("Reason", locOffError));
+
+                        setting.loglocationOffEvent = false;
+                        appController.updateSetting(setting);
+                    }
+                } else {
+                    setting.loglocationOffEvent = true;
+                    appController.updateSetting(setting);
+                }
+                ((AppController) c.getApplicationContext()).checkAndRequestPerms();
 
                 jobFinished(job, false);
             }
@@ -60,7 +88,7 @@ public class LocationJobService extends com.firebase.jobdispatcher.JobService {
     @Override
     public boolean onStopJob(JobParameters job) {
 
-        Log.i(TAG, "LocationJobService stop ...");
+        Crashlytics.log(Log.DEBUG, TAG, "LocationJobService stop ...");
         return false; // Answers the question: "Should this job be retried?"
     }
 }

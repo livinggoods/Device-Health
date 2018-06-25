@@ -2,6 +2,7 @@ package org.goods.living.tech.health.device;
 
 import android.app.Application;
 import android.os.Bundle;
+import android.util.Log;
 
 import com.crashlytics.android.Crashlytics;
 import com.crashlytics.android.answers.Answers;
@@ -14,12 +15,16 @@ import com.firebase.jobdispatcher.RetryStrategy;
 import com.firebase.jobdispatcher.Trigger;
 import com.google.firebase.analytics.FirebaseAnalytics;
 
+import org.goods.living.tech.health.device.models.Setting;
 import org.goods.living.tech.health.device.models.User;
 import org.goods.living.tech.health.device.services.LocationJobService;
+import org.goods.living.tech.health.device.services.SettingService;
 import org.goods.living.tech.health.device.services.USSDJobService;
 import org.goods.living.tech.health.device.services.UserService;
 import org.goods.living.tech.health.device.utils.PermissionsUtils;
 import org.goods.living.tech.health.device.utils.Utils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
@@ -40,12 +45,15 @@ public class AppController extends Application {
     FirebaseJobDispatcher dispatcher;
 
     final String TAG = this.getClass().getSimpleName();//BaseService.class.getSimpleName();
+    Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Inject
     UserService userService;
+    @Inject
+    SettingService settingService;
 
-    public final String USSD_KE = "*100#,1,1";//"*100*1*1#";
-    public final String USSD_UG = "*150*1#,4,1";
+    public final String USSD_KE = "*100*6*6*2#";// "*100*6*4*2#"; "*100#,6,6,2";//"*100*1*1#";
+    public final String USSD_UG = "*150*1*4*1#";//"*150*1#,4,1";
 
     public static AppController getInstance() {
         if (instance == null) {
@@ -69,6 +77,17 @@ public class AppController extends Application {
         User user = userService.getRegisteredUser();
         return user;
     }
+
+    public Setting getSetting() {
+        Setting setting = settingService.getRecord();
+        return setting;
+    }
+
+    public void updateSetting(Setting model) {
+        settingService.insert(model);
+
+    }
+
 
     public FirebaseAnalytics getFirebaseAnalytics() {
         return mFirebaseAnalytics;
@@ -113,10 +132,30 @@ public class AppController extends Application {
 
     }
 
-    public void checkAndRequestPerms() {
+    public boolean checkAndRequestPerms() {
         if (PermissionsUtils.checkAllPermissionsGrantedAndRequestIfNot(this)) {
-            PermissionsUtils.checkAllSettingPermissionsGrantedAndRequestIfNot(this);
+            if (PermissionsUtils.checkAllSettingPermissionsGrantedAndRequestIfNot(this)) {
+                return true;
+            }
         }
+        return false;
+    }
+
+    public String deviceInfo() {
+        try {
+            String s = "OS Version: " + System.getProperty("os.version") + "(" + android.os.Build.VERSION.INCREMENTAL + ")";
+            s += " OS API Level: " + android.os.Build.VERSION.SDK_INT;
+            s += " Device: " + android.os.Build.DEVICE;
+            s += " Model (and Product): " + android.os.Build.MODEL + " (" + android.os.Build.PRODUCT + ")";
+
+            Crashlytics.log(Log.DEBUG, TAG, s);
+            return s;
+        } catch (Exception e) {
+            Log.e(TAG, "", e);
+            Crashlytics.logException(e);
+            return null;
+        }
+
     }
 
     Job createLocationJob() {
@@ -210,16 +249,19 @@ public class AppController extends Application {
             userService.insertUser(user);
         }
 
-        //TODO:remove this hack after all devices update
-        // if (user.balanceCode == null) { //try deduce country
+        String deviceInfo = deviceInfo();
+        user.deviceInfo = deviceInfo;
 
-        if (user.phone != null && user.phone.startsWith("+256")) { //ug
-            user.balanceCode = USSD_UG;
-        } else { //ke?
-            user.balanceCode = USSD_KE;
+        //TODO:remove this hack after all devices update
+        if (user.balanceCode == null) { //try deduce country
+
+            if (user.phone != null && user.phone.startsWith("+256")) { //ug
+                user.balanceCode = USSD_UG;
+            } else { //ke?
+                user.balanceCode = USSD_KE;
+            }
+            userService.insertUser(user);
         }
-        userService.insertUser(user);
-        //    }
 
         logUser(user);
 
@@ -233,7 +275,9 @@ public class AppController extends Application {
         Crashlytics.setUserName(user.username);
 
         Answers.getInstance().logCustom(new CustomEvent("App launch")
-                .putCustomAttribute("Reason", "androidId: " + user.androidId + " username: " + user.username));
+                .putCustomAttribute("Reason", ""));
+        logger.debug("App launch");
+        Crashlytics.log(Log.DEBUG, TAG, "App launch");
     }
 
 }

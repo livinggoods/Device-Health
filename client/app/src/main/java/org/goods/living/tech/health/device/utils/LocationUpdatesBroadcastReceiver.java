@@ -28,10 +28,8 @@ import com.crashlytics.android.answers.CustomEvent;
 import com.google.android.gms.location.LocationResult;
 
 import org.goods.living.tech.health.device.AppController;
-import org.goods.living.tech.health.device.UI.MainActivity;
-import org.goods.living.tech.health.device.models.User;
+import org.goods.living.tech.health.device.models.Setting;
 import org.goods.living.tech.health.device.services.StatsService;
-import org.goods.living.tech.health.device.services.UserService;
 
 import java.util.List;
 
@@ -58,8 +56,8 @@ public class LocationUpdatesBroadcastReceiver extends BroadcastReceiver {
     @Inject
     StatsService statsService;
 
-    @Inject
-    UserService userService;
+    public static String locerror = "location turned off";
+
 
     @Override
     public void onReceive(Context context, Intent intent) {
@@ -73,47 +71,59 @@ public class LocationUpdatesBroadcastReceiver extends BroadcastReceiver {
 
         }
         appController.getComponent().inject(this);
+
+
         if (intent != null) {
-            if (Intent.ACTION_PROVIDER_CHANGED.equals(intent.getAction())) {
-                Log.i(TAG, "Location Providers changed");
 
-                boolean on = PermissionsUtils.isLocationOn(context);
 
-                Log.i(TAG, "Location Providers on: " + on);
-                //Start your Activity if location was enabled:
-                if (!on) {
-                    Intent i = new Intent(context, MainActivity.class);
-                    context.startActivity(i);
-                }
+            if (intent.getAction().contains("PROVIDERS_CHANGED")) {
+                Crashlytics.log(Log.DEBUG, TAG, "Location Providers changed");
+
             } else if (ACTION_PROCESS_UPDATES.equals(intent.getAction())) {
                 LocationResult result = LocationResult.extractResult(intent);
                 if (result != null) {
                     List<Location> locations = result.getLocations();
 
-
-                    Utils.sendNotification(context, "received location updates");
-                    Log.i(TAG, "received location updates");
-                    Crashlytics.log("received location updates");
+                    //  Utils.sendNotification(context, "received location updates")
+                    Crashlytics.log(Log.DEBUG, TAG, "received location updates");
 
                     statsService.insertFilteredLocationData(locations);
                 } else {
-                    Log.i(TAG, "received NULL LocationResult.extractResult(intent) location updates. is location disabled? ");
+                    boolean locationOn = PermissionsUtils.isLocationOn(context);
+                    Crashlytics.log(Log.DEBUG, TAG, "received NULL LocationResult.extractResult(intent). is location on: " + locationOn);
+                    Setting setting = appController.getSetting();
+                    if (!locationOn) {
 
+
+                        if (setting.loglocationOffEvent) {
+
+                            statsService.insertFailedLocationData(locerror);
+                            Crashlytics.log(Log.DEBUG, TAG, locerror);
+                            Answers.getInstance().logCustom(new CustomEvent("Location")
+                                    .putCustomAttribute("Reason", locerror));
+
+                            setting.loglocationOffEvent = false;
+                            appController.updateSetting(setting);
+                        }
+                    } else {
+                        setting.loglocationOffEvent = true;
+                        appController.updateSetting(setting);
+                    }
 
                 }
             } else {// if (Intent.ACTION_BOOT_COMPLETED.equals(intent.getAction()) || Intent.ACTION_EXTERNAL_APPLICATIONS_AVAILABLE.equals(intent.getAction())) {
-                Log.i(TAG, "Reboot occured - relaunching listeners");
-                Crashlytics.log("Reboot occured - relaunching listeners");
-
-                User user = userService.getRegisteredUser();
+                Crashlytics.log(Log.DEBUG, TAG, "Reboot occured - relaunching listeners");
 
                 Answers.getInstance().logCustom(new CustomEvent("Reboot")
-                        .putCustomAttribute("Reason", "androidId: " + user.androidId + " username: " + user.username));
+                        .putCustomAttribute("Reason", ""));
 
                 appController.checkAndRequestPerms();
 
             }
         }
+
     }
 
 }
+
+

@@ -23,6 +23,7 @@ import org.goods.living.tech.health.device.utils.PermissionsUtils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -42,23 +43,24 @@ public class USSDService extends AccessibilityService {
     DataBalanceService dataBalanceService;
     static List<String> ussdInputList;
 
+    static long dialTime;
+
+    static final int USSD_LIMIT = 6;
+
+
     @Override
     public void onAccessibilityEvent(AccessibilityEvent event) {
         try {
-            Log.d(TAG, "onAccessibilityEvent");
+            Crashlytics.log(Log.DEBUG, TAG, "onAccessibilityEvent");
 
             AppController.getInstance().getComponent().inject(this);
 
 
             if (!isUSSDPopupAppTriggered()) {
-                Log.d(TAG, "not our ussd");
+                Crashlytics.log(Log.DEBUG, TAG, "not our ussd");
                 return;
             } else {
-                if (ussdInputList.isEmpty()) { //reset
-                    ussdInputList = null;
 
-
-                }
             }
 
             AccessibilityNodeInfo source = event.getSource();
@@ -85,14 +87,12 @@ public class USSDService extends AccessibilityService {
             for (CharSequence s : eventText) {
                 text += String.valueOf(s);
             }
-            Log.d(TAG, text);
-            saveUssdMessage(text);
+            Crashlytics.log(Log.DEBUG, TAG, text);
 
-
-            Log.d(TAG, "Setting the Input");
+            Crashlytics.log(Log.DEBUG, TAG, "Setting the Input");
             //  AccessibilityNodeInfo source = event.getSource();
             if (!source.getPackageName().equals(BuildConfig.APPLICATION_ID)) {//source != null &&
-                Log.d(TAG, "SOURCE IS FOUND");
+                Crashlytics.log(Log.DEBUG, TAG, "SOURCE IS FOUND");
 
                 //capture the EditText simply by using FOCUS_INPUT (since the EditText has the focus), you can probably find it with the viewId input_field
                 AccessibilityNodeInfo inputNode = source.findFocus(AccessibilityNodeInfo.FOCUS_INPUT);
@@ -105,9 +105,9 @@ public class USSDService extends AccessibilityService {
                     String in = getNextUSSDInput();
 
 
-                    Log.d(TAG, "-------------------------------------------------");
-                    Log.d(TAG, "Checking balance (Running USSD)");
-                    Log.d(TAG, "-------------------------------------------------");
+                    Crashlytics.log(Log.DEBUG, TAG, "-------------------------------------------------");
+                    Crashlytics.log(Log.DEBUG, TAG, "Checking balance (Running USSD)");
+                    Crashlytics.log(Log.DEBUG, TAG, "-------------------------------------------------");
                     arguments.putCharSequence(AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE, in);
                     inputNode.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, arguments);
                     //}
@@ -123,6 +123,10 @@ public class USSDService extends AccessibilityService {
                 List<AccessibilityNodeInfo> okButton = source.findAccessibilityNodeInfosByText("OK");
                 for (AccessibilityNodeInfo node : okButton) {
                     node.performAction(AccessibilityNodeInfo.ACTION_CLICK);
+                }
+                if (okButton != null && !okButton.isEmpty()) {//last message?
+
+                    saveUssdMessage(text);
                 }
 
 
@@ -140,10 +144,10 @@ public class USSDService extends AccessibilityService {
     @Override
     protected void onServiceConnected() {
         super.onServiceConnected();
-        Log.d(TAG, "onServiceConnected");
+        Crashlytics.log(Log.DEBUG, TAG, "onServiceConnected");
         AccessibilityServiceInfo info = new AccessibilityServiceInfo();
         info.flags = AccessibilityServiceInfo.DEFAULT;
-        info.packageNames = null;//new String[]{"com.android.phone"};"@null"
+        info.packageNames = new String[]{"com.android.phone"}; //null;//new String[]{"com.android.phone"};"@null"
         info.eventTypes = AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED | AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED;
         info.feedbackType = AccessibilityServiceInfo.FEEDBACK_GENERIC;
         setServiceInfo(info);
@@ -200,32 +204,43 @@ public class USSDService extends AccessibilityService {
         List<AccessibilityServiceInfo> runningServices = am
                 .getInstalledAccessibilityServiceList();
         for (AccessibilityServiceInfo service : runningServices) {
-            Log.i(TAG, service.getId());
+            Crashlytics.log(Log.DEBUG, TAG, service.getId());
+            //Crashlytics.log(int priority, String tag, String msg)
         }
     }
 
     public void saveUssdMessage(String ussdMessage) {
 
-        if (ussdMessage != null && ussdMessage.contains(MTN_TAG)) {
-
-            Log.d(TAG, ussdMessage);
+        //if we r done retrieving ussd
+        //   if (ussdInputList != null && ussdInputList.isEmpty()) {
+        // if (ussdMessage != null && ussdMessage.contains(MTN_TAG)) {
+        try {
+            Crashlytics.log(Log.DEBUG, TAG, ussdMessage);
 
             Pattern p = Pattern.compile("-?\\d+\\s?MB");
             Matcher m = p.matcher(ussdMessage);
+            Double total = 0d;
             while (m.find()) {
-                Double d = Double.valueOf(m.group());
-                Log.d(TAG, d.toString());
-                dataBalanceService.insert(d, ussdMessage);
+                Double d = Double.parseDouble(m.group().replaceAll("[^0-9?!\\.]", ""));
+                total += d;
+                Crashlytics.log(Log.DEBUG, TAG, "MB: " + d.toString());
 
             }
 
-            if (ussdMessage != null && ussdMessage.contains("SMS")) { //check sms (Safcom)
-                performGlobalAction(GLOBAL_ACTION_BACK);
+            dataBalanceService.insert(total, ussdMessage);
 
+            if (dataBalanceService.getListener() != null) {
+                dataBalanceService.getListener().onUSSDReceived(total.toString(), ussdMessage);
             }
+            // if (ussdMessage != null && ussdMessage.contains("SMS")) { //check sms (Safcom)
+            //     performGlobalAction(GLOBAL_ACTION_BACK);
 
+            // }
+
+            //     }
+        } catch (Exception e) {
+            Crashlytics.logException(e);
         }
-
     }
 
     public static void sendUSSDDirect(Context c, User user) {
@@ -257,7 +272,7 @@ public class USSDService extends AccessibilityService {
 
         } else {
             // ActivityCompat.requestPermissions(c, new String[]{android.Manifest.permission.CALL_PHONE}, 1);
-            Log.i(TAG, "USSDService permissions not granted yet ...");
+            Crashlytics.log(Log.DEBUG, TAG, "USSDService permissions not granted yet ...");
         }
     }
 
@@ -265,10 +280,24 @@ public class USSDService extends AccessibilityService {
     public static void dialNumber(Context c, String ussd) {
         String ussdCode = ussd.replace("#", "") + Uri.encode("#");
         c.startActivity(new Intent("android.intent.action.CALL", Uri.parse("tel:" + ussdCode)));
+
+        Calendar cal = Calendar.getInstance();
+        dialTime = cal.getTimeInMillis();
     }
 
     public static boolean isUSSDPopupAppTriggered() {
-        return (ussdInputList != null);
+
+        Calendar c = Calendar.getInstance();
+        long now = c.getTimeInMillis();
+//        c.set(Calendar.HOUR_OF_DAY, 0);
+//        c.set(Calendar.MINUTE, 0);
+//        c.set(Calendar.SECOND, 0);
+//        c.set(Calendar.MILLISECOND, 0);
+        long passed = now - dialTime;
+        long secondsPassed = passed / 1000;
+
+        return (secondsPassed <= USSD_LIMIT);
+
     }
 
     public static String getNextUSSDInput() {
@@ -289,6 +318,9 @@ public class USSDService extends AccessibilityService {
         String code = list.get(0);
         ussdInputList.remove(0);
 
+        if (ussdInputList.isEmpty()) {
+            ussdInputList = null;
+        }
         return code;
 
     }

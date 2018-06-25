@@ -22,7 +22,6 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -38,6 +37,7 @@ import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import com.crashlytics.android.Crashlytics;
 import com.crashlytics.android.answers.Answers;
 import com.crashlytics.android.answers.CustomEvent;
 import com.google.android.gms.location.LocationRequest;
@@ -47,6 +47,7 @@ import org.goods.living.tech.health.device.AppController;
 import org.goods.living.tech.health.device.R;
 import org.goods.living.tech.health.device.models.Stats;
 import org.goods.living.tech.health.device.models.User;
+import org.goods.living.tech.health.device.services.DataBalanceService;
 import org.goods.living.tech.health.device.services.StatsService;
 import org.goods.living.tech.health.device.services.USSDService;
 import org.goods.living.tech.health.device.services.UserService;
@@ -85,6 +86,9 @@ public class MainActivity extends FragmentActivity implements
     @Inject
     StatsService statsService;
 
+    @Inject
+    DataBalanceService dataBalanceService;
+
     /**
      * Provides access to the Fused Location Provider API.
      */
@@ -94,6 +98,8 @@ public class MainActivity extends FragmentActivity implements
     private Button cancelBtn;
     private Button saveBtn;
     private TextView usernameText;
+    private TextView balanceCodeTextView;
+    private TextView balanceTextView;
     CountryCodePicker ccp;
     AppCompatEditText edtPhoneNumber;
 
@@ -104,7 +110,9 @@ public class MainActivity extends FragmentActivity implements
     private TextView mLocationUpdatesResultView;
 
     LinearLayout btnLayout;
+    LinearLayout balanceLayout;
 
+    boolean newLaunch;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -123,9 +131,16 @@ public class MainActivity extends FragmentActivity implements
         edtPhoneNumber = (AppCompatEditText) findViewById(R.id.phone_number_edt);
         ccp.registerCarrierNumberEditText(edtPhoneNumber);
 
+        balanceCodeTextView = (TextView) findViewById(R.id.balanceCodeTextView);
+        balanceTextView = (TextView) findViewById(R.id.balanceTextView);
+
+        balanceTextView.setText(getString(R.string.data_balance, "0"));
+
         intervalTextView = (TextView) findViewById(R.id.intervalTextView);
         btnLayout = (LinearLayout) findViewById(R.id.btnLayout);
+        balanceLayout = (LinearLayout) findViewById(R.id.balanceLayout);
 
+        newLaunch = true;
         disableSettingsEdit();
 
         User user = userService.getRegisteredUser();
@@ -141,7 +156,7 @@ public class MainActivity extends FragmentActivity implements
         // Perform a manual sync by calling this:
         SyncAdapter.performSync();
 
-        AppController.getInstance().checkAndRequestPerms();
+
         // Crashlytics.getInstance().crash(); // Force a crash
 
 
@@ -162,6 +177,13 @@ public class MainActivity extends FragmentActivity implements
 
         loadData();
 
+
+        if (newLaunch) {
+            // requestLocationPermissions();
+            newLaunch = false;
+            AppController.getInstance().checkAndRequestPerms();
+        }
+
     }
 
 
@@ -176,7 +198,7 @@ public class MainActivity extends FragmentActivity implements
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String s) {
 
-        Log.i(TAG, "onSharedPreferenceChanged " + s);
+        Crashlytics.log(Log.DEBUG, TAG, "onSharedPreferenceChanged " + s);
         //  if (s.equals(Utils.KEY_LOCATION_UPDATES_RESULT)) {
 
         //  } else if (s.equals(Utils.KEY_LOCATION_UPDATES_REQUESTED)) {
@@ -188,7 +210,7 @@ public class MainActivity extends FragmentActivity implements
      * Handles the Save registration button.
      */
     public void registrationSave(View view) {
-        Log.i(TAG, "registrationSave updates");
+        Crashlytics.log(Log.DEBUG, TAG, "registrationSave updates");
 
         final AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Register User");
@@ -212,7 +234,7 @@ public class MainActivity extends FragmentActivity implements
      * Handles the cancel registration button.
      */
     public void registrationCancel(View view) {
-        Log.i(TAG, "registrationCancel ");
+        Crashlytics.log(Log.DEBUG, TAG, "registrationCancel ");
         loadData();
     }
 
@@ -220,15 +242,18 @@ public class MainActivity extends FragmentActivity implements
      * Handles the cancel registration button.
      */
     public void checkBalance(View view) {
-        Log.i(TAG, "checkBalance ");
+        Crashlytics.log(Log.DEBUG, TAG, "checkBalance ");
 
-        checkBalanceThroughUSSD();
+        //comma separated list of actions
+        String balanceCode = balanceCodeTextView.getText().toString().trim();
+
+        checkBalanceThroughUSSD(balanceCode);
         // checkBalanceThroughSMS();
     }
 
 
     public void checkBalanceThroughSMS() {
-        Log.i(TAG, "checkBalanceThroughSMS ");
+        Crashlytics.log(Log.DEBUG, TAG, "checkBalanceThroughSMS ");
 
         String strMessage = "bal";
         User user = userService.getRegisteredUser();
@@ -243,28 +268,37 @@ public class MainActivity extends FragmentActivity implements
     }
 
 
-    public void checkBalanceThroughUSSD() {
+    public void checkBalanceThroughUSSD(final String balanceCode) {
 
         final Context c = this;
 
+        DataBalanceService.USSDListener USSDListener = new DataBalanceService.USSDListener() {
+            @Override
+            public void onUSSDReceived(String balance, String raw) {
+                dataBalanceService.unbindListener();
+                if (balanceTextView != null) {
+                    balanceTextView.setText(getString(R.string.data_balance, balance));
+                }
+            }
+        };
+
+        dataBalanceService.bindListener(USSDListener);
 
         new Thread(new Runnable() {
             @Override
             public void run() {
                 try {
-                    User user = userService.getRegisteredUser();
 
                     Answers.getInstance().logCustom(new CustomEvent("USSD Balance check")
-                            .putCustomAttribute("Reason", "androidId: " + user.androidId + " username: " + user.username));
+                            .putCustomAttribute("Reason", ""));
 
 
                     if (PermissionsUtils.checkAllPermissionsGrantedAndRequestIfNot(c)) {
                         //   startService(new Intent(c.getApplicationContext(), USSDService.class));//not needed
 
 
-                        String ussd = USSDService.getUSSDCode(user.balanceCode);
-                        String ussdCode = ussd.replace("#", "") + Uri.encode("#");
-                        startActivityForResult(new Intent("android.intent.action.CALL", Uri.parse("tel:" + ussdCode)), 1);
+                        String ussd = USSDService.getUSSDCode(balanceCode);
+                        USSDService.dialNumber(c, ussd);
 
                         //well timed ones also work - but how much time ?
                         //startActivity(new Intent("android.intent.action.CALL", Uri.parse("tel:" + ussdCode)));
@@ -283,7 +317,7 @@ public class MainActivity extends FragmentActivity implements
 
                     } else {
                         // ActivityCompat.requestPermissions(c, new String[]{android.Manifest.permission.CALL_PHONE}, 1);
-                        Log.i(TAG, "USSDJobService permissions not granted yet ...");
+                        Crashlytics.log(Log.DEBUG, TAG, "USSDJobService permissions not granted yet ...");
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -295,14 +329,14 @@ public class MainActivity extends FragmentActivity implements
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        Log.i(TAG, "onActivityResult ...");
+        Crashlytics.log(Log.DEBUG, TAG, "onActivityResult ...");
     }
 
     /**
      * Handles the triggerSync  button.
      */
     public void triggerSync(View view) {
-        Log.i(TAG, "triggerSync ");
+        Crashlytics.log(Log.DEBUG, TAG, "triggerSync ");
 
         SnackbarUtil.showSnack(this, "Performing sync");
         SyncAdapter.performSync();
@@ -326,7 +360,6 @@ public class MainActivity extends FragmentActivity implements
 
     void loadData() {
 
-        //if 1st run - no user record exists.
         User user = userService.getRegisteredUser();
         //if(user ==null){
         usernameText.setText(user == null ? null : user.username);
@@ -335,13 +368,17 @@ public class MainActivity extends FragmentActivity implements
 
         Long total = statsService.countRecords();
         Long synced = statsService.countSyncedRecords();
-        syncTextView.setText("Synced data: " + synced + "/" + total);
-        intervalTextView.setText("Location Update interval (seconds): " + (user == null ? ("" + PermissionsUtils.UPDATE_INTERVAL) : "" + user.updateInterval));
+        syncTextView.setText(getString(R.string.sync_data, synced.toString(), total.toString()));
+
+        intervalTextView.setText(getString(R.string.locationupdate_interval, "" + user.updateInterval));
         // }
 
 
+        balanceCodeTextView.setText(user.balanceCode);
+
+
         //load latest locs
-        List<Stats> list = statsService.getLatestStats(500l);
+        List<Stats> list = statsService.getLatestRecords(50l);
         long count = statsService.getStatsCount();
         String data = "count :" + count + " \n" +
                 "";
@@ -363,6 +400,7 @@ public class MainActivity extends FragmentActivity implements
         ccp.setClickable(true);
         ccp.setCcpClickable(true);
         edtPhoneNumber.setEnabled(true);
+        balanceLayout.setVisibility(View.VISIBLE);
     }
 
     void disableSettingsEdit() {
@@ -371,6 +409,8 @@ public class MainActivity extends FragmentActivity implements
         ccp.setClickable(false);
         ccp.setCcpClickable(false);
         edtPhoneNumber.setEnabled(false);
+        balanceLayout.setVisibility(View.GONE);
+
 
     }
 
@@ -387,6 +427,9 @@ public class MainActivity extends FragmentActivity implements
 
         user.phone = phone.isEmpty() ? null : phone;
         ccp.setFullNumber(user.phone);
+
+        String balanceCode = balanceCodeTextView.getText().toString().trim();
+        user.balanceCode = balanceCode.isEmpty() ? null : balanceCode;
 
 
         user.recordedAt = new Date();

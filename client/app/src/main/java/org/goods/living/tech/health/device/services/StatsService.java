@@ -36,27 +36,27 @@ public class StatsService extends BaseService {
 
     }
 
-    public boolean insertStats(Stats stats) {
+    public boolean insertRecords(Stats record) {
 
         try {
 
 
-            box.put(stats);
+            box.put(record);
             return true;
 
         } catch (Exception e) {
-            Log.i(TAG, e.toString());
+            Crashlytics.log(Log.DEBUG, TAG, e.toString());
             return false;
         }
 
     }
 
-    public boolean insertStats(List<Stats> stats) {
+    public boolean insertRecords(List<Stats> records) {
 
         try {
 
 
-            box.put(stats);
+            box.put(records);
             return true;
 
         } catch (Exception e) {
@@ -67,7 +67,7 @@ public class StatsService extends BaseService {
     }
 
     public @Nonnull
-    List<Stats> getLatestStats(@Nullable Long limit) {
+    List<Stats> getLatestRecords(@Nullable Long limit) {
 
         try {
 
@@ -93,10 +93,10 @@ public class StatsService extends BaseService {
     }
 
     public @Nonnull
-    List<Stats> getUnSyncedStats(long limit) {//limit for pagination
+    List<Stats> getUnSyncedRecords(long limit) {//limit for pagination
 
         try {
-            return getUnSyncedFilteredStats(limit);
+            return getUnSyncedFilteredRecords(limit);
         } catch (Exception e) {
             Crashlytics.logException(e);
             return new ArrayList<>();
@@ -105,7 +105,7 @@ public class StatsService extends BaseService {
     }
 
     public @Nonnull
-    List<Stats> getUnSyncedFilteredStats(long limit) {//limit for pagination
+    List<Stats> getUnSyncedFilteredRecords(long limit) {//limit for pagination
 
         try {
             Query<Stats> q = box.query().equal(Stats_.synced, false).order(Stats_.createdAt).build();
@@ -177,7 +177,7 @@ public class StatsService extends BaseService {
             for (Location loc : locations) {
 
                 if (loc.getAccuracy() < ACCURACY_THRESHHOLD) {//take only accurate readings
-                    Log.i(TAG, "skipping inaccurate readings accuracy: " + loc.getAccuracy());
+                    Crashlytics.log(Log.DEBUG, TAG, "skipping inaccurate readings accuracy: " + loc.getAccuracy());
                     continue;
                 }
 
@@ -201,12 +201,30 @@ public class StatsService extends BaseService {
         }
     }
 
+    public boolean insertFailedLocationData(String reason) {
+        try {
+
+            Stats stats = new Stats();
+            stats.message = reason;
+            stats.recordedAt = new Date();
+            stats.createdAt = stats.recordedAt;
+
+
+            box.put(stats);
+
+            return true;
+        } catch (Exception e) {
+            Crashlytics.logException(e);
+            return false;
+        }
+    }
+
     public boolean deleteSyncedRecordsOlder(Long id) {
         try {
 
 
             List<Stats> list = box.query().less(Stats_.id, id).build().find();//find(above, 10000);//.orderDesc(User_.createdAt).build().findFirst();
-            Log.i(TAG, "Deleting synced records: " + list.size());
+            Crashlytics.log(Log.DEBUG, TAG, "Deleting synced records: " + list.size());
             box.remove(list);
             return true;
         } catch (Exception e) {
@@ -221,7 +239,7 @@ public class StatsService extends BaseService {
 
             //     List<Stats> list = box.query().equal(Stats_.synced, true).less(Stats_.id, latestId).
             //             build().find();//.orderDesc(User_.createdAt).build().findFirst();
-            Log.i(TAG, "Deleting synced records: " + list.size());
+            Crashlytics.log(Log.DEBUG, TAG, "Deleting synced records: " + list.size());
             box.remove(list);
 
             List<Stats> l = box.query().equal(Stats_.synced, true).
@@ -234,7 +252,7 @@ public class StatsService extends BaseService {
                 Stats s = list.get(list.size() - 1);
                 list = box.query().less(Stats_.id, s.id).
                         build().find();//.orderDesc(User_.createdAt).build().findFirst();
-                Log.i(TAG, "Deleting older sync records under : " + s.id);
+                Crashlytics.log(Log.DEBUG, TAG, "Deleting older sync records under : " + s.id);
                 box.remove(list);
             }
 

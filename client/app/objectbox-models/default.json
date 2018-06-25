@@ -5,7 +5,7 @@
   "entities": [
     {
       "id": "1:7129388409425330234",
-      "lastPropertyId": "26:8844571266447920956",
+      "lastPropertyId": "28:8764657639077423805",
       "name": "User",
       "properties": [
         {
@@ -53,10 +53,6 @@
           "name": "forceUpdate"
         },
         {
-          "id": "21:8129311537204588692",
-          "name": "syncSuccessful"
-        },
-        {
           "id": "22:1363012422735160509",
           "name": "recordedAt"
         },
@@ -75,13 +71,21 @@
         {
           "id": "26:8844571266447920956",
           "name": "balanceCode"
+        },
+        {
+          "id": "27:2425509032392928415",
+          "name": "deviceInfo"
+        },
+        {
+          "id": "28:8764657639077423805",
+          "name": "name"
         }
       ],
       "relations": []
     },
     {
       "id": "3:8220282066785022929",
-      "lastPropertyId": "12:6494411762571363929",
+      "lastPropertyId": "13:4229248663042287453",
       "name": "Stats",
       "properties": [
         {
@@ -127,13 +131,17 @@
         {
           "id": "12:6494411762571363929",
           "name": "recordedAt"
+        },
+        {
+          "id": "13:4229248663042287453",
+          "name": "message"
         }
       ],
       "relations": []
     },
     {
       "id": "4:3062157238318330674",
-      "lastPropertyId": "8:8251459684650370841",
+      "lastPropertyId": "9:3371675909267952934",
       "name": "DataBalance",
       "properties": [
         {
@@ -167,12 +175,36 @@
         {
           "id": "8:8251459684650370841",
           "name": "createdAt"
+        },
+        {
+          "id": "9:3371675909267952934",
+          "name": "message"
+        }
+      ],
+      "relations": []
+    },
+    {
+      "id": "5:214091166483630018",
+      "lastPropertyId": "3:6672479158856321414",
+      "name": "Setting",
+      "properties": [
+        {
+          "id": "1:6087002661892738563",
+          "name": "id"
+        },
+        {
+          "id": "2:2770414709695736203",
+          "name": "showlocationOnReminder"
+        },
+        {
+          "id": "3:6672479158856321414",
+          "name": "loglocationOffEvent"
         }
       ],
       "relations": []
     }
   ],
-  "lastEntityId": "4:3062157238318330674",
+  "lastEntityId": "5:214091166483630018",
   "lastIndexId": "1:8535954839457018984",
   "lastRelationId": "0:0",
   "lastSequenceId": "0:0",
@@ -200,7 +232,8 @@
     1170443955009266688,
     972831289198029829,
     579299391904750719,
-    8712536923763512850
+    8712536923763512850,
+    8129311537204588692
   ],
   "retiredRelationUids": [],
   "version": 1

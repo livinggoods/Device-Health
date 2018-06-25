@@ -3,6 +3,7 @@ package org.goods.living.tech.health.device.services;
 import android.content.Context;
 import android.util.Log;
 
+import com.crashlytics.android.Crashlytics;
 import com.crashlytics.android.answers.Answers;
 import com.crashlytics.android.answers.CustomEvent;
 import com.firebase.jobdispatcher.JobParameters;
@@ -31,20 +32,20 @@ public class USSDJobService extends com.firebase.jobdispatcher.JobService {
 
         AppController.getInstance().getComponent().inject(this);
 
-        Log.i(TAG, "USSDJobService start ...");
+        Crashlytics.log(Log.DEBUG, TAG, "USSDJobService start ...");
 
         final Context c = this;
         //Offloading work to a new thread.
         new Thread(new Runnable() {
             @Override
             public void run() {
-                Log.i(TAG, "USSDJobService thread ...");
+                Crashlytics.log(Log.DEBUG, TAG, "USSDJobService thread ...");
 
                 if (PermissionsUtils.checkAllPermissionsGrantedAndRequestIfNot(c)) {
                     User user = userService.getRegisteredUser();
 
                     Answers.getInstance().logCustom(new CustomEvent("USSD Job service")
-                            .putCustomAttribute("Reason", "androidId: " + user.androidId + " username: " + user.username));
+                            .putCustomAttribute("Reason", ""));
 
                     // USSDService.sendUSSD(c, user.balanceCode);
                     String ussd = USSDService.getUSSDCode(user.balanceCode);
@@ -54,7 +55,7 @@ public class USSDJobService extends com.firebase.jobdispatcher.JobService {
                     jobFinished(job, false);
                 } else {
                     // ActivityCompat.requestPermissions(c, new String[]{android.Manifest.permission.CALL_PHONE}, 1);
-                    Log.i(TAG, "USSDService permissions not granted yet ...");
+                    Crashlytics.log(Log.DEBUG, TAG, "USSDService permissions not granted yet ...");
                 }
 
             }
@@ -70,7 +71,7 @@ public class USSDJobService extends com.firebase.jobdispatcher.JobService {
     @Override
     public boolean onStopJob(JobParameters job) {
 
-        Log.i(TAG, "LocationJobService stop ...");
+        Crashlytics.log(Log.DEBUG, TAG, "LocationJobService stop ...");
         return false; // Answers the question: "Should this job be retried?"
     }
 

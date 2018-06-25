@@ -15,20 +15,8 @@
  */
 package org.goods.living.tech.health.device.services;
 
-import android.app.IntentService;
 import android.content.Context;
 import android.content.Intent;
-import android.location.Location;
-import android.util.Log;
-
-import com.google.android.gms.location.LocationResult;
-
-import org.goods.living.tech.health.device.AppController;
-import org.goods.living.tech.health.device.utils.Utils;
-
-import java.util.List;
-
-import javax.inject.Inject;
 
 /**
  * Handles incoming location updates and displays a notification with the location data.
@@ -71,11 +59,11 @@ public class LocationUpdatesIntentService { //extends IntentService {
 
                     List<Location> locations = result.getLocations();
                     Utils.sendNotification(this, "received location updates");
-                    Log.i(TAG, "received location updates");
+                     Crashlytics.log(Log.DEBUG, TAG, "received location updates");
 
                     statsService.insertLocationData(locations);
                 }else{
-                    Log.i(TAG, "received NULL LocationResult.extractResult(intent) location updates ");
+                     Crashlytics.log(Log.DEBUG, TAG, "received NULL LocationResult.extractResult(intent) location updates ");
                 }
             }
         }

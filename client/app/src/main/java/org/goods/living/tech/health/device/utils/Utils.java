@@ -35,6 +35,8 @@ import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.TaskStackBuilder;
 import android.util.Log;
 
+import com.crashlytics.android.Crashlytics;
+
 import org.goods.living.tech.health.device.R;
 import org.goods.living.tech.health.device.UI.MainActivity;
 
@@ -140,7 +142,7 @@ public class Utils {
                 .getString(KEY_INSTALL_ID, null);
 
         if (uuid == null) {
-            Log.i(TAG, "creating new uuid: " + uuid);
+            Crashlytics.log(Log.DEBUG, TAG, "creating new uuid: " + uuid);
 
             PreferenceManager.getDefaultSharedPreferences(context)
                     .edit()

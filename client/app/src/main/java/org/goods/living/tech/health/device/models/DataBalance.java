@@ -19,6 +19,7 @@ public class DataBalance extends BaseModel {
 
     public double balance;
     public String text;
+    public String message;
     public Date recordedAt;
 
     public boolean synced;
@@ -27,12 +28,12 @@ public class DataBalance extends BaseModel {
     public JSONObject toJSONObject() throws JSONException {
 
         JSONObject JSONObject = super.toJSONObject();
-
         JSONObject.put("id", String.valueOf(id));
         JSONObject.put("userId", userId);
         if (userMasterId != null) JSONObject.put("userMasterId", userMasterId);
+        if (text != null) JSONObject.put("text", text);
         JSONObject.put("balance", balance);
-        JSONObject.put("text", text);
+        if (message != null) JSONObject.put("message", message);
         if (recordedAt != null) {
             String formattedDate = dateFormat.format(recordedAt);
             JSONObject.put("recordedAt", formattedDate);

@@ -111,10 +111,44 @@
             </LinearLayout>
 
             <LinearLayout
+                android:id="@+id/balanceLayout"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:orientation="horizontal">
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:visibility="visible">
+
+                <EditText
+                    android:id="@+id/balanceCodeTextView"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:gravity="center_vertical"
+                    android:text="USSD Balance code eg *100*6*6*2#" />
+
+                <Button
+                    android:id="@+id/checkBalBtn"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:onClick="checkBalance"
+                    android:text="Check Balance" />
+
+
+            </LinearLayout>
+
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+
+                <TextView
+                    android:id="@+id/balanceTextView"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/data_balance" />
 
                 <TextView
                     android:id="@+id/intervalTextView"
@@ -122,7 +156,7 @@
                     android:layout_height="match_parent"
                     android:layout_weight="1"
                     android:gravity="center_vertical"
-                    android:text="Location Update interval (seconds):" />
+                    android:text="@string/locationupdate_interval" />
 
             </LinearLayout>
 
@@ -156,29 +190,6 @@
                     android:text="Save" />
             </LinearLayout>
 
-            <LinearLayout
-                android:id="@+id/btnLayout"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:visibility="visible">
-
-                <Button
-                    android:id="@+id/checkBalBtn"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:onClick="checkBalance"
-                    android:text="Check Balance" />
-
-                <TextView
-                    android:id="@+id/balanceTextView"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Bundle data: 0" />
-
-            </LinearLayout>
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -206,7 +217,7 @@
                     android:id="@+id/syncTextView"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Synced data: 0/0" />
+                    android:text="@string/sync_data" />
 
 
                 <ScrollView

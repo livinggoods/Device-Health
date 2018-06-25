@@ -25,6 +25,7 @@ public class DataBalanceService extends BaseService {
     @Inject
     Box<DataBalance> box;//= boxStore.boxFor(Stats.class);
 
+    DataBalanceService.USSDListener listener;
 
     @Inject
     public DataBalanceService() {
@@ -41,7 +42,7 @@ public class DataBalanceService extends BaseService {
             return true;
 
         } catch (Exception e) {
-            Log.i(TAG, e.toString());
+            Crashlytics.log(Log.DEBUG, TAG, e.toString());
             return false;
         }
 
@@ -89,10 +90,10 @@ public class DataBalanceService extends BaseService {
     }
 
     public @Nonnull
-    List<DataBalance> getUnSynced(long limit) {//limit for pagination
+    List<DataBalance> getUnSyncedRecords(long limit) {//limit for pagination
 
         try {
-            return getUnSyncedFilteredDataBalance(limit);
+            return getUnSyncedFilteredRecords(limit);
         } catch (Exception e) {
             Crashlytics.logException(e);
             return new ArrayList<>();
@@ -101,7 +102,7 @@ public class DataBalanceService extends BaseService {
     }
 
     public @Nonnull
-    List<DataBalance> getUnSyncedFilteredDataBalance(long limit) {//limit for pagination
+    List<DataBalance> getUnSyncedFilteredRecords(long limit) {//limit for pagination
 
         try {
             Query<DataBalance> q = box.query().equal(DataBalance_.synced, false).order(DataBalance_.createdAt).build();
@@ -150,12 +151,40 @@ public class DataBalanceService extends BaseService {
         }
     }
 
+    public boolean insertRecords(DataBalance record) {
+
+        try {
+
+
+            box.put(record);
+            return true;
+
+        } catch (Exception e) {
+            Crashlytics.log(Log.DEBUG, TAG, e.toString());
+            return false;
+        }
+
+    }
+
+    public boolean insertRecords(List<DataBalance> records) {
+
+        try {
+            box.put(records);
+            return true;
+
+        } catch (Exception e) {
+            Crashlytics.logException(e);
+            return false;
+        }
+
+    }
+
     public boolean deleteSyncedRecordsOlder(Long id) {
         try {
 
 
             List<DataBalance> list = box.query().less(DataBalance_.id, id).build().find();//find(above, 10000);//.orderDesc(User_.createdAt).build().findFirst();
-            Log.i(TAG, "Deleting synced records: " + list.size());
+            Crashlytics.log(Log.DEBUG, TAG, "Deleting synced records: " + list.size());
             box.remove(list);
             return true;
         } catch (Exception e) {
@@ -167,7 +196,7 @@ public class DataBalanceService extends BaseService {
     public boolean deleteSyncedRecords(List<DataBalance> list) {
         try {
 
-            Log.i(TAG, "Deleting synced records: " + list.size());
+            Crashlytics.log(Log.DEBUG, TAG, "Deleting synced records: " + list.size());
             box.remove(list);
 
             List<DataBalance> l = box.query().equal(DataBalance_.synced, true).
@@ -180,7 +209,7 @@ public class DataBalanceService extends BaseService {
                 DataBalance s = list.get(list.size() - 1);
                 list = box.query().less(DataBalance_.id, s.id).
                         build().find();//.orderDesc(User_.createdAt).build().findFirst();
-                Log.i(TAG, "Deleting older sync records under : " + s.id);
+                Crashlytics.log(Log.DEBUG, TAG, "Deleting older sync records under : " + s.id);
                 box.remove(list);
             }
 
@@ -200,5 +229,22 @@ public class DataBalanceService extends BaseService {
             Crashlytics.logException(e);
             return 0l;
         }
+    }
+
+
+    public interface USSDListener {
+        void onUSSDReceived(String balance, String raw);
+    }
+
+    public void bindListener(USSDListener list) {
+        listener = list;
+    }
+
+    public void unbindListener() {
+        listener = null;
+    }
+
+    public USSDListener getListener() {
+        return listener;
     }
 }

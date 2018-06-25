@@ -35,14 +35,12 @@ import com.crashlytics.android.answers.CustomEvent;
 import org.goods.living.tech.health.device.AppController;
 import org.goods.living.tech.health.device.BuildConfig;
 import org.goods.living.tech.health.device.R;
-import org.goods.living.tech.health.device.services.UserService;
+import org.goods.living.tech.health.device.models.User;
 import org.goods.living.tech.health.device.utils.PermissionsUtils;
 
 import java.util.Arrays;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import javax.inject.Inject;
 
 
 public class PermissionActivity extends FragmentActivity {
@@ -52,9 +50,6 @@ public class PermissionActivity extends FragmentActivity {
 
     private static final int REQUEST_PERMISSIONS_REQUEST_CODE = 34;
 
-
-    @Inject
-    UserService userService;
 
     boolean newLaunch;
 
@@ -105,7 +100,7 @@ public class PermissionActivity extends FragmentActivity {
 //        // Provide an additional rationale to the user. This would happen if the user denied the
 //        // request previously, but didn't check the "Don't ask again" checkbox.
 //        if (shouldProvideRationale) {
-//            Log.i(TAG, "Displaying permission rationale to provide additional context.");
+//             Crashlytics.log(Log.DEBUG, TAG, "Displaying permission rationale to provide additional context.");
 //            Snackbar.make(
 //                    getWindow().getDecorView().getRootView(),// findViewById(R.id.activity_main),
 //                    R.string.permission_rationale,
@@ -121,7 +116,7 @@ public class PermissionActivity extends FragmentActivity {
 //                    })
 //                    .show();
 //        } else {
-//            Log.i(TAG, "Requesting permission");
+//             Crashlytics.log(Log.DEBUG, TAG, "Requesting permission");
 //            // Request permission. It's possible this can be auto answered if device policy
 //            // sets the permission in a given state or the user denied the permission
 //            // previously and checked "Never ask again".
@@ -138,20 +133,20 @@ public class PermissionActivity extends FragmentActivity {
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
                                            @NonNull int[] grantResults) {
-        Log.i(TAG, "onRequestPermissionResult");
+        Crashlytics.log(Log.DEBUG, TAG, "onRequestPermissionResult");
 
 
         //     if (requestCode == REQUEST_PERMISSIONS_REQUEST_CODE) {
         if (grantResults.length <= 0) {
             // If user interaction was interrupted, the permission request is cancelled and you
             // receive empty arrays.
-            Log.i(TAG, "User interaction was cancelled.");
+            Crashlytics.log(Log.DEBUG, TAG, "User interaction was cancelled.");
 
         } else {
 
             for (int i = 0; i < grantResults.length; i++) {
                 if (grantResults[i] != PackageManager.PERMISSION_GRANTED) {
-                    // Log.i(TAG, "Permission denied " + permissions[i]);
+                    //  Crashlytics.log(Log.DEBUG, TAG, "Permission denied " + permissions[i]);
 
                     Crashlytics.log("Permission denied " + permissions[i]);
                     Answers.getInstance().logCustom(new CustomEvent("Permission denied")
@@ -201,11 +196,12 @@ public class PermissionActivity extends FragmentActivity {
                     return;
                 } else {
                     //perm granted
-                    Log.i(TAG, "Permission was granted " + permissions[i]);
+                    Crashlytics.log(Log.DEBUG, TAG, "Permission was granted " + permissions[i]);
 
                     if (Arrays.asList(PermissionsUtils.getRequiredPermissions()).contains(Manifest.permission.ACCESS_FINE_LOCATION)) {
 
-                        PermissionsUtils.requestLocationUpdates(this, userService, false);
+                        User user = AppController.getInstance().getUser();
+                        PermissionsUtils.requestLocationUpdates(this, user.updateInterval);
                     }
                 }
             }

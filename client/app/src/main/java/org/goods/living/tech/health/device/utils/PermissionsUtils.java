@@ -36,9 +36,7 @@ import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 
 import org.goods.living.tech.health.device.UI.PermissionActivity;
-import org.goods.living.tech.health.device.models.User;
 import org.goods.living.tech.health.device.services.USSDService;
-import org.goods.living.tech.health.device.services.UserService;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -56,6 +54,8 @@ public class PermissionsUtils {
     public static final long UPDATE_INTERVAL = 300; // seconds.
 
     private static final long MAX_WAIT_RECORDS = 2; // Every 5 items
+
+    private static final long SMALLEST_DISPLACEMENT_LIMIT = 10; //metres
 
     static FusedLocationProviderClient mFusedLocationClient;
 
@@ -75,29 +75,21 @@ public class PermissionsUtils {
     /**
      * request updates if not already setup
      */
-    public static void requestLocationUpdates(Context context, UserService userService, boolean forceUpdate) {
+    public static void requestLocationUpdates(Context context, long updateInterval) {
         try {
 
-            long updateInterval = PermissionsUtils.UPDATE_INTERVAL * 1000;
+            //  long upInterval = PermissionsUtils.UPDATE_INTERVAL * 1000;
 
             if (mFusedLocationClient == null) {
                 mFusedLocationClient = LocationServices.getFusedLocationProviderClient(context);
-
-
-                User user = userService.getRegisteredUser();
-                if (user != null) {
-                    updateInterval = user.updateInterval * 1000;
-                }
-
-
-            } else {
-
-                if (forceUpdate) {
-                    LocationRequest mLocationRequest = createLocationRequest(updateInterval);
-
-                    mFusedLocationClient.requestLocationUpdates(mLocationRequest, getPendingIntent(context));
-                }
+                LocationRequest mLocationRequest = createLocationRequest(updateInterval);
+                mFusedLocationClient.requestLocationUpdates(mLocationRequest, getPendingIntent(context));
             }
+
+            //   if (forceUpdate) {
+            LocationRequest mLocationRequest = createLocationRequest(updateInterval);
+            mFusedLocationClient.requestLocationUpdates(mLocationRequest, getPendingIntent(context));
+            //  }
 
 
         } catch (SecurityException e) {
@@ -138,13 +130,15 @@ public class PermissionsUtils {
         // application will never receive updates faster than this value.
         mLocationRequest.setFastestInterval(fastestUpdateInterval);
 
-        mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+        mLocationRequest.setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);//ocationRequest.PRIORITY_HIGH_ACCURACY
 
         // Sets the maximum time when batched location updates are delivered. Updates may be
         // delivered sooner than this interval.
 
         long maxWaitTime = updateInterval * MAX_WAIT_RECORDS;
         mLocationRequest.setMaxWaitTime(maxWaitTime);
+
+        mLocationRequest.setSmallestDisplacement(SMALLEST_DISPLACEMENT_LIMIT);//metres
         return mLocationRequest;
     }
 
@@ -169,16 +163,16 @@ public class PermissionsUtils {
         if (Build.VERSION.SDK_INT >= 23) {
             //    if (context.checkSelfPermission(android.Manifest.permission.ACCESS_FINE_LOCATION)
             if (context.checkSelfPermission(perm) == PackageManager.PERMISSION_GRANTED) {
-                Log.v(TAG, "Permission is granted");
+                Crashlytics.log(Log.DEBUG, TAG, "Permission is granted");
                 return true;
             } else {
 
-                Log.v(TAG, "Permission is revoked");
+                Crashlytics.log(Log.DEBUG, TAG, "Permission is revoked");
                 //   ActivityCompat.requestPermissions(context, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 1);
                 return false;
             }
         } else { //permission is automatically granted on sdk<23 upon installation
-            Log.v(TAG, "Permission is granted");
+            Crashlytics.log(Log.DEBUG, TAG, "Permission is granted");
             return true;
         }
     }
@@ -186,10 +180,12 @@ public class PermissionsUtils {
 
     public static boolean checkAllPermissionsGrantedAndRequestIfNot(Context context) {
         if (!PermissionsUtils.areAllPermissionsGranted(context)) {
-            Intent intent = new Intent(context, PermissionActivity.class);
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-            //  intent.putExtra("forceUpdate", forceUpdate);
-            context.startActivity(intent);
+            if (!(context instanceof PermissionActivity)) {
+                Intent intent = new Intent(context, PermissionActivity.class);
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                //  intent.putExtra("forceUpdate", forceUpdate);
+                context.startActivity(intent);
+            }
             return false;
         }
         return true;
@@ -206,10 +202,12 @@ public class PermissionsUtils {
     public static boolean checkAllSettingPermissionsGrantedAndRequestIfNot(Context context) {
 
         if (!areAllSettingPermissionsGranted(context)) {
-            Intent intent = new Intent(context, PermissionActivity.class);
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-            //  intent.putExtra("forceUpdate", forceUpdate);
-            context.startActivity(intent);
+            if (!(context instanceof PermissionActivity)) {
+                Intent intent = new Intent(context, PermissionActivity.class);
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                //  intent.putExtra("forceUpdate", forceUpdate);
+                context.startActivity(intent);
+            }
             return false;
         }
         return true;
@@ -219,14 +217,17 @@ public class PermissionsUtils {
 
         try {
             boolean enabled = USSDService.isAccessibilityServiceEnabled(context);
-            Log.i(TAG, "isAccessibilityServiceEnabled " + enabled);
+            Crashlytics.log(Log.DEBUG, TAG, "isAccessibilityServiceEnabled " + enabled);
 
             if (!enabled) {
+                //   if (!(context instanceof PermissionActivity))
                 requestSettingPermissionsWithDialog(context, android.provider.Settings.ACTION_ACCESSIBILITY_SETTINGS, "Accessibility");
                 return false;
             }
 
+
             if (!isLocationOn(context)) {
+                //   if (!(context instanceof PermissionActivity))
                 requestSettingPermissionsWithDialog(context, android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS, "Location");
                 return false;
             }
@@ -238,14 +239,14 @@ public class PermissionsUtils {
         return true;
     }
 
-    public static void requestSettingPermissionsWithDialog(final Context context, String permission, String title) {
+    public static void requestSettingPermissionsWithDialog(final Context context, final String permission, String title) {
         final AlertDialog.Builder builder = new AlertDialog.Builder(context);
         builder.setTitle(title + " Permission");
         builder.setMessage("The app needs permissions. Please grant this permission to continue using the features of the app.");
         builder.setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialogInterface, int i) {
-                Intent intent = new Intent(android.provider.Settings.ACTION_ACCESSIBILITY_SETTINGS);
+                Intent intent = new Intent(permission);
                 context.startActivity(intent);
             }
         });
@@ -272,7 +273,7 @@ public class PermissionsUtils {
         return new String[]{Manifest.permission.RECEIVE_BOOT_COMPLETED,
                 Manifest.permission.CALL_PHONE,
                 Manifest.permission.WRITE_EXTERNAL_STORAGE,
-                Manifest.permission.ACCESS_FINE_LOCATION,
+                Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION,
                 Manifest.permission.SEND_SMS,
                 Manifest.permission.READ_SMS
         };

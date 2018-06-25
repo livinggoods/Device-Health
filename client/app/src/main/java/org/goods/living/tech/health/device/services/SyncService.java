@@ -13,6 +13,7 @@ import org.goods.living.tech.health.device.AppController;
 import org.goods.living.tech.health.device.BuildConfig;
 import org.goods.living.tech.health.device.R;
 import org.goods.living.tech.health.device.UI.UpgradeActivity;
+import org.goods.living.tech.health.device.models.DataBalance;
 import org.goods.living.tech.health.device.models.Stats;
 import org.goods.living.tech.health.device.models.User;
 import org.goods.living.tech.health.device.utils.Constants;
@@ -42,6 +43,9 @@ public class SyncService extends BaseService {
     @Inject
     UserService userService;
 
+    @Inject
+    DataBalanceService dataBalanceService;
+
     Context c;
 
 
@@ -54,6 +58,8 @@ public class SyncService extends BaseService {
     long SYNC_SIZE = 200;
 
     static long CLEANUP_LIMIT = 100;
+
+    boolean syncSuccessful = false;
 
     @Inject
     public SyncService() {
@@ -68,12 +74,13 @@ public class SyncService extends BaseService {
 
             c = context;
             if (syncRunning.get()) {
-                Log.i(TAG, "sync running exiting...");
+                Crashlytics.log(Log.DEBUG, TAG, "sync running exiting...");
                 return;
             }
             Crashlytics.log("Starting sync");
             syncRunning.set(true);
             User user = syncUser();
+
 
             //check server version
 
@@ -94,7 +101,19 @@ public class SyncService extends BaseService {
                 return;
             }
 
+            //only sync if user synced
+            if (user.masterId == null) {
+                Crashlytics.log("cancel sync stats. masterid does not exist");
+                Answers.getInstance().logCustom(new CustomEvent("Sync failed")
+                        .putCustomAttribute("Reason", "masterid missing"));
+                syncRunning.set(false);
+                return;
+            }
+
+
             syncStats();
+
+            syncDataBalance();
 
 
             syncRunning.set(false);
@@ -126,10 +145,7 @@ public class SyncService extends BaseService {
         serverRestClient.postSync(Constants.URL.USER_CREATE, entity, new TextHttpResponseHandler() {
             @Override
             public void onFailure(int statusCode, Header[] headers, String responseString, Throwable throwable) {
-                Log.d(TAG, "Failed");
-                Log.d(TAG, "body " + responseString);
-                Crashlytics.log("failed sync. body: " + responseString + " username:masterId -  " + user.username + " : " + user.masterId);
-
+                Crashlytics.log(Log.DEBUG, TAG, "onFailure " + responseString);
 
                 user.masterId = null;
                 user.lastSync = new Date();
@@ -140,25 +156,24 @@ public class SyncService extends BaseService {
 
             @Override
             public void onSuccess(int statusCode, Header[] headers, String responseString) {
-                Log.d(TAG, "data " + responseString);
+                Crashlytics.log(Log.DEBUG, TAG, "onSuccess " + responseString);
                 try {
                     JSONObject response = new JSONObject(responseString);
                     String data = response.toString();
-                    Log.d(TAG, "Data : " + data);
+                    Crashlytics.log(Log.DEBUG, TAG, "Data : " + data);
 
                     // If the response is JSONObject instead of JSONArray
                     boolean success = response.has(Constants.STATUS) && response.getBoolean(Constants.STATUS);
                     String msg = response.has(Constants.MESSAGE) ? response.getString(Constants.MESSAGE) : response.getString(Constants.MESSAGE);
-                    boolean updateInterval = false;
+                    boolean changeLocationUpdateInterval = false;
                     if (success && response.has(Constants.DATA)) {
                         User updatedUser = User.fromJson(response.getJSONObject(Constants.DATA));
 
                         //         Answers.getInstance().logCustom(new CustomEvent("User Update")
                         //                .putCustomAttribute("Reason", "androidId: " + updatedUser.androidId + " username: " + updatedUser.username));
 
-
                         user.masterId = updatedUser.masterId;
-                        updateInterval = user.updateInterval != updatedUser.updateInterval;
+                        changeLocationUpdateInterval = user.updateInterval != updatedUser.updateInterval;
                         user.updateInterval = updatedUser.updateInterval;
                         user.serverApi = updatedUser.serverApi;
                         user.forceUpdate = updatedUser.forceUpdate;
@@ -170,12 +185,11 @@ public class SyncService extends BaseService {
 
 
                     } else {
-                        Log.d(TAG, "problem syncing user");
-                        Crashlytics.logException(new Exception("problem syncing user"));
+                        Crashlytics.log(Log.ERROR, TAG, "problem syncing user");
                     }
 
-                    if (updateInterval) {
-                        PermissionsUtils.requestLocationUpdates(c, userService, true);
+                    if (changeLocationUpdateInterval) {
+                        PermissionsUtils.requestLocationUpdates(c, user.updateInterval);
                     }
 
                 } catch (JSONException e) {
@@ -193,16 +207,9 @@ public class SyncService extends BaseService {
 
         final User user = userService.getRegisteredUser();
 
-        //only sync if user synced
-        if (user.masterId == null) {
-            Crashlytics.log("cancel sync stats. masterid does not exist");
-            Answers.getInstance().logCustom(new CustomEvent("Sync failed")
-                    .putCustomAttribute("Reason", "masterid missing"));
-            return;
-        }
+        final List<Stats> list = statsService.getUnSyncedRecords(SYNC_SIZE);
 
-
-        final List<Stats> list = statsService.getUnSyncedStats(SYNC_SIZE);
+        syncSuccessful = false;
 
         // JSONObject JSONObject = new JSONObject();
         JSONArray JSONArray = new JSONArray();
@@ -215,37 +222,36 @@ public class SyncService extends BaseService {
         StringEntity entity = new StringEntity(JSONArray.toString(), "UTF-8");
         //RequestParams params = new RequestParams(user.toJSONObject());
         //params.setUseJsonStreamer(true);
-        user.syncSuccessful = false;
+
 
         serverRestClient.postSync(Constants.URL.STATS_CREATE, entity, new TextHttpResponseHandler() {
             @Override
             public void onFailure(int statusCode, Header[] headers, String responseString, Throwable throwable) {
-                Log.d(TAG, "Failed");
-                Log.d(TAG, "body " + responseString);
+                Crashlytics.log(Log.DEBUG, TAG, "Failed");
+                Crashlytics.log(Log.DEBUG, TAG, "body " + responseString);
                 Crashlytics.log("problem syncing stats: " + responseString);
                 Crashlytics.logException(throwable);
             }
 
             @Override
             public void onSuccess(int statusCode, Header[] headers, String responseString) {
-                Log.d(TAG, "data " + responseString);
+                Crashlytics.log(Log.DEBUG, TAG, "data " + responseString);
                 try {
                     JSONObject response = new JSONObject(responseString);
                     String data = response.toString();
-                    Log.d(TAG, "Data : " + data);
+                    Crashlytics.log(Log.DEBUG, TAG, "Data : " + data);
 
                     // If the response is JSONObject instead of JSONArray
                     boolean success = response.has(Constants.STATUS) && response.getBoolean(Constants.STATUS);
                     String msg = response.has(Constants.MESSAGE) ? response.getString(Constants.MESSAGE) : response.getString(Constants.MESSAGE);
 
                     if (success) {
-                        Crashlytics.log("Successfully synced");
-                        user.syncSuccessful = true;
-
+                        Crashlytics.log("Successfully synced stats");
+                        syncSuccessful = true;
                         for (Stats s : list) {
                             s.synced = true;
                         }
-                        statsService.insertStats(list);
+                        statsService.insertRecords(list);
                         //      Answers.getInstance().logCustom(new CustomEvent("Sync stats")
                         //              .putCustomAttribute("Reason", "androidId: " + user.androidId + " username: " + user.username));
 
@@ -254,7 +260,7 @@ public class SyncService extends BaseService {
                         statsService.deleteSyncedRecords(list);//deleteSyncedRecordsOlder(CLEANUP_LIMIT);
 
                     } else {
-                        Log.d(TAG, "problem syncing stats");
+                        Crashlytics.log(Log.DEBUG, TAG, "problem syncing stats");
                         Crashlytics.log("problem syncing stats");
                         Crashlytics.logException(new Exception("problem syncing stats "));
                     }
@@ -269,9 +275,89 @@ public class SyncService extends BaseService {
         });
 
 
-        List<Stats> listMore = statsService.getUnSyncedStats(SYNC_SIZE);
-        if (listMore.size() > 0 && user.syncSuccessful) {
+        List<Stats> listMore = statsService.getUnSyncedRecords(SYNC_SIZE);
+        if (listMore.size() > 0 && syncSuccessful) {
             syncStats();
+        }
+
+    }
+
+    void syncDataBalance() throws JSONException {
+
+        final User user = userService.getRegisteredUser();
+
+        final List<DataBalance> list = dataBalanceService.getUnSyncedRecords(SYNC_SIZE);
+
+        syncSuccessful = false;
+
+        // JSONObject JSONObject = new JSONObject();
+        JSONArray JSONArray = new JSONArray();
+
+        for (DataBalance d : list) {
+            d.userMasterId = user.masterId;
+            JSONArray.put(d.toJSONObject());
+        }
+
+        StringEntity entity = new StringEntity(JSONArray.toString(), "UTF-8");
+        //RequestParams params = new RequestParams(user.toJSONObject());
+        //params.setUseJsonStreamer(true);
+
+
+        serverRestClient.postSync(Constants.URL.STATS_CREATE, entity, new TextHttpResponseHandler() {
+            @Override
+            public void onFailure(int statusCode, Header[] headers, String responseString, Throwable throwable) {
+                Crashlytics.log(Log.DEBUG, TAG, "Failed");
+                Crashlytics.log(Log.DEBUG, TAG, "body " + responseString);
+                Crashlytics.log("problem syncing databalance: " + responseString);
+                Crashlytics.logException(throwable);
+            }
+
+            @Override
+            public void onSuccess(int statusCode, Header[] headers, String responseString) {
+                Crashlytics.log(Log.DEBUG, TAG, "data " + responseString);
+                try {
+                    JSONObject response = new JSONObject(responseString);
+                    String data = response.toString();
+                    Crashlytics.log(Log.DEBUG, TAG, "Data : " + data);
+
+                    // If the response is JSONObject instead of JSONArray
+                    boolean success = response.has(Constants.STATUS) && response.getBoolean(Constants.STATUS);
+                    String msg = response.has(Constants.MESSAGE) ? response.getString(Constants.MESSAGE) : response.getString(Constants.MESSAGE);
+
+                    if (success) {
+                        Crashlytics.log("Successfully synced databalance");
+                        syncSuccessful = true;
+
+                        for (DataBalance d : list) {
+                            d.synced = true;
+                        }
+                        dataBalanceService.insertRecords(list);
+                        //      Answers.getInstance().logCustom(new CustomEvent("Sync stats")
+                        //              .putCustomAttribute("Reason", "androidId: " + user.androidId + " username: " + user.username));
+
+
+                        //cleanup
+                        dataBalanceService.deleteSyncedRecords(list);//deleteSyncedRecordsOlder(CLEANUP_LIMIT);
+
+                    } else {
+                        Crashlytics.log(Log.DEBUG, TAG, "problem syncing stats");
+                        Crashlytics.log("problem syncing stats");
+                        Crashlytics.logException(new Exception("problem syncing stats "));
+                    }
+
+
+                } catch (JSONException e) {
+                    //  e.printStackTrace();
+                    Log.e(TAG, "", e);
+                    Crashlytics.logException(e);
+                }
+            }
+        });
+
+
+        List<DataBalance> listMore = dataBalanceService.getUnSyncedRecords(SYNC_SIZE);
+        if (listMore.size() > 0 && syncSuccessful) {
+            syncDataBalance();
         }
 
     }

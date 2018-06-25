@@ -1,11 +1,14 @@
 package org.goods.living.tech.health.device;
 
+import android.app.Application;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.location.Location;
+import android.preference.PreferenceManager;
 
 import org.goods.living.tech.health.device.models.DataBalance;
 import org.goods.living.tech.health.device.models.MyObjectBox;
+import org.goods.living.tech.health.device.models.Setting;
 import org.goods.living.tech.health.device.models.Stats;
 import org.goods.living.tech.health.device.models.User;
 
@@ -65,8 +68,8 @@ public class AppControllerModule {
 
     @Provides
     @Singleton
-    Box<Stats> provideBoxStats(BoxStore boxStore) {
-        return boxStore.boxFor(Stats.class);
+    Box<Setting> provideBoxSetting(BoxStore boxStore) {
+        return boxStore.boxFor(Setting.class);
     }
 
     @Provides
@@ -77,22 +80,33 @@ public class AppControllerModule {
 
     @Provides
     @Singleton
+    Box<Stats> provideBoxStats(BoxStore boxStore) {
+        return boxStore.boxFor(Stats.class);
+    }
+
+    @Provides
+    @Singleton
     Box<DataBalance> provideBoxDataBalance(BoxStore boxStore) {
         return boxStore.boxFor(DataBalance.class);
     }
+//    @Provides
+//    @Singleton
+//    public <T> Box<T> boxFor(BoxStore boxStore, Class<T> entityClass) {
+//        return boxStore.boxFor(entityClass);
+//    }
 
-    //  @Provides
-    //  @Singleton
-    //  Bus provideBus(){
-    //      return new Bus();
-    //   }
+//    @Provides
+//    @Singleton
+//    Bus provideBus() {
+//        return new Bus();
+//    }
 
 
-    //  @Provides
-    // @Singleton
-    //  SharedPreferences provideSharedPreference(Application ctx) {
-    //      return new SharedPreferences(ctx);
-    //  }
+    @Provides
+    @Singleton
+    SharedPreferences provideSharedPreference(Application ctx) {
+        return PreferenceManager.getDefaultSharedPreferences(ctx);
+    }
 
     //  @Provides
     //  @Singleton

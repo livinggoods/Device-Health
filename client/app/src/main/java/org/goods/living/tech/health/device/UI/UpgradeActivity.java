@@ -59,7 +59,7 @@ public class UpgradeActivity extends FragmentActivity {
         User user = AppController.getInstance().getUser();
 
         Answers.getInstance().logCustom(new CustomEvent("App Update")
-                .putCustomAttribute("Reason", "androidId: " + user.androidId + " username: " + user.username + " force:" + force));
+                .putCustomAttribute("Reason", "force:" + force));
 
 
         update(force);

@@ -21,6 +21,7 @@ public class Stats extends BaseModel {
     public double longitude;
     public double accuracy;
     public String provider;
+    public String message;
     public Date recordedAt;
 
     public boolean synced;
@@ -38,6 +39,7 @@ public class Stats extends BaseModel {
         JSONObject.put("longitude", longitude);
         JSONObject.put("accuracy", accuracy);
         if (provider != null) JSONObject.put("provider", provider);
+        if (message != null) JSONObject.put("message", message);
         if (recordedAt != null) {
             String formattedDate = dateFormat.format(recordedAt);
             JSONObject.put("recordedAt", formattedDate);
