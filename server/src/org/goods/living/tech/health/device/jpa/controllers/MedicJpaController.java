@@ -132,6 +132,8 @@ public class MedicJpaController implements Serializable {
 				JSONObject fields=(JSONObject)chvActivty.get("fields");
 				JSONObject inputs=(JSONObject)fields.get("inputs");
 				JSONObject contact=(JSONObject)inputs.get("contact");
+				JSONObject inputMetadata=(JSONObject)inputs.get("meta");
+				JSONObject coordinates=(JSONObject)inputMetadata.get("location");
 				String clientName=null;
 				try{
 					clientName=(String)contact.get("name");
@@ -142,6 +144,7 @@ public class MedicJpaController implements Serializable {
 				activity.setActivityType((String) object[2]);
 				activity.setActivityId((String) object[0]);
 				activity.setClientName(clientName);
+				activity.setMedicCoordinates(coordinates);
 
 				activity.setChvUuid((String)object[1]);
 				Date date=new Date(((Double)object[3]).longValue()*1000);

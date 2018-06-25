@@ -5,6 +5,8 @@
  */
 package org.goods.living.tech.health.device.jpa.dao;
 
+import org.json.simple.JSONObject;
+
 import java.io.Serializable;
 import java.util.Date;
 
@@ -22,6 +24,15 @@ public class ChvActivity implements Serializable {
     private Double longitude;
     private String clientName;
     private Date reportedDate;
+    private JSONObject medicCoordinates;
+
+    public JSONObject getMedicCoordinates() {
+        return medicCoordinates;
+    }
+
+    public void setMedicCoordinates(JSONObject medicCoordinates) {
+        this.medicCoordinates = medicCoordinates;
+    }
 
     public String getClientName() {
         return clientName;

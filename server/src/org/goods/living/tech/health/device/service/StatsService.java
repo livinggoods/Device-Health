@@ -29,6 +29,7 @@ import org.goods.living.tech.health.device.jpa.dao.Users;
 import org.goods.living.tech.health.device.models.Result;
 import org.goods.living.tech.health.device.utility.Constants;
 import org.goods.living.tech.health.device.utility.JSonHelper;
+import org.json.simple.JSONObject;
 
 //https://dzone.com/articles/lets-compare-jax-rs-vs-spring-for-rest-endpoints
 
@@ -150,6 +151,7 @@ public class StatsService extends BaseService {
 			root.put("latitude", activityWithStats.getLatitude());
 			root.put("activity", activityWithStats.getActivityType());
 			root.put("client", activityWithStats.getClientName());
+			root.put("medicCoordinates", activityWithStats.getMedicCoordinates().toJSONString());
 			root.put("activityId", activityWithStats.getActivityId());
 			results.add(root);
 		}

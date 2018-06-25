@@ -26,7 +26,7 @@ import org.goods.living.tech.health.device.jpa.dao.Stats;
 import org.goods.living.tech.health.device.jpa.dao.Users;
 
 public class StatsJpaController implements Serializable {
-	public static float timeRangeLimitConstant= 600;
+	public static float timeRangeLimitConstant= 6000;
 
 	public StatsJpaController(EntityManagerFactory emf) {
 		this.emf = emf;
