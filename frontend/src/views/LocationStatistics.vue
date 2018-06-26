@@ -215,7 +215,7 @@ export default {
             'unmatchedDeviceHealthActivities': [], // Activities that have not matched Device Health coordinates
             'unmappedActivities': [],
             'medicLayerSelected': false,
-            'deviceHealthLayerSelected': true
+            'deviceHealthLayerSelected': false
 
         }
     },
@@ -264,8 +264,13 @@ export default {
                     map.removeSource('medic-data-source')
                 }
             }
-            this.deviceHealthLayerSelected = true
+            this.deviceHealthLayerSelected = false
             this.medicLayerSelected = false
+            this.medicActivitiesWithLocation = [] // Activities that have coordinates collected by Medic
+            this.medicActivitiesWithoutLocation = [] // Activities that don't have coordinates collected by Medic
+            this.matchedDeviceHealthActivities = []// Activities that have matched Device Health coordinates
+            this.unmatchedDeviceHealthActivities = [] // Activities that have not matched Device Health coordinates
+            this.unmappedActivities = []
             map.setZoom(3)
         },
         selectChv: function (chv) {
@@ -273,11 +278,6 @@ export default {
         },
         getLocationStats: function () {
             this.reinitializeMap()
-            this.medicActivitiesWithLocation = [] // Activities that have coordinates collected by Medic
-            this.medicActivitiesWithoutLocation = [] // Activities that don't have coordinates collected by Medic
-            this.matchedDeviceHealthActivities = []// Activities that have matched Device Health coordinates
-            this.unmatchedDeviceHealthActivities = [] // Activities that have not matched Device Health coordinates
-            this.unmappedActivities = []
             var self = this
             this.isLoading = true
             api.post('/stats/find', {
@@ -303,10 +303,17 @@ export default {
             this.filterMedicActivities(locations)
             this.filterDeviceHealthActivities(locations)
             this.createDataSources()
-            // this.addLayersToMap()
-            this.fitBounds()
-            // this.animateChpMovement(reducedArray)
-            // this.layers = geoJsonified
+            if (this.matchedDeviceHealthActivities.length > 0) {
+                this.deviceHealthLayerSelected = true
+                this.medicLayerSelected = false
+                this.toggleDeviceHealthData()
+            } else {
+                this.deviceHealthLayerSelected = false
+                this.medicLayerSelected = true
+                this.toggleMedicData()
+
+            }
+            this.repositionMap()
         },
         filterUnmappedActivities: function (array) {
             var self = this
@@ -331,9 +338,6 @@ export default {
                     }
                 }
             })
-
-            // choose which data to display if either is empty
-            if (this.medicActivitiesWithLocation === 0) this.medicLayerSelected = true
         },
         filterMedicActivities: function (array) {
             var self = this
@@ -369,9 +373,6 @@ export default {
                     })
                 }
             })
-
-            // choose which data to display if either is empty
-            if (this.medicActivitiesWithLocation === 0) this.medicLayerSelected = true
         },
         filterDeviceHealthActivities: function (array) {
             var self = this
@@ -404,9 +405,6 @@ export default {
                     })
                 }
             })
-
-            // choose which data to display if either is empty
-            if (this.matchedDeviceHealthActivities.length > 0) this.deviceHealthLayerSelected = true
         },
         createDataSources: function () {
             if (this.matchedDeviceHealthActivities.length > 0) {
@@ -439,6 +437,7 @@ export default {
                         'type': 'geojson',
                         'data': deviceHealthData
                     })
+                this.addLayersToMap('device-health')
             }
             if (this.medicActivitiesWithLocation.length > 0) {
                 var medicData = {
@@ -470,42 +469,41 @@ export default {
                         'type': 'geojson',
                         'data': medicData
                     })
+                this.addLayersToMap('medic')
             }
-            this.addLayersToMap()
         },
-        addLayersToMap: function () {
-            var deviceHealthLayer = {
-                'id': 'device-health-data-layer',
-                'type': 'circle',
-                'interactive': true,
-                'source': 'device-health-data-source',
-                'layout': {
-                    'visibility': 'visible'
-                },
-                'paint': {
-                    'circle-radius': 8,
-                    'circle-color': 'rgba(66, 166, 138, 1)'
-                }
+        addLayersToMap: function (type) {
+            if (type === 'device-health') {
+                var deviceHealthLayer = {
+                    'id': 'device-health-data-layer',
+                    'type': 'circle',
+                    'interactive': true,
+                    'source': 'device-health-data-source',
+                    'layout': {
+                        'visibility': 'none'
+                    },
+                    'paint': {
+                        'circle-radius': 8,
+                        'circle-color': 'rgba(66, 166, 138, 1)'
+                    }
 
-            }
-            var medicLayer = {
-                'id': 'medic-data-layer',
-                'type': 'circle',
-                'interactive': true,
-                'source': 'medic-data-source',
-                'layout': {
-                    'visibility': this.matchedDeviceHealthActivities.length === 0 ? 'visible' : 'none'
-                },
-                'paint': {
-                    'circle-radius': 8,
-                    'circle-color': 'rgba(58, 89, 255, 1)'
                 }
-
-            }
-            if (this.matchedDeviceHealthActivities.length > 0) {
                 map.addLayer(deviceHealthLayer)
-            }
-            if (this.medicActivitiesWithLocation.length > 0) {
+            } else if (type === 'medic') {
+                var medicLayer = {
+                    'id': 'medic-data-layer',
+                    'type': 'circle',
+                    'interactive': true,
+                    'source': 'medic-data-source',
+                    'layout': {
+                        'visibility': 'none'
+                    },
+                    'paint': {
+                        'circle-radius': 8,
+                        'circle-color': 'rgba(58, 89, 255, 1)'
+                    }
+
+                }
                 map.addLayer(medicLayer)
             }
         },
@@ -567,7 +565,7 @@ export default {
                 }, 500)
             }
         },
-        fitBounds: function () {
+        repositionMap: function () {
             var coordinates = []
             if (this.deviceHealthLayerSelected && !this.medicLayerSelected) {
                 this.matchedDeviceHealthActivities.forEach(function (location) {
@@ -577,19 +575,21 @@ export default {
                 this.medicActivitiesWithLocation.forEach(function (location) {
                     coordinates.push([location.coordinates.longitude, location.coordinates.latitude])
                 })
-            } else if (this.medicLayerSelected && this.deviceHealthLayerSelected) {
+            } else {
                 this.medicActivitiesWithLocation.concat(this.matchedDeviceHealthActivities).forEach(function (location) {
                     coordinates.push([location.coordinates.longitude, location.coordinates.latitude])
                 })
             }
 
-            var bounds = coordinates.reduce(function (bounds, coord) {
-                return bounds.extend(coord)
-            }, new mapboxgl.LngLatBounds(coordinates[0], coordinates[1]))
+            if (coordinates.length > 0) {
+                var bounds = coordinates.reduce(function (bounds, coord) {
+                    return bounds.extend(coord)
+                }, new mapboxgl.LngLatBounds(coordinates[0], coordinates[1]))
 
-            map.fitBounds(bounds, {
-                padding: 20
-            })
+                map.fitBounds(bounds, {
+                    padding: 20
+                })
+            }
         },
         showPopup: function (location, layer) {
             var popup = new mapboxgl.Popup({
@@ -614,8 +614,6 @@ export default {
         toggleMedicData: function () {
             try {
                 var visibility = map.getLayoutProperty('medic-data-layer', 'visibility')
-                console.log(map.getLayoutProperty('medic-data-layer', 'visibility'))
-                this.fitBounds()
                 if (visibility === 'visible') {
                     this.medicLayerSelected = false
                     map.setLayoutProperty('medic-data-layer', 'visibility', 'none')
@@ -623,8 +621,8 @@ export default {
                     this.medicLayerSelected = true
                     map.setLayoutProperty('medic-data-layer', 'visibility', 'visible')
                 }
-                this.fitBounds()
             } catch (e) {
+                this.medicLayerSelected = false
                 toastr.error('This Layer has no data')
             }
         },
@@ -640,7 +638,6 @@ export default {
                     this.deviceHealthLayerSelected = true
                     map.setLayoutProperty('device-health-data-layer', 'visibility', 'visible')
                 }
-                this.fitBounds()
             } catch (e) {
                 this.deviceHealthLayerSelected = false
                 toastr.error('This Layer has no data')
@@ -662,7 +659,14 @@ export default {
             self.showPopup(e, 'device-health-data-layer')
         })
     },
-    watch: {}
+    watch: {
+        medicLayerSelected: function () {
+            this.repositionMap()
+        },
+        deviceHealthLayerSelected: function () {
+            this.repositionMap()
+        }
+    }
 
 }
 </script>
