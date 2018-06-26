@@ -38,7 +38,6 @@ import org.goods.living.tech.health.device.R;
 import org.goods.living.tech.health.device.models.User;
 import org.goods.living.tech.health.device.utils.PermissionsUtils;
 
-import java.util.Arrays;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -198,7 +197,8 @@ public class PermissionActivity extends FragmentActivity {
                     //perm granted
                     Crashlytics.log(Log.DEBUG, TAG, "Permission was granted " + permissions[i]);
 
-                    if (Arrays.asList(PermissionsUtils.getRequiredPermissions()).contains(Manifest.permission.ACCESS_FINE_LOCATION)) {
+                    if (permissions[i].equals(Manifest.permission.ACCESS_FINE_LOCATION)
+                            || permissions[i].equals(Manifest.permission.ACCESS_COARSE_LOCATION)) {
 
                         User user = AppController.getInstance().getUser();
                         PermissionsUtils.requestLocationUpdates(this, user.updateInterval);

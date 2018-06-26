@@ -61,7 +61,10 @@ public class SyncService extends BaseService {
 
     boolean syncSuccessful = false;
 
+    Date deviceSyncTime;
+
     @Inject
+
     public SyncService() {
         //super(boxStore);
 
@@ -79,6 +82,9 @@ public class SyncService extends BaseService {
             }
             Crashlytics.log("Starting sync");
             syncRunning.set(true);
+            deviceSyncTime = new Date();
+
+
             User user = syncUser();
 
 
@@ -128,7 +134,7 @@ public class SyncService extends BaseService {
     User syncUser() throws JSONException {
 
         final User user = userService.getRegisteredUser();
-
+        user.deviceTime = deviceSyncTime;
         //only sync after username is registered on device, else just collect data
         if (user.username == null || user.phone == null) {
             Crashlytics.log("cancel sync. username/phone not registered on device yet");
@@ -136,6 +142,7 @@ public class SyncService extends BaseService {
                     .putCustomAttribute("Reason", "username/phone missing"));
             return user;
         }
+        //  String  deviceSyncTimeStr = Utils.getStringTimeStampWithTimezoneFromDate(deviceSyncTime, TimeZone.getTimeZone(Utils.TIMEZONE_UTC));
 
 
         StringEntity entity = new StringEntity(user.toJSONObject().toString(), "UTF-8");
@@ -167,7 +174,7 @@ public class SyncService extends BaseService {
                     String msg = response.has(Constants.MESSAGE) ? response.getString(Constants.MESSAGE) : response.getString(Constants.MESSAGE);
                     boolean changeLocationUpdateInterval = false;
                     if (success && response.has(Constants.DATA)) {
-                        User updatedUser = User.fromJson(response.getJSONObject(Constants.DATA));
+                        User updatedUser = new User(response.getJSONObject(Constants.DATA));
 
                         //         Answers.getInstance().logCustom(new CustomEvent("User Update")
                         //                .putCustomAttribute("Reason", "androidId: " + updatedUser.androidId + " username: " + updatedUser.username));
@@ -216,6 +223,7 @@ public class SyncService extends BaseService {
 
         for (Stats s : list) {
             s.userMasterId = user.masterId;
+            s.deviceTime = deviceSyncTime;
             JSONArray.put(s.toJSONObject());
         }
 

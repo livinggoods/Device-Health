@@ -1,9 +1,11 @@
 package org.goods.living.tech.health.device.models;
 
+import org.goods.living.tech.health.device.utils.Utils;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.Date;
+import java.util.TimeZone;
 
 import io.objectbox.annotation.Entity;
 import io.objectbox.annotation.Id;
@@ -28,6 +30,12 @@ public class Stats extends BaseModel {
     public Date createdAt;
     Date updatedAt;
 
+
+    public Stats() {
+
+    }
+
+
     public JSONObject toJSONObject() throws JSONException {
 
         JSONObject JSONObject = super.toJSONObject();
@@ -41,7 +49,7 @@ public class Stats extends BaseModel {
         if (provider != null) JSONObject.put("provider", provider);
         if (message != null) JSONObject.put("message", message);
         if (recordedAt != null) {
-            String formattedDate = dateFormat.format(recordedAt);
+            String formattedDate = Utils.getStringTimeStampWithTimezoneFromDate(recordedAt, TimeZone.getTimeZone(Utils.TIMEZONE_UTC));
             JSONObject.put("recordedAt", formattedDate);
         }
 

@@ -40,7 +40,11 @@ import com.crashlytics.android.Crashlytics;
 import org.goods.living.tech.health.device.R;
 import org.goods.living.tech.health.device.UI.MainActivity;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
+import java.util.TimeZone;
 
 /**
  * Utility methods used in this sample.
@@ -52,6 +56,10 @@ public class Utils {
     public final static String CHANNEL_ID = "channel_01";
     final static String TAG = Utils.class.getSimpleName();//BaseService.class.getSimpleName();
     final static String KEY_INSTALL_ID = "KEY_INSTALL_ID";
+
+    public final static String DATE_FORMAT_TIMEZONE = "MM-dd-yyyy HH:mm:ss Z";//"MM-dd-yyyy HH:mm:ss"
+    static SimpleDateFormat dateFormatWithTimezone = new SimpleDateFormat(DATE_FORMAT_TIMEZONE, Locale.getDefault());
+    public final static String TIMEZONE_UTC = "UTC";
 
 
 /*
@@ -153,5 +161,30 @@ public class Utils {
         return uuid;
     }
 
+    public static Date getDateFromTimeStampWithTimezone(String date, TimeZone timezone) {
+
+        try {
+            dateFormatWithTimezone.setTimeZone(timezone);
+            return dateFormatWithTimezone.parse(date);
+        } catch (Exception e) {
+            Crashlytics.logException(e);
+            return null;
+        }
+
+    }
+
+    /**
+     * Converting from Date to String
+     **/
+    public static String getStringTimeStampWithTimezoneFromDate(Date date, TimeZone timezone) {
+        try {
+            dateFormatWithTimezone.setTimeZone(timezone);//TimeZone.getTimeZone("UTC"
+            return dateFormatWithTimezone.format(date);
+        } catch (Exception e) {
+            Crashlytics.logException(e);
+            return null;
+        }
+
+    }
 
 }

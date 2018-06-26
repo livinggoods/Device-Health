@@ -1,9 +1,11 @@
 package org.goods.living.tech.health.device.models;
 
+import org.goods.living.tech.health.device.utils.Utils;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.Date;
+import java.util.TimeZone;
 
 import io.objectbox.annotation.Entity;
 import io.objectbox.annotation.Id;
@@ -35,7 +37,7 @@ public class DataBalance extends BaseModel {
         JSONObject.put("balance", balance);
         if (message != null) JSONObject.put("message", message);
         if (recordedAt != null) {
-            String formattedDate = dateFormat.format(recordedAt);
+            String formattedDate = Utils.getStringTimeStampWithTimezoneFromDate(recordedAt, TimeZone.getTimeZone(Utils.TIMEZONE_UTC));
             JSONObject.put("recordedAt", formattedDate);
         }
 

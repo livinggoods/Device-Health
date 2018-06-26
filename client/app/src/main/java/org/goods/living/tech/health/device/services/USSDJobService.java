@@ -49,9 +49,9 @@ public class USSDJobService extends com.firebase.jobdispatcher.JobService {
 
                     // USSDService.sendUSSD(c, user.balanceCode);
                     String ussd = USSDService.getUSSDCode(user.balanceCode);
-
-                    USSDService.dialNumber(c, ussd);
-
+                    if (ussd != null) {
+                        USSDService.dialNumber(c, ussd);
+                    }
                     jobFinished(job, false);
                 } else {
                     // ActivityCompat.requestPermissions(c, new String[]{android.Manifest.permission.CALL_PHONE}, 1);

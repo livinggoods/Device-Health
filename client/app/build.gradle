@@ -101,8 +101,10 @@ dependencies {
     implementation 'com.loopj.android:android-async-http:1.4.9'
 
     implementation 'com.google.firebase:firebase-core:15.0.0'
-    implementation 'com.crashlytics.sdk.android:crashlytics:2.9.2'
     implementation 'com.firebase:firebase-jobdispatcher:0.8.5'
+    implementation('com.crashlytics.sdk.android:crashlytics:2.9.4@aar') {
+        transitive = true;
+    }
 
     // https://mvnrepository.com/artifact/org.slf4j/slf4j-api
     implementation group: 'org.slf4j', name: 'slf4j-api', version: '1.7.25'
