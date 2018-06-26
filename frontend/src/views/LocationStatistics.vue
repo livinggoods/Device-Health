@@ -18,7 +18,8 @@
                             <div class="collapse navbar-collapse">
                                 <ul class="nav navbar-nav navbar-left">
                                     <li style="margin-top: 10px;">
-                                        <el-select v-model="searchParams.country" filterable default-first-option placeholder="Country">
+                                        <el-select v-model="searchParams.country" filterable default-first-option
+                                                   placeholder="Country">
                                             <el-option
                                                     v-for="item in countryOptions"
                                                     :key="item.code"
@@ -42,7 +43,9 @@
                                                     slot="suffix">
                                             </i>
                                             <template slot-scope="{ item }" style="width: 50px">
-                                                <div class="value"><strong></strong> {{ item.value }} <strong> - </strong> {{ item.branch }}</div>
+                                                <div class="value"><strong></strong> {{ item.value }} <strong>
+                                                    - </strong> {{ item.branch }}
+                                                </div>
                                             </template>
                                         </el-autocomplete>
                                     </li>
@@ -114,11 +117,37 @@
                     </nav>
                 </div>
                 <Sidebar :sidebar-header="sidebarHeader"></Sidebar>
-                <el-card class="box-card" style="position: absolute; float: right;margin-right:
+                <el-card v-if="this.medicLayerSelected==true && this.deviceHealthLayerSelected==false" class="box-card" style="position: absolute; float: right;margin-right:
                 0px;max-width: 400px; z-index: 9999;  top: 60px; right: 0;max-height: 200px;overflow-y: scroll;overflow-x: scroll;overflow: -moz-scrollbars-vertical;">
-                    <h4 style="margin-bottom: 5px;">Unmapped Activities : {{unmatchedActivities.length}}</h4>
-                    <div style="border-bottom: 1px gainsboro solid; margin-bottom:5px" v-for="unmappedActivity in unmatchedActivities" class="text item">
-                        <strong>Activity:</strong> {{unmappedActivity.activity}} <br/> <strong>Client :</strong> {{unmappedActivity.client}}
+                    <h4  style="margin-bottom: 5px;">Unmapped Medic Activities :
+                        {{medicActivitiesWithoutLocation.length}}</h4>
+                    <div style="border-bottom: 1px gainsboro solid; margin-bottom:5px"
+                         v-for="unmappedActivity in medicActivitiesWithoutLocation" class="text item">
+                        <strong>Activity:</strong> {{unmappedActivity.activity}} <br/> <strong>Client :</strong>
+                        {{unmappedActivity.client}}
+                        <br/> <strong>Reported At:</strong> {{unmappedActivity.recordedAt}}
+                        <br/> <strong>Activity Id:</strong> {{unmappedActivity.activityId}}
+                    </div>
+                </el-card>
+                <el-card v-else-if="this.medicLayerSelected==false && this.deviceHealthLayerSelected==true" class="box-card" style="position: absolute; float: right;margin-right:
+                0px;max-width: 400px; z-index: 9999;  top: 60px; right: 0;max-height: 200px;overflow-y: scroll;overflow-x: scroll;overflow: -moz-scrollbars-vertical;">
+                    <h4 style="margin-bottom: 5px;">Unmapped DeviceHealth
+                        Activities : {{unmatchedDeviceHealthActivities.length}}</h4>
+                    <div style="border-bottom: 1px gainsboro solid; margin-bottom:5px"
+                         v-for="unmappedActivity in unmatchedDeviceHealthActivities" class="text item">
+                        <strong>Activity:</strong> {{unmappedActivity.activity}} <br/> <strong>Client :</strong>
+                        {{unmappedActivity.client}}
+                        <br/> <strong>Reported At:</strong> {{unmappedActivity.recordedAt}}
+                        <br/> <strong>Activity Id:</strong> {{unmappedActivity.activityId}}
+                    </div>
+                </el-card>
+                <el-card v-else-if="this.medicLayerSelected==true && this.deviceHealthLayerSelected==true" class="box-card" style="position: absolute; float: right;margin-right:
+                0px;max-width: 400px; z-index: 9999;  top: 60px; right: 0;max-height: 200px;overflow-y: scroll;overflow-x: scroll;overflow: -moz-scrollbars-vertical;">
+                    <h4 style="margin-bottom: 5px;">All unmapped Activities : {{unmappedActivities.length}}</h4>
+                    <div style="border-bottom: 1px gainsboro solid; margin-bottom:5px"
+                         v-for="unmappedActivity in unmappedActivities" class="text item">
+                        <strong>Activity:</strong> {{unmappedActivity.activity}} <br/> <strong>Client :</strong>
+                        {{unmappedActivity.client}}
                         <br/> <strong>Reported At:</strong> {{unmappedActivity.recordedAt}}
                         <br/> <strong>Activity Id:</strong> {{unmappedActivity.activityId}}
                     </div>
@@ -126,9 +155,13 @@
                 <div id="map"></div>
                 <div style="position: absolute;margin-bottom: 20px;z-index: 1000; bottom:30px; right: 0px"
                      id="menu" class="btn-group" role="group" aria-label="">
-                    <button @click="toggleMedicData"  :class="medicDataSelected?'':'btn-neutral'" type="button" class="btn btn-fill btn-secondary">Medic Data</button>
-                    <button @click="toggleDeviceHealthData" :class="deviceHealthDataSelected?'':'btn-neutral'" type="button"
-                            class="btn btn-fill btn-secondary">DeviceHealth Data</button>
+                    <button @click="toggleMedicData" :class="medicLayerSelected?'':'btn-neutral'" type="button"
+                            class="btn btn-fill btn-secondary">Medic Data
+                    </button>
+                    <button @click="toggleDeviceHealthData" :class="deviceHealthLayerSelected?'':'btn-neutral'"
+                            type="button"
+                            class="btn btn-fill btn-secondary">DeviceHealth Data
+                    </button>
                 </div>
 
                 <!--<lg-map-viz :access-token="accessToken" :layers="layers" :map-options="mapOptions"></lg-map-viz>-->
@@ -170,16 +203,19 @@ export default {
             },
             'sidebarHeader': generalConfig.sidebarHeader,
             'searchParams': {
-                'country': '',
+                'country': 'UG',
                 'uuid': '',
                 'chvId': '',
                 'dates': []
             },
             'layers': '',
-            'unmatchedActivities': [],
-            'matchedActivities': [],
-            'medicDataSelected': false,
-            'deviceHealthDataSelected': true
+            'medicActivitiesWithLocation': [], // Activities that have coordinates collected by Medic
+            'medicActivitiesWithoutLocation': [], // Activities that don't have coordinates collected by Medic
+            'matchedDeviceHealthActivities': [], // Activities that have matched Device Health coordinates
+            'unmatchedDeviceHealthActivities': [], // Activities that have not matched Device Health coordinates
+            'unmappedActivities': [],
+            'medicLayerSelected': false,
+            'deviceHealthLayerSelected': true
 
         }
     },
@@ -191,7 +227,10 @@ export default {
     },
     methods: {
         searchChv: function (username, callback) {
-            api.post('/user/find', {'username': username, 'country': this.searchParams.country}).then(function (response) {
+            api.post('/user/find', {
+                'username': username,
+                'country': this.searchParams.country
+            }).then(function (response) {
                 var errorResult = [{'value': 'No user found'}]
                 if (response.data.status === true) {
                     var users = []
@@ -225,6 +264,8 @@ export default {
                     map.removeSource('medic-data-source')
                 }
             }
+            this.deviceHealthLayerSelected = true
+            this.medicLayerSelected = false
             map.setZoom(3)
         },
         selectChv: function (chv) {
@@ -232,8 +273,11 @@ export default {
         },
         getLocationStats: function () {
             this.reinitializeMap()
-            this.matchedActivities = []
-            this.unmatchedActivities = []
+            this.medicActivitiesWithLocation = [] // Activities that have coordinates collected by Medic
+            this.medicActivitiesWithoutLocation = [] // Activities that don't have coordinates collected by Medic
+            this.matchedDeviceHealthActivities = []// Activities that have matched Device Health coordinates
+            this.unmatchedDeviceHealthActivities = [] // Activities that have not matched Device Health coordinates
+            this.unmappedActivities = []
             var self = this
             this.isLoading = true
             api.post('/stats/find', {
@@ -255,19 +299,63 @@ export default {
             })
         },
         processLocations: function (locations) {
-            this.filterActivities(locations)
+            this.filterUnmappedActivities(locations)
+            this.filterMedicActivities(locations)
+            this.filterDeviceHealthActivities(locations)
             this.createDataSources()
             // this.addLayersToMap()
             this.fitBounds()
             // this.animateChpMovement(reducedArray)
             // this.layers = geoJsonified
         },
-        filterActivities: function (array) {
+        filterUnmappedActivities: function (array) {
             var self = this
             array.forEach(function (entry) {
+                // Use Medic Coordinates
                 if (entry.latitude == null || entry.longitude == null) {
                     var coordinates = JSON.parse(entry.medicCoordinates)
-                    self.unmatchedActivities.push({
+                    if (coordinates.lat === '' || coordinates.long === '') {
+                        // set as unmatched activities
+                        self.unmappedActivities.push({
+                            'coordinates': {
+                                'latitude': null,
+                                'longitude': null
+                            },
+                            'activity': entry.activity,
+                            'radius': 5,
+                            'medicCoordinates': entry.medicCoordinates,
+                            'client': entry.client,
+                            'recordedAt': entry.timestamp,
+                            'activityId': entry.activityId
+                        })
+                    }
+                }
+            })
+
+            // choose which data to display if either is empty
+            if (this.medicActivitiesWithLocation === 0) this.medicLayerSelected = true
+        },
+        filterMedicActivities: function (array) {
+            var self = this
+            array.forEach(function (entry) {
+                // Use Medic Coordinates
+                var coordinates = JSON.parse(entry.medicCoordinates)
+                if (coordinates.lat === '' || coordinates.long === '') {
+                    // set as unmatched activities
+                    self.medicActivitiesWithoutLocation.push({
+                        'coordinates': {
+                            'latitude': null,
+                            'longitude': null
+                        },
+                        'activity': entry.activity,
+                        'radius': 5,
+                        'medicCoordinates': entry.medicCoordinates,
+                        'client': entry.client,
+                        'recordedAt': entry.timestamp,
+                        'activityId': entry.activityId
+                    })
+                } else {
+                    self.medicActivitiesWithLocation.push({
                         'coordinates': {
                             'latitude': coordinates.lat,
                             'longitude': coordinates.long
@@ -279,8 +367,32 @@ export default {
                         'recordedAt': entry.timestamp,
                         'activityId': entry.activityId
                     })
+                }
+            })
+
+            // choose which data to display if either is empty
+            if (this.medicActivitiesWithLocation === 0) this.medicLayerSelected = true
+        },
+        filterDeviceHealthActivities: function (array) {
+            var self = this
+            array.forEach(function (entry) {
+                if (entry.latitude == null || entry.longitude == null) {
+                    // Use Medic Coordinates
+                    self.unmatchedDeviceHealthActivities.push({
+                        'coordinates': {
+                            'latitude': null,
+                            'longitude': null
+                        },
+                        'activity': entry.activity,
+                        'radius': 5,
+                        'medicCoordinates': entry.medicCoordinates,
+                        'client': entry.client,
+                        'recordedAt': entry.timestamp,
+                        'activityId': entry.activityId
+                    })
                 } else {
-                    self.matchedActivities.push({
+                    // Activities matched with device health coordinates
+                    self.matchedDeviceHealthActivities.push({
                         'coordinates': {
                             'latitude': entry.latitude,
                             'longitude': entry.longitude
@@ -292,14 +404,17 @@ export default {
                     })
                 }
             })
+
+            // choose which data to display if either is empty
+            if (this.matchedDeviceHealthActivities.length > 0) this.deviceHealthLayerSelected = true
         },
         createDataSources: function () {
-            if (this.matchedActivities.length > 0) {
+            if (this.matchedDeviceHealthActivities.length > 0) {
                 var deviceHealthData = {
                     'type': 'FeatureCollection',
                     'features': []
                 }
-                this.matchedActivities.forEach(function (location) {
+                this.matchedDeviceHealthActivities.forEach(function (location) {
                     deviceHealthData.features.push({
                         'type': 'Feature',
                         'properties': {
@@ -325,12 +440,12 @@ export default {
                         'data': deviceHealthData
                     })
             }
-            if (this.unmatchedActivities.length > 0) {
+            if (this.medicActivitiesWithLocation.length > 0) {
                 var medicData = {
                     'type': 'FeatureCollection',
                     'features': []
                 }
-                this.unmatchedActivities.forEach(function (location) {
+                this.medicActivitiesWithLocation.forEach(function (location) {
                     medicData.features.push({
                         'type': 'Feature',
                         'properties': {
@@ -359,7 +474,6 @@ export default {
             this.addLayersToMap()
         },
         addLayersToMap: function () {
-            console.log(this.matchedActivities)
             var deviceHealthLayer = {
                 'id': 'device-health-data-layer',
                 'type': 'circle',
@@ -380,7 +494,7 @@ export default {
                 'interactive': true,
                 'source': 'medic-data-source',
                 'layout': {
-                    'visibility': 'none'
+                    'visibility': this.matchedDeviceHealthActivities.length === 0 ? 'visible' : 'none'
                 },
                 'paint': {
                     'circle-radius': 8,
@@ -388,10 +502,10 @@ export default {
                 }
 
             }
-            if (this.matchedActivities.length > 0) {
+            if (this.matchedDeviceHealthActivities.length > 0) {
                 map.addLayer(deviceHealthLayer)
             }
-            if (this.unmatchedActivities.length > 0) {
+            if (this.medicActivitiesWithLocation.length > 0) {
                 map.addLayer(medicLayer)
             }
         },
@@ -455,18 +569,27 @@ export default {
         },
         fitBounds: function () {
             var coordinates = []
-            if (this.matchedActivities.length > 0) {
-                this.matchedActivities.forEach(function (location) {
+            if (this.deviceHealthLayerSelected && !this.medicLayerSelected) {
+                this.matchedDeviceHealthActivities.forEach(function (location) {
                     coordinates.push([location.coordinates.longitude, location.coordinates.latitude])
                 })
-                var bounds = coordinates.reduce(function (bounds, coord) {
-                    return bounds.extend(coord)
-                }, new mapboxgl.LngLatBounds(coordinates[0], coordinates[1]))
-
-                map.fitBounds(bounds, {
-                    padding: 20
+            } else if (this.medicLayerSelected && !this.deviceHealthLayerSelected) {
+                this.medicActivitiesWithLocation.forEach(function (location) {
+                    coordinates.push([location.coordinates.longitude, location.coordinates.latitude])
+                })
+            } else if (this.medicLayerSelected && this.deviceHealthLayerSelected) {
+                this.medicActivitiesWithLocation.concat(this.matchedDeviceHealthActivities).forEach(function (location) {
+                    coordinates.push([location.coordinates.longitude, location.coordinates.latitude])
                 })
             }
+
+            var bounds = coordinates.reduce(function (bounds, coord) {
+                return bounds.extend(coord)
+            }, new mapboxgl.LngLatBounds(coordinates[0], coordinates[1]))
+
+            map.fitBounds(bounds, {
+                padding: 20
+            })
         },
         showPopup: function (location, layer) {
             var popup = new mapboxgl.Popup({
@@ -479,39 +602,48 @@ export default {
             if (identifiedFeatures !== '') {
                 popup.setLngLat(location.lngLat)
                     .setHTML('<h4> Location Details</h4>' +
-                    '<p>Latitude: ' + location.lngLat.lat + '</p>' +
-                        '<p>Longitude: ' + location.lngLat.lng + '</p>' +
-                    '<p>Time: ' + identifiedFeatures[0].properties.recordedAt + '</p>' +
-                    '<p>Activity: ' + identifiedFeatures[0].properties.activity + '</p>' +
-                    '<p>Client: ' + identifiedFeatures[0].properties.client + '</p>'
+                            '<p>Latitude: ' + location.lngLat.lat + '</p>' +
+                            '<p>Longitude: ' + location.lngLat.lng + '</p>' +
+                            '<p>Time: ' + identifiedFeatures[0].properties.recordedAt + '</p>' +
+                            '<p>Activity: ' + identifiedFeatures[0].properties.activity + '</p>' +
+                            '<p>Client: ' + identifiedFeatures[0].properties.client + '</p>'
                     )
                     .addTo(map)
             }
         },
         toggleMedicData: function () {
-            var visibility = map.getLayoutProperty('medic-data-layer', 'visibility')
-            console.log(map.getLayoutProperty('medic-data-layer', 'visibility'))
-
-            if (visibility === 'visible') {
-                map.setLayoutProperty('medic-data-layer', 'visibility', 'none')
-                this.medicDataSelected = false
-            } else {
-                this.medicDataSelected = true
-                map.setLayoutProperty('medic-data-layer', 'visibility', 'visible')
+            try {
+                var visibility = map.getLayoutProperty('medic-data-layer', 'visibility')
+                console.log(map.getLayoutProperty('medic-data-layer', 'visibility'))
+                this.fitBounds()
+                if (visibility === 'visible') {
+                    this.medicLayerSelected = false
+                    map.setLayoutProperty('medic-data-layer', 'visibility', 'none')
+                } else {
+                    this.medicLayerSelected = true
+                    map.setLayoutProperty('medic-data-layer', 'visibility', 'visible')
+                }
+                this.fitBounds()
+            } catch (e) {
+                toastr.error('This Layer has no data')
             }
         },
         toggleDeviceHealthData: function () {
-            if (map.getLayer('device-health-data-layer') !== undefined) {
+            try {
                 var visibility = map.getLayoutProperty('device-health-data-layer', 'visibility')
 
                 if (visibility === 'visible') {
+                    this.deviceHealthLayerSelected = false
                     map.setLayoutProperty('device-health-data-layer', 'visibility', 'none')
                     // map.setLayoutProperty('line-animation', 'visibility', 'none')
-                    this.deviceHealthDataSelected = false
                 } else {
-                    this.deviceHealthDataSelected = true
+                    this.deviceHealthLayerSelected = true
                     map.setLayoutProperty('device-health-data-layer', 'visibility', 'visible')
                 }
+                this.fitBounds()
+            } catch (e) {
+                this.deviceHealthLayerSelected = false
+                toastr.error('This Layer has no data')
             }
         }
 
@@ -530,9 +662,7 @@ export default {
             self.showPopup(e, 'device-health-data-layer')
         })
     },
-    watch: {
-
-    }
+    watch: {}
 
 }
 </script>
@@ -546,8 +676,10 @@ export default {
 
     #map {
         width: 100%;
-        height: 100vh;
+        height: 90vh;
+        margin-top: 60px;
     }
+
     .marker {
         background-image: url('../assets/img/marker.png');
         background-size: cover;
@@ -574,6 +706,7 @@ export default {
     .sidebar {
         background-image: url("../assets/img/sidebar-5.jpg");
     }
+
     #pause {
         position: absolute;
         margin: 20px;
@@ -586,6 +719,7 @@ export default {
     #pause.pause::after {
         content: 'Play';
     }
+
     .my-autocomplete {
         li {
             line-height: normal;
@@ -601,7 +735,8 @@ export default {
             }
         }
     }
-    .el-autocomplete-suggestion{
-        width: 300px!important;
+
+    .el-autocomplete-suggestion {
+        width: 300px !important;
     }
 </style>
