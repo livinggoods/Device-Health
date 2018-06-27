@@ -12,12 +12,18 @@ Vue.config.productionTip = false
 
 //  Router guard to check whether route is allowed
 router.beforeEach((to, from, next) => {
-    console.log((to))
-    if (generalConfig.siteModules.includes(from.name) === false) {
-        next()
-    }
-    else if (!to.matched[0].length) {
-        next('/error')
+    // Check Auth
+    if (to.meta.requiresAuth) {
+        if (localStorage.getItem('auth-token')) {
+            // if (generalConfig.siteModules.includes(from.name) === false) {
+            //     next()
+            // } else if (!to.matched[0].length) {
+            //     next('/error')
+            // } else {
+            //     next()
+            // }
+            next()
+        } else next('/login')
     } else {
         next()
     }
