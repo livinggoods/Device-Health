@@ -81,6 +81,27 @@ public class LocationUpdatesBroadcastReceiver extends BroadcastReceiver {
 
             } else if (ACTION_PROCESS_UPDATES.equals(intent.getAction())) {
                 LocationResult result = LocationResult.extractResult(intent);
+
+                boolean locationOn = PermissionsUtils.isLocationOn(context);
+                Setting setting = appController.getSetting();
+                if (!locationOn) {
+
+
+                    if (setting.loglocationOffEvent) {
+
+                        statsService.insertFailedLocationData(locerror);
+                        Crashlytics.log(Log.DEBUG, TAG, locerror);
+                        Answers.getInstance().logCustom(new CustomEvent("Location")
+                                .putCustomAttribute("Reason", locerror));
+
+                        setting.loglocationOffEvent = false;
+                        appController.updateSetting(setting);
+                    }
+                } else {
+                    setting.loglocationOffEvent = true;
+                    appController.updateSetting(setting);
+                }
+
                 if (result != null) {
                     List<Location> locations = result.getLocations();
 
@@ -89,26 +110,9 @@ public class LocationUpdatesBroadcastReceiver extends BroadcastReceiver {
 
                     statsService.insertFilteredLocationData(locations);
                 } else {
-                    boolean locationOn = PermissionsUtils.isLocationOn(context);
+
                     Crashlytics.log(Log.DEBUG, TAG, "received NULL LocationResult.extractResult(intent). is location on: " + locationOn);
-                    Setting setting = appController.getSetting();
-                    if (!locationOn) {
 
-
-                        if (setting.loglocationOffEvent) {
-
-                            statsService.insertFailedLocationData(locerror);
-                            Crashlytics.log(Log.DEBUG, TAG, locerror);
-                            Answers.getInstance().logCustom(new CustomEvent("Location")
-                                    .putCustomAttribute("Reason", locerror));
-
-                            setting.loglocationOffEvent = false;
-                            appController.updateSetting(setting);
-                        }
-                    } else {
-                        setting.loglocationOffEvent = true;
-                        appController.updateSetting(setting);
-                    }
 
                 }
             } else {// if (Intent.ACTION_BOOT_COMPLETED.equals(intent.getAction()) || Intent.ACTION_EXTERNAL_APPLICATIONS_AVAILABLE.equals(intent.getAction())) {

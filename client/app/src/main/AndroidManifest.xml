@@ -109,15 +109,20 @@
 
         <service
             android:exported="false"
-            android:name=".services.LocationJobService">
+            android:name=".services.JobSchedulerService">
 
             <intent-filter>
                 <action android:name="com.firebase.jobdispatcher.ACTION_EXECUTE" />
             </intent-filter>
         </service>
-        <service
-            android:exported="false"
-            android:name=".services.USSDJobService">
+
+        <service android:name=".services.LocationJobService">
+
+            <intent-filter>
+                <action android:name="com.firebase.jobdispatcher.ACTION_EXECUTE" />
+            </intent-filter>
+        </service>
+        <service android:name=".services.USSDJobService">
 
             <intent-filter>
                 <action android:name="com.firebase.jobdispatcher.ACTION_EXECUTE" />

@@ -8,8 +8,7 @@ public class Setting extends BaseModel {
 
     @Id
     public long id;
-    
-    public boolean showlocationOnReminder;
+
     public boolean loglocationOffEvent;
 
 }

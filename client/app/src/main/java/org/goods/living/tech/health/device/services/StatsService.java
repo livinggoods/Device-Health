@@ -177,7 +177,7 @@ public class StatsService extends BaseService {
             for (Location loc : locations) {
 
                 if (loc.getAccuracy() < ACCURACY_THRESHHOLD) {//take only accurate readings
-                    Crashlytics.log(Log.DEBUG, TAG, "skipping inaccurate readings accuracy: " + loc.getAccuracy());
+                    Crashlytics.log(Log.DEBUG, TAG, String.format("skipping inaccurate readings accuracy: %s  lat: %s  lon: %s ", loc.getAccuracy(), loc.getLatitude(), loc.getLongitude()));
                     continue;
                 }
 

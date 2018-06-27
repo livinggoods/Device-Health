@@ -1,7 +1,9 @@
 package org.goods.living.tech.health.device;
 
 import android.app.Application;
+import android.content.Context;
 import android.os.Bundle;
+import android.telephony.TelephonyManager;
 import android.util.Log;
 
 import com.crashlytics.android.Crashlytics;
@@ -10,6 +12,7 @@ import com.crashlytics.android.answers.CustomEvent;
 import com.firebase.jobdispatcher.FirebaseJobDispatcher;
 import com.firebase.jobdispatcher.GooglePlayDriver;
 import com.firebase.jobdispatcher.Job;
+import com.firebase.jobdispatcher.JobService;
 import com.firebase.jobdispatcher.Lifetime;
 import com.firebase.jobdispatcher.RetryStrategy;
 import com.firebase.jobdispatcher.Trigger;
@@ -17,15 +20,18 @@ import com.google.firebase.analytics.FirebaseAnalytics;
 
 import org.goods.living.tech.health.device.models.Setting;
 import org.goods.living.tech.health.device.models.User;
+import org.goods.living.tech.health.device.services.JobSchedulerService;
 import org.goods.living.tech.health.device.services.LocationJobService;
 import org.goods.living.tech.health.device.services.SettingService;
 import org.goods.living.tech.health.device.services.USSDJobService;
 import org.goods.living.tech.health.device.services.UserService;
 import org.goods.living.tech.health.device.utils.PermissionsUtils;
 import org.goods.living.tech.health.device.utils.Utils;
+import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Calendar;
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
 
@@ -42,7 +48,7 @@ public class AppController extends Application {
 
     FirebaseAnalytics mFirebaseAnalytics;
 
-    FirebaseJobDispatcher dispatcher;
+    public FirebaseJobDispatcher dispatcher;
 
     final String TAG = this.getClass().getSimpleName();//BaseService.class.getSimpleName();
     Logger logger = LoggerFactory.getLogger(this.getClass());
@@ -52,8 +58,6 @@ public class AppController extends Application {
     @Inject
     SettingService settingService;
 
-    public final String USSD_KE = "*100*6*6*2#";// "*100*6*4*2#"; "*100#,6,6,2";//"*100*1*1#";
-    public final String USSD_UG = "*150*1*4*1#";//"*150*1#,4,1";
 
     public static AppController getInstance() {
         if (instance == null) {
@@ -109,10 +113,10 @@ public class AppController extends Application {
         // Create a new dispatcher using the Google Play driver.
         dispatcher = new FirebaseJobDispatcher(new GooglePlayDriver(this));
 
-        dispatcher.mustSchedule(createLocationJob());
-        dispatcher.mustSchedule(createUSSDJob());
 
         createUserOnFirstRun();
+
+        schedulerJobs();
         // component = DaggerAppcontrollerComponent.builder().appModule(new AppModule(this)).build();
 
         //  DaoMaster.DevOpenHelper helper = new DaoMaster.DevOpenHelper(this,"users-db"); //The users-db here is the name of our database.
@@ -129,6 +133,7 @@ public class AppController extends Application {
 // do this in your activities/fragments to get hold of a Box
         // notesBox = ((AppController) getApplication()).getBoxStore().boxFor(Note.class);
 
+        PermissionsUtils.requestLocationUpdates(this, this.getUser().updateInterval);
 
     }
 
@@ -141,15 +146,28 @@ public class AppController extends Application {
         return false;
     }
 
-    public String deviceInfo() {
+    public JSONObject deviceInfo() {
         try {
-            String s = "OS Version: " + System.getProperty("os.version") + "(" + android.os.Build.VERSION.INCREMENTAL + ")";
-            s += " OS API Level: " + android.os.Build.VERSION.SDK_INT;
-            s += " Device: " + android.os.Build.DEVICE;
-            s += " Model (and Product): " + android.os.Build.MODEL + " (" + android.os.Build.PRODUCT + ")";
 
-            Crashlytics.log(Log.DEBUG, TAG, s);
-            return s;
+            JSONObject JSONObject = new JSONObject();
+
+
+            String s = "" + System.getProperty("os.version") + "(" + android.os.Build.VERSION.INCREMENTAL + ")";
+            JSONObject.put("OS Version", s);
+
+            s = "" + android.os.Build.VERSION.SDK_INT;
+            JSONObject.put("OS API Level", s);
+            s = "" + android.os.Build.DEVICE;
+            JSONObject.put("Device", s);
+            s = "" + android.os.Build.MODEL + " (" + android.os.Build.PRODUCT + ")";
+            JSONObject.put("Model (and Product)", s);
+
+            TelephonyManager telephonyManager = ((TelephonyManager) this.getSystemService(Context.TELEPHONY_SERVICE));
+            s = telephonyManager.getNetworkOperatorName();
+            JSONObject.put("Operator", s);
+
+            Crashlytics.log(Log.DEBUG, TAG, JSONObject.toString());
+            return JSONObject;
         } catch (Exception e) {
             Log.e(TAG, "", e);
             Crashlytics.logException(e);
@@ -158,24 +176,24 @@ public class AppController extends Application {
 
     }
 
-    Job createLocationJob() {
-        Bundle myExtrasBundle = new Bundle();
-        myExtrasBundle.putString("some_key", "some_value");
+    public Job createJob(Class<? extends JobService> serviceClass, int runAfterSeconds, boolean recurring, Bundle myExtrasBundle) {
+        // Bundle myExtrasBundle = new Bundle();
+        //  myExtrasBundle.putString("some_key", "some_value");
 
 
         int toleranceInterval = (int) TimeUnit.MINUTES.toSeconds(1); // a small(ish) window of time when triggering is OK
 
         Job job = dispatcher.newJobBuilder()
                 // the LocationJobService that will be called
-                .setService(LocationJobService.class)
+                .setService(serviceClass)
                 // uniquely identifies the job
-                .setTag(LocationJobService.class.getName())
+                .setTag(serviceClass.getName() + "-" + runAfterSeconds)//make job names unique .. due to replace current
                 // one-off job
-                .setRecurring(true)
+                .setRecurring(recurring)
                 // don't persist past a device reboot
                 .setLifetime(Lifetime.FOREVER)
                 // Run between xx - xy seconds from now.
-                .setTrigger(Trigger.executionWindow(LocationJobService.runEverySeconds, LocationJobService.runEverySeconds + toleranceInterval))
+                .setTrigger(Trigger.executionWindow(runAfterSeconds, runAfterSeconds + toleranceInterval))
                 //.setTrigger(Trigger.executionWindow(15, toleranceInterval))
                 // don't overwrite an existing job with the same tag
                 .setReplaceCurrent(true)
@@ -194,38 +212,82 @@ public class AppController extends Application {
         return job;
     }
 
-    Job createUSSDJob() {
+    void schedulerJobs() {
+
+        dispatcher.cancelAll();
+
+        // ArrayList<Job> jobs = new ArrayList();
+        //ussd job start midnight
+
+
+        Calendar calendar = Calendar.getInstance();
+        long currentTsec = calendar.getTimeInMillis() / 1000;
+        currentTsec = calendar.getTimeInMillis() / 1000;
+        Log.e(TAG, "Current Tsec: " + currentTsec);
+        calendar.set(Calendar.HOUR_OF_DAY, 0);
+        calendar.set(Calendar.MINUTE, 0);
+        calendar.set(Calendar.SECOND, 0);
+        calendar.add(Calendar.DATE, 1);
+        long midnightTsec = calendar.getTimeInMillis() / 1000;
+        int nextIn = (int) (midnightTsec - currentTsec);
+
+        Log.e(TAG, "next midnight Tsec: " + nextIn);
+
         Bundle myExtrasBundle = new Bundle();
-        myExtrasBundle.putString("some_key", "some_value");
 
-        int toleranceInterval = (int) TimeUnit.MINUTES.toSeconds(1); // a small(ish) window of time when triggering is OK
+        myExtrasBundle.putString(JobSchedulerService.JOB_NAME, USSDJobService.class.getName());
+        Job USSDjob = createJob(JobSchedulerService.class, nextIn, false, myExtrasBundle);
+        dispatcher.mustSchedule(USSDjob);
+        //jobs.add(USSDjob);//
 
-        Job job = dispatcher.newJobBuilder()
-                // the JobService that will be called
-                .setService(USSDJobService.class)
-                // uniquely identifies the job
-                .setTag(USSDJobService.class.getName())
-                // one-off job
-                .setRecurring(true)
-                // don't persist past a device reboot
-                .setLifetime(Lifetime.FOREVER)
-                // Run between xx - xy seconds from now.
-                // .setTrigger(Trigger.executionWindow(USSDJobService.runEverySeconds, USSDJobService.runEverySeconds + toleranceInterval))
-                .setTrigger(Trigger.executionWindow(60, toleranceInterval))
 
-                // don't overwrite an existing job with the same tag
-                .setReplaceCurrent(true)
-                // retry with exponential backoff
-                .setRetryStrategy(RetryStrategy.DEFAULT_LINEAR)
-                .setExtras(myExtrasBundle)
-                .build();
+        //location job start next hour
+        currentTsec = calendar.getTimeInMillis() / 1000;
+        Log.e(TAG, "Current Tsec: " + currentTsec);
 
-        return job;
+        calendar.set(Calendar.MINUTE, 0);
+        calendar.set(Calendar.SECOND, 0);
+        //calendar.set(Calendar.MILLISECOND, 0);
+        calendar.add(Calendar.HOUR_OF_DAY, 1);
+        long nextHourTsec = calendar.getTimeInMillis() / 1000;
+        nextIn = (int) (nextHourTsec - currentTsec);
 
+        Log.e(TAG, "next hour Tsec: " + nextIn);
+
+        myExtrasBundle = new Bundle();
+
+        myExtrasBundle.putString(JobSchedulerService.JOB_NAME, LocationJobService.class.getName());
+        Job locationjob = createJob(JobSchedulerService.class, nextIn, false, myExtrasBundle);
+        dispatcher.mustSchedule(locationjob);
+        //jobs.add(locationjob);
+
+
+//        //ussd job start next minute - for testing
+//        calendar = Calendar.getInstance();
+//        currentTsec = calendar.getTimeInMillis() / 1000;
+//        Log.e(TAG, "Current Tsec: " + currentTsec);
+//        calendar.set(Calendar.SECOND, 0);
+//        calendar.add(Calendar.MINUTE, 1);
+//        long minuteTsec = calendar.getTimeInMillis() / 1000;
+//        nextIn = (int) (minuteTsec - currentTsec);
+//
+//        Log.e(TAG, "next minute Tsec: " + nextIn);
+//
+//        myExtrasBundle = new Bundle();
+//
+//        myExtrasBundle.putString(JobSchedulerService.JOB_NAME, USSDJobService.class.getName());
+//        Job USSDMinjob = createJob(JobSchedulerService.class, nextIn, false, myExtrasBundle);
+//        dispatcher.mustSchedule(USSDMinjob); // jobs.add(USSDMinjob);
+        //return jobs;
     }
 
     void createUserOnFirstRun() {
 
+        Setting setting = settingService.getRecord();
+        if (setting == null) {
+            setting = new Setting();
+            settingService.insert(setting);
+        }
         //if 1st run - no user record exists.
         User user = userService.getRegisteredUser();
         if (user == null) {
@@ -243,25 +305,15 @@ public class AppController extends Application {
             }
         }
 
+
         //TODO:remove this hack after all devices update
         {
             user.forceUpdate = false;
             userService.insertUser(user);
         }
+        JSONObject JSONObject = deviceInfo();
+        user.deviceInfo = JSONObject;//== null ? null : JSONObject.toString();
 
-        String deviceInfo = deviceInfo();
-        user.deviceInfo = deviceInfo;
-
-        //TODO:remove this hack after all devices update
-        if (user.balanceCode == null) { //try deduce country
-
-            if (user.phone != null && user.phone.startsWith("+256")) { //ug
-                user.balanceCode = USSD_UG;
-            } else { //ke?
-                user.balanceCode = USSD_KE;
-            }
-            userService.insertUser(user);
-        }
 
         logUser(user);
 

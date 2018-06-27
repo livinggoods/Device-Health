@@ -34,6 +34,7 @@ import com.crashlytics.android.Crashlytics;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.tasks.Task;
 
 import org.goods.living.tech.health.device.UI.PermissionActivity;
 import org.goods.living.tech.health.device.services.USSDService;
@@ -82,13 +83,14 @@ public class PermissionsUtils {
 
             if (mFusedLocationClient == null) {
                 mFusedLocationClient = LocationServices.getFusedLocationProviderClient(context);
-                LocationRequest mLocationRequest = createLocationRequest(updateInterval);
-                mFusedLocationClient.requestLocationUpdates(mLocationRequest, getPendingIntent(context));
+                // LocationRequest mLocationRequest = createLocationRequest(updateInterval);
+                // mFusedLocationClient.requestLocationUpdates(mLocationRequest, getPendingIntent(context));
             }
 
             //   if (forceUpdate) {
             LocationRequest mLocationRequest = createLocationRequest(updateInterval);
-            mFusedLocationClient.requestLocationUpdates(mLocationRequest, getPendingIntent(context));
+            Task<Void> locationTask = mFusedLocationClient.requestLocationUpdates(mLocationRequest, getPendingIntent(context));
+            Log.d(TAG, "" + locationTask.isSuccessful());
             //  }
 
 
@@ -98,6 +100,21 @@ public class PermissionsUtils {
         }
     }
 
+    public static void flushLocations() {
+        try {
+
+            //  long upInterval = PermissionsUtils.UPDATE_INTERVAL * 1000;
+
+            if (mFusedLocationClient != null) {
+                mFusedLocationClient.flushLocations();
+            }
+
+
+        } catch (SecurityException e) {
+            Log.wtf(TAG, e);
+            Crashlytics.logException(e);
+        }
+    }
 
     /**
      * Sets up the location request. Android has two location request settings:

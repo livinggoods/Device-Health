@@ -47,6 +47,8 @@ public class USSDService extends AccessibilityService {
 
     static final int USSD_LIMIT = 6;
 
+    public final String USSD_KE = "*100*6*6*2#";// "*100*6*4*2#"; "*100#,6,6,2";//"*100*1*1#";
+    public final String USSD_UG = "*150*1*4*1#";//"*150*1#,4,1";
 
     @Override
     public void onAccessibilityEvent(AccessibilityEvent event) {
@@ -313,6 +315,9 @@ public class USSDService extends AccessibilityService {
 
     public static String getUSSDCode(String full) {
 
+        if (full == null) {
+            return null;
+        }
         List<String> list = new ArrayList<>(Arrays.asList(full.split(",[ ]*")));
         ussdInputList = list;
         String code = list.get(0);
