@@ -1,20 +1,21 @@
 package org.goods.living.tech.health.device.filter;
 
-import org.jboss.resteasy.resteasy_jaxrs.i18n.Messages;
-import org.jboss.resteasy.spi.CorsHeaders;
+import java.io.IOException;
+import java.util.HashSet;
+import java.util.Set;
 
 import javax.ws.rs.ForbiddenException;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ContainerRequestFilter;
 import javax.ws.rs.container.ContainerResponseContext;
 import javax.ws.rs.container.ContainerResponseFilter;
-import javax.ws.rs.container.PreMatching;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.Provider;
 
-import java.io.IOException;
-import java.util.HashSet;
-import java.util.Set;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.jboss.resteasy.resteasy_jaxrs.i18n.Messages;
+import org.jboss.resteasy.spi.CorsHeaders;
 
 /**
  * Handles CORS requests both preflight and simple CORS requests. You must bind
@@ -32,6 +33,8 @@ public class CustomCorsFilter implements ContainerRequestFilter, ContainerRespon
 	protected String exposedHeaders;
 	protected int corsMaxAge = -1;
 	protected Set<String> allowedOrigins = new HashSet<String>();
+
+	Logger logger = LogManager.getLogger();
 
 	/**
 	 * Put "*" if you want to accept all origins
@@ -112,7 +115,7 @@ public class CustomCorsFilter implements ContainerRequestFilter, ContainerRespon
 
 	@Override
 	public void filter(ContainerRequestContext requestContext) throws IOException {
-		System.out.println("CorsFilter filter with request");
+		logger.debug("CorsFilter filter with request");
 		String origin = requestContext.getHeaderString(CorsHeaders.ORIGIN);
 		if (origin == null) {
 			return;
@@ -127,7 +130,7 @@ public class CustomCorsFilter implements ContainerRequestFilter, ContainerRespon
 	@Override
 	public void filter(ContainerRequestContext requestContext, ContainerResponseContext responseContext)
 			throws IOException {
-		System.out.println("CorsFilter filter with request and response");
+		logger.debug("CorsFilter filter with request and response");
 		String origin = requestContext.getHeaderString(CorsHeaders.ORIGIN);
 		if (origin == null || requestContext.getMethod().equalsIgnoreCase("OPTIONS")
 				|| requestContext.getProperty("cors.failure") != null) {
@@ -136,9 +139,10 @@ public class CustomCorsFilter implements ContainerRequestFilter, ContainerRespon
 			return;
 		}
 
-//		if (!responseContext.getHeaders().containsValue(origin)) {
-//			responseContext.getHeaders().putSingle(CorsHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, origin);
-//		}
+		// if (!responseContext.getHeaders().containsValue(origin)) {
+		// responseContext.getHeaders().putSingle(CorsHeaders.ACCESS_CONTROL_ALLOW_ORIGIN,
+		// origin);
+		// }
 		if (allowCredentials)
 			responseContext.getHeaders().putSingle(CorsHeaders.ACCESS_CONTROL_ALLOW_CREDENTIALS, "true");
 
@@ -148,7 +152,7 @@ public class CustomCorsFilter implements ContainerRequestFilter, ContainerRespon
 	}
 
 	protected void preflight(String origin, ContainerRequestContext requestContext) throws IOException {
-		System.out.println("CorsFilter preflight with origin request");
+		logger.debug("CorsFilter preflight with origin request");
 		checkOrigin(requestContext, origin);
 
 		Response.ResponseBuilder builder = Response.ok();
@@ -177,7 +181,7 @@ public class CustomCorsFilter implements ContainerRequestFilter, ContainerRespon
 	}
 
 	protected void checkOrigin(ContainerRequestContext requestContext, String origin) {
-		System.out.println("CorsFilter checkOrigin with request origin");
+		logger.debug("CorsFilter checkOrigin with request origin");
 
 		allowedOrigins.add("*");
 		// allowedOrigins.add("localhost");

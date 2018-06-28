@@ -1,7 +1,7 @@
 package org.goods.living.tech.health.device.models;
 
 import org.goods.living.tech.health.device.BuildConfig;
-import org.goods.living.tech.health.device.utils.PermissionsUtils;
+import org.goods.living.tech.health.device.utils.Constants;
 import org.goods.living.tech.health.device.utils.Utils;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -24,9 +24,11 @@ public class User extends BaseModel {
     public String name;
     public String password;
     public String androidId;
-    public long updateInterval = PermissionsUtils.UPDATE_INTERVAL; // seconds
+    public long updateInterval = Constants.UPDATE_INTERVAL; // seconds
     public String phone;
-    public String balanceCode;
+    public String ussdBalanceCode;
+    public String country;
+    public String branch;
 
     @Transient
     public JSONObject deviceInfo;
@@ -56,16 +58,17 @@ public class User extends BaseModel {
         if (JSONObject.has("chvId")) chvId = JSONObject.getString("chvId");
         if (JSONObject.has("androidId")) androidId = JSONObject.getString("androidId");
         if (JSONObject.has("phone")) androidId = JSONObject.getString("phone");
-        if (JSONObject.has("balanceCode")) androidId = JSONObject.getString("balanceCode");
+        if (JSONObject.has("ussdBalanceCode")) androidId = JSONObject.getString("ussdBalanceCode");
 
         if (JSONObject.has("name")) name = JSONObject.getString("name");
+        if (JSONObject.has("branch")) name = JSONObject.getString("branch");
+        if (JSONObject.has("country")) name = JSONObject.getString("country");
 
 
         if (JSONObject.has("updateInterval"))
             updateInterval = JSONObject.getLong("updateInterval"); // seconds in millis 1000=1
 
         //   JSONObject.put("versionCode", versionCode);
-        if (JSONObject.has("disableSync")) disableSync = JSONObject.getBoolean("disableSync");
         if (JSONObject.has("serverApi")) serverApi = JSONObject.getInt("serverApi");
         if (JSONObject.has("forceUpdate")) forceUpdate = JSONObject.getBoolean("forceUpdate");
 
@@ -93,10 +96,12 @@ public class User extends BaseModel {
         if (username != null) JSONObject.put("username", username);
         if (password != null) JSONObject.put("password", password);
         if (name != null) JSONObject.put("name", name);
+        if (branch != null) JSONObject.put("branch", branch);
+        if (country != null) JSONObject.put("country", country);
 
         if (phone != null) JSONObject.put("phone", phone);
 
-        if (balanceCode != null) JSONObject.put("balanceCode", phone);
+        if (ussdBalanceCode != null) JSONObject.put("ussdBalanceCode", phone);
         if (deviceInfo != null) JSONObject.put("deviceInfo", deviceInfo.toString());
 
 

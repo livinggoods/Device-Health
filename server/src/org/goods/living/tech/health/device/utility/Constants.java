@@ -14,7 +14,7 @@ public class Constants {
 
 		public static final String USER = "/user";
 		public static final String FIND = "/find";
-                public static final String LOGIN = "/login";
+		public static final String LOGIN = "/login";
 		// public static final String USER_CREATE = USER + CREATE;
 		// public static final String USER_READ = USER + READ;
 		// public static final String USER_UPDATE = USER + UPDATE;

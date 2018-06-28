@@ -7,6 +7,11 @@ public final class Constants {
     public static final String DATA = "data";
 
     public static final long SYNC_FREQUENCY = 60;//60 * 60; // 1 hour (seconds)
+    /**
+     * The desired interval for location updates. Inexact. Updates may be more or less frequent.
+     */
+    public static final long UPDATE_INTERVAL = 300; // seconds.
+
 
     public final class URL {
 

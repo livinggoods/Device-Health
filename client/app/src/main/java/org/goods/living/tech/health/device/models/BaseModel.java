@@ -31,6 +31,9 @@ public class BaseModel {
             String formattedDate = Utils.getStringTimeStampWithTimezoneFromDate(deviceTime, TimeZone.getTimeZone(Utils.TIMEZONE_UTC));
             JSONObject.put("recordedAt", formattedDate);
         }
+        if (JSONObject.has("clockDrift")) clockDrift = JSONObject.getLong("clockDrift");
+        
+
         return JSONObject;
     }
 }

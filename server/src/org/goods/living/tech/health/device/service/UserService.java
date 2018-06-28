@@ -1,12 +1,12 @@
 package org.goods.living.tech.health.device.service;
 
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
 import java.io.InputStream;
 import java.text.SimpleDateFormat;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.TimeZone;
 
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
@@ -30,6 +30,10 @@ import org.goods.living.tech.health.device.jpa.dao.Users;
 import org.goods.living.tech.health.device.models.Result;
 import org.goods.living.tech.health.device.utility.Constants;
 import org.goods.living.tech.health.device.utility.JSonHelper;
+import org.goods.living.tech.health.device.utility.Utils;
+
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
 
 //https://dzone.com/articles/lets-compare-jax-rs-vs-spring-for-rest-endpoints
 
@@ -69,6 +73,18 @@ public class UserService extends BaseService {
 		Users users;
 		String username = data.has("username") ? data.get("username").asText() : null;
 		String androidId = data.has("androidId") ? data.get("androidId").asText() : null;
+		String deviceTimeStr = data.has("deviceTime") ? data.get("deviceTime").asText() : null;
+		String country = data.has("country") ? data.get("country").asText() : null;
+
+		Date deviceTime = Utils.getDateFromTimeStampWithTimezone(deviceTimeStr,
+				TimeZone.getTimeZone(Utils.TIMEZONE_UTC));// at sync/toJSONObject time set this - we can use it to get
+															// the clock drift
+
+		Long clockDrift = null;// clock drift from server time in seconds
+		Date serverTime = new Date();
+		if (deviceTime != null) {
+			clockDrift = Duration.between(serverTime.toInstant(), deviceTime.toInstant()).getSeconds();
+		}
 
 		users = usersJpaController.findByUserNameAndAndroidId(username, androidId);
 		if (users == null) {
@@ -77,18 +93,21 @@ public class UserService extends BaseService {
 			users.setUsername(username);
 			users.setPassword(data.has("password") ? data.get("password").asText() : null);
 			users.setAndroidId(androidId);
-			users.setDisableSync(false);
+			users.setCountry(country);
 
 			// set chvId - retrieve from medic
-			MedicUser mu = medicJpaController.findByUsername(username);
+			MedicUser mu = medicJpaController.findByUsername(country, username);
 			users.setChvId(mu == null ? null : mu.getUuid());
-
 			users.setPhone(data.has("phone") ? data.get("phone").asText() : null);
+
 		}
 
 		int versionCode = data.has("versionCode") ? Integer.valueOf(data.get("versionCode").asText()) : 1;
 		users.setVersionCode(versionCode);
 		users.setVersionName(data.has("versionName") ? data.get("versionName").asText() : null);
+		users.setDeviceTime(deviceTime);
+
+		// TODO: data.has("deviceInfo") ? data.get("deviceInfo").asText() : null;
 
 		if (data.has("recordedAt")) {
 			Date recordedAt = dateFormat.parse(data.get("recordedAt").asText());
@@ -106,8 +125,11 @@ public class UserService extends BaseService {
 
 			// set chvId if blank - retrieve from medic
 			if (users.getChvId() == null) {
-				MedicUser mu = medicJpaController.findByUsername(username);
+				MedicUser mu = medicJpaController.findByUsername(country, username);
 				users.setChvId(mu == null ? null : mu.getUuid());
+				users.setBranch(mu == null ? null : mu.getBranch());
+				users.setName(mu == null ? null : mu.getName());
+
 			}
 			users.setUpdatedAt(new Date());
 			users = usersJpaController.update(users);
@@ -120,10 +142,13 @@ public class UserService extends BaseService {
 
 		ObjectNode o = (ObjectNode) data;
 		o.put("masterId", users.getId());
-		o.put("disableSync", users.getDisableSync());
 		o.put("updateInterval", users.getUpdateInterval());// DEFAULT_UPDATE_INTERVAL);
 		o.put("phone", users.getPhone());
 		o.put("chvId", users.getChvId());
+		o.put("ussdBalanceCode", users.getUssdBalanceCode());
+
+		if (clockDrift != null)
+			o.put("clockDrift", clockDrift);
 
 		// NodeBean toValue = mapper.convertValue(node, NodeBean.cla
 
@@ -158,7 +183,6 @@ public class UserService extends BaseService {
 
 		ObjectNode o = (ObjectNode) data;
 		o.put("masterId", users.getId());
-		o.put("disableSync", users.getDisableSync());
 		o.put("updateInterval", users.getUpdateInterval());// DEFAULT_UPDATE_INTERVAL);
 
 		// NodeBean toValue = mapper.convertValue(node, NodeBean.cla
@@ -171,14 +195,16 @@ public class UserService extends BaseService {
 		return result;
 
 	}
-        
-        //use the @Secured annotation for your secured methods
-        //use the @RolesAllowed({"ADMIN"})  annotation to specify what level of authority has access to your resources
-        
-        //Roles can be found at org.goods.living.tech.health.device.service.security.qualifier
-        
-        //@Secured
-        //@RolesAllowed({"ADMIN"}) 
+
+	// use the @Secured annotation for your secured methods
+	// use the @RolesAllowed({"ADMIN"}) annotation to specify what level of
+	// authority has access to your resources
+
+	// Roles can be found at
+	// org.goods.living.tech.health.device.service.security.qualifier
+
+	// @Secured
+	// @RolesAllowed({"ADMIN"})
 	@POST
 	// @Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
@@ -188,8 +214,9 @@ public class UserService extends BaseService {
 		JsonNode data = JSonHelper.getJsonNode(incomingData);
 
 		String username = data.has("username") ? data.get("username").asText() : null;
+		String country = data.has("country") ? data.get("country").asText() : null;
 
-		List<MedicUser> lists = medicJpaController.findByNameLike(username);
+		List<MedicUser> lists = medicJpaController.findByNameLike(country, username);
 
 		// List<Users> list = usersJpaController.findByUserNameLike(username);
 		// ObjectMapper mapper = new ObjectMapper();
@@ -231,16 +258,16 @@ public class UserService extends BaseService {
 		return false;
 
 	}
-        
-        @POST
+
+	@POST
 	@Consumes("application/x-www-form-urlencoded")
 	@Produces("application/json")
 	@Path(Constants.URL.LOGIN)
-	public LoginResponse login(@FormParam("username") String username, @FormParam("password") String password) throws Exception {
+	public LoginResponse login(@FormParam("username") String username, @FormParam("password") String password)
+			throws Exception {
 
 		System.out.println("Username is: " + username); // prints output
 		System.out.println("Password is: " + password); // prints output
-
 
 		if (username != null && password != null) {
 			LoginResponse loginResponse = getLoginResposeForJWT(username, password);
@@ -250,16 +277,17 @@ public class UserService extends BaseService {
 			throw new Exception("Username/Password is wrong");
 		}
 	}
-        
-        private LoginResponse getLoginResposeForJWT(String username, String password) {
+
+	private LoginResponse getLoginResposeForJWT(String username, String password) {
 		LoginResponse loginResponse = null;
-                 
-                //You can plug in Database user Authorization here....at the moment we are generating a token as 
-                //long as username and password are not empty
+
+		// You can plug in Database user Authorization here....at the moment we are
+		// generating a token as
+		// long as username and password are not empty
 		if (username != null && password != null) {
 			System.out.println("user.getPassword(): " + username);
 			System.out.println("user.getPassword(): " + password);
-			
+
 			long tokenLife;
 			try {
 				tokenLife = Integer.parseInt(applicationParameters.getTokenLife()) * 1000;
@@ -268,7 +296,6 @@ public class UserService extends BaseService {
 			}
 
 			long nowMillis = System.currentTimeMillis();
-			Date now = new Date(nowMillis);
 
 			long expMillis = nowMillis + tokenLife;
 			Date expireDate = new Date(expMillis);
@@ -276,14 +303,14 @@ public class UserService extends BaseService {
 			System.out.println(expireDate.toString());
 
 			loginResponse = new LoginResponse(Jwts.builder().setSubject(username).setId("Unique_ID")
-					.claim("roles", "ADMIN").claim("first name", "firstName")
-					.claim("site", "site").setIssuedAt(new Date())
-					.signWith(SignatureAlgorithm.HS256, applicationParameters.getHashKey()).setExpiration(expireDate).compact());
+					.claim("roles", "ADMIN").claim("first name", "firstName").claim("site", "site")
+					.setIssuedAt(new Date()).signWith(SignatureAlgorithm.HS256, applicationParameters.getHashKey())
+					.setExpiration(expireDate).compact());
 		}
 
 		return loginResponse;
 	}
-	
+
 	@SuppressWarnings("unused")
 	@XmlRootElement
 	private static class LoginResponse {

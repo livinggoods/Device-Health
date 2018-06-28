@@ -5,7 +5,6 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
 
 import javax.enterprise.context.RequestScoped;
@@ -29,7 +28,6 @@ import org.goods.living.tech.health.device.jpa.dao.Users;
 import org.goods.living.tech.health.device.models.Result;
 import org.goods.living.tech.health.device.utility.Constants;
 import org.goods.living.tech.health.device.utility.JSonHelper;
-import org.json.simple.JSONObject;
 
 //https://dzone.com/articles/lets-compare-jax-rs-vs-spring-for-rest-endpoints
 
@@ -116,9 +114,11 @@ public class StatsService extends BaseService {
 		logger.debug("find");
 		JsonNode data = JSonHelper.getJsonNode(incomingData);
 
-		String uuid = data.has("uuid")? data.get("uuid").asText():null;
+		String uuid = data.has("uuid") ? data.get("uuid").asText() : null;
 
 		String username = data.has("username") ? data.get("username").asText() : null;
+
+		String country = data.has("country") ? data.get("country").asText() : null;
 
 		String dateFromString = data.has("from") ? data.get("from").asText() : null;
 		String dateToString = data.has("to") ? data.get("to").asText() : null;
@@ -128,7 +128,8 @@ public class StatsService extends BaseService {
 
 		logger.info("initiating query execution");
 
-		List<ChvActivity> chvActivities = uuid == null? null: medicJpaController.findChvActivities(uuid, from, to);
+		List<ChvActivity> chvActivities = uuid == null ? null
+				: medicJpaController.findChvActivities(country, uuid, from, to);
 
 		if (chvActivities == null) {
 			logger.error("no activities found... " + username);
@@ -141,7 +142,7 @@ public class StatsService extends BaseService {
 		// ArrayNode array = mapper.valueToTree(list);
 		ObjectMapper mapper = new ObjectMapper();
 		for (ChvActivity activity : chvActivities) {
-			//get array of locations for the activity timestamp
+			// get array of locations for the activity timestamp
 
 			ChvActivity activityWithStats = statsJpaController.fetchLocationStatistics(uuid, activity);
 			ObjectNode root = mapper.createObjectNode();

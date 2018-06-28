@@ -21,7 +21,6 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
-
 /**
  * @author bensonbundi
  */
@@ -29,6 +28,9 @@ public class MedicJpaController implements Serializable {
 
 	Logger logger = LogManager.getLogger();
 	private EntityManagerFactory emf = null;
+
+	public static String EM_KE = "KE";
+	public static String EM_UG = "UG";
 
 	public MedicJpaController(EntityManagerFactory emfKE, EntityManagerFactory emfUG) {
 		this.emfKE = emfKE;
@@ -46,24 +48,31 @@ public class MedicJpaController implements Serializable {
 		return emfKE.createEntityManager();
 	}
 
-	public List<MedicUser> findByNameLike(String username) {
-
-		List<Object[]> list = this.getEntityManagerUG().createNativeQuery("SELECT "
-				+ "doc->>'name' AS username, doc->>'contact_id' contact_id, chw_name , branch_name, chw_phone "
-				+ "FROM couchdb left join contactview_hierarchy ch on ch.chw_uuid=doc->>'contact_id' WHERE doc->>'type' = 'user-settings' "
-				+ "and chw_name ilike :name").setParameter("name", "%" + username + "%").getResultList();
-		List<MedicUser> l = new ArrayList<>();
-		for (Object[] o : list) {
-			MedicUser mu = new MedicUser();
-			mu.setUsername((String) o[0]);
-			mu.setUuid((String) o[1]);
-			mu.setName((String) o[2]);
-			mu.setBranch((String) o[3]);
-			mu.setPhone((String) o[4]);
-			l.add(mu);
+	public EntityManager getEntityManager(String db) {
+		if (db != null && db.toUpperCase().equals(EM_KE)) {
+			return getEntityManagerKE();
 		}
-		EntityManager em = getEntityManagerUG();
+		return getEntityManagerUG();
+	}
+
+	public List<MedicUser> findByNameLike(String db, String username) {
+		EntityManager em = getEntityManager(db);
 		try {
+			List<Object[]> list = em.createNativeQuery("SELECT "
+					+ "doc->>'name' AS username, doc->>'contact_id' contact_id, chw_name , branch_name, chw_phone "
+					+ "FROM couchdb left join contactview_hierarchy ch on ch.chw_uuid=doc->>'contact_id' WHERE doc->>'type' = 'user-settings' "
+					+ "and chw_name ilike :name").setParameter("name", "%" + username + "%").getResultList();
+			List<MedicUser> l = new ArrayList<>();
+			for (Object[] o : list) {
+				MedicUser mu = new MedicUser();
+				mu.setUsername((String) o[0]);
+				mu.setUuid((String) o[1]);
+				mu.setName((String) o[2]);
+				mu.setBranch((String) o[3]);
+				mu.setPhone((String) o[4]);
+				l.add(mu);
+			}
+
 			// CriteriaQuery cq = em.getCriteriaBuilder().createQuery();
 			// Root<Users> rt = cq.from(Users.class);
 			// cq.select(em.getCriteriaBuilder().count(rt));
@@ -76,11 +85,12 @@ public class MedicJpaController implements Serializable {
 
 	}
 
-	public MedicUser findByUsername(String username) {
+	public MedicUser findByUsername(String db, String username) {
 
-		EntityManager em = getEntityManagerUG();
+		EntityManager em = getEntityManager(db);
 		try {
-			Object[] o = (Object[]) this.getEntityManagerUG().createNativeQuery("SELECT "
+
+			Object[] o = (Object[]) em.createNativeQuery("SELECT "
 					+ "doc->>'name' AS username, doc->>'contact_id' contact_id, chw_name , branch_name, chw_phone "
 					+ "FROM couchdb left join contactview_hierarchy ch on ch.chw_uuid=doc->>'contact_id' WHERE doc->>'type' = 'user-settings' "
 					+ "and doc->>'name' ILIKE :name").setParameter("name", "" + username + "").getSingleResult();
@@ -101,43 +111,41 @@ public class MedicJpaController implements Serializable {
 		}
 
 	}
-	public List<ChvActivity> findChvActivities(String chvId, Date from, Date to) {
-		long dateFrom=from.getTime()/1000;
-		long dateTo=to.getTime()/1000;
 
-		EntityManager em = getEntityManagerUG();
+	public List<ChvActivity> findChvActivities(String db, String chvId, Date from, Date to) {
 
+		EntityManager em = getEntityManager(db);
 		try {
 
 			logger.info("starting query execution");
+			long dateFrom = from.getTime() / 1000;
+			long dateTo = to.getTime() / 1000;
 
-			List<Object[]> queryResult = em.createNativeQuery("SELECT cast(uuid as text) as recordId, cast(chw as text) as chwId,  formname as formname, extract(epoch from reported) as reported, cast(doc as text) as jsonRecord from (SELECT * from form_metadata fm where chw = :chvId and extract(epoch from reported) between :fromDate and :toDate) as a inner join couchdb cb on (a.uuid = cb.doc->>'_id')")
-					.setParameter("chvId", chvId)
-					.setParameter("fromDate", dateFrom)
-					.setParameter("toDate", dateTo)
+			List<Object[]> queryResult = em.createNativeQuery(
+					"SELECT cast(uuid as text) as recordId, cast(chw as text) as chwId,  formname as formname, extract(epoch from reported) as reported, cast(doc as text) as jsonRecord from (SELECT * from form_metadata fm where chw = :chvId and extract(epoch from reported) between :fromDate and :toDate) as a inner join couchdb cb on (a.uuid = cb.doc->>'_id')")
+					.setParameter("chvId", chvId).setParameter("fromDate", dateFrom).setParameter("toDate", dateTo)
 					.getResultList();
 
 			List<ChvActivity> activities = new ArrayList<>();
 			for (Object[] object : queryResult) {
 				ChvActivity activity = new ChvActivity();
 				JSONParser parser = new JSONParser();
-				Object obj=null;
-				try{
-					obj=parser.parse((String)object[4]);
-				}
-				catch (ParseException e){
+				Object obj = null;
+				try {
+					obj = parser.parse((String) object[4]);
+				} catch (ParseException e) {
 
 				}
-				JSONObject chvActivty=(JSONObject)obj;
-				JSONObject fields=(JSONObject)chvActivty.get("fields");
-				JSONObject inputs=(JSONObject)fields.get("inputs");
-				JSONObject contact=(JSONObject)inputs.get("contact");
-				JSONObject inputMetadata=(JSONObject)inputs.get("meta");
-				JSONObject coordinates=(JSONObject)inputMetadata.get("location");
-				String clientName=null;
-				try{
-					clientName=(String)contact.get("name");
-				}catch (Exception e){
+				JSONObject chvActivty = (JSONObject) obj;
+				JSONObject fields = (JSONObject) chvActivty.get("fields");
+				JSONObject inputs = (JSONObject) fields.get("inputs");
+				JSONObject contact = (JSONObject) inputs.get("contact");
+				JSONObject inputMetadata = (JSONObject) inputs.get("meta");
+				JSONObject coordinates = (JSONObject) inputMetadata.get("location");
+				String clientName = null;
+				try {
+					clientName = (String) contact.get("name");
+				} catch (Exception e) {
 					e.printStackTrace();
 				}
 
@@ -146,8 +154,8 @@ public class MedicJpaController implements Serializable {
 				activity.setClientName(clientName);
 				activity.setMedicCoordinates(coordinates);
 
-				activity.setChvUuid((String)object[1]);
-				Date date=new Date(((Double)object[3]).longValue()*1000);
+				activity.setChvUuid((String) object[1]);
+				Date date = new Date(((Double) object[3]).longValue() * 1000);
 
 				activity.setReportedDate(date);
 				activities.add(activity);
@@ -161,4 +169,3 @@ public class MedicJpaController implements Serializable {
 	}
 
 }
-

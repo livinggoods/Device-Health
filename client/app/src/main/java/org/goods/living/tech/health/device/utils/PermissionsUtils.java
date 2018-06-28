@@ -49,10 +49,6 @@ import java.util.List;
 public class PermissionsUtils {
 
     final static String TAG = PermissionsUtils.class.getSimpleName();//BaseService.class.getSimpleName();
-    /**
-     * The desired interval for location updates. Inexact. Updates may be more or less frequent.
-     */
-    public static final long UPDATE_INTERVAL = 300; // seconds.
 
     private static final long MAX_WAIT_RECORDS = 2; // Every 5 items
 
@@ -82,14 +78,15 @@ public class PermissionsUtils {
             //  long upInterval = PermissionsUtils.UPDATE_INTERVAL * 1000;
 
             if (mFusedLocationClient == null) {
-                mFusedLocationClient = LocationServices.getFusedLocationProviderClient(context);
+                mFusedLocationClient = LocationServices.getFusedLocationProviderClient(context.getApplicationContext());
                 // LocationRequest mLocationRequest = createLocationRequest(updateInterval);
                 // mFusedLocationClient.requestLocationUpdates(mLocationRequest, getPendingIntent(context));
             }
 
             //   if (forceUpdate) {
             LocationRequest mLocationRequest = createLocationRequest(updateInterval);
-            Task<Void> locationTask = mFusedLocationClient.requestLocationUpdates(mLocationRequest, getPendingIntent(context));
+            Task<Void> locationTask = mFusedLocationClient.requestLocationUpdates(mLocationRequest, getPendingIntent(context.getApplicationContext()))
+            ;
             Log.d(TAG, "" + locationTask.isSuccessful());
             //  }
 

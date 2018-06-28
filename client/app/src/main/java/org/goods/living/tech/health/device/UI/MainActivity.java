@@ -51,7 +51,6 @@ import org.goods.living.tech.health.device.services.DataBalanceService;
 import org.goods.living.tech.health.device.services.StatsService;
 import org.goods.living.tech.health.device.services.USSDService;
 import org.goods.living.tech.health.device.services.UserService;
-import org.goods.living.tech.health.device.utils.AuthenticatorService;
 import org.goods.living.tech.health.device.utils.PermissionsUtils;
 import org.goods.living.tech.health.device.utils.SnackbarUtil;
 import org.goods.living.tech.health.device.utils.SyncAdapter;
@@ -150,13 +149,6 @@ public class MainActivity extends FragmentActivity implements
 
         loadData();
 
-        // Create your sync account
-        AuthenticatorService.createSyncAccount(this);
-
-        // Perform a manual sync by calling this:
-        SyncAdapter.performSync();
-
-
         // Crashlytics.getInstance().crash(); // Force a crash
 
 
@@ -179,9 +171,9 @@ public class MainActivity extends FragmentActivity implements
 
 
         if (newLaunch) {
-            // requestLocationPermissions();
             newLaunch = false;
-            AppController.getInstance().checkAndRequestPerms();
+
+            // requestLocationPermissions();
         }
 
     }
@@ -427,6 +419,7 @@ public class MainActivity extends FragmentActivity implements
 
         user.phone = phone.isEmpty() ? null : phone;
         ccp.setFullNumber(user.phone);
+        user.country = ccp.getSelectedCountryNameCode();
 
         String balanceCode = balanceCodeTextView.getText().toString().trim();
         user.balanceCode = balanceCode.isEmpty() ? null : balanceCode;

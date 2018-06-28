@@ -25,7 +25,10 @@ import org.goods.living.tech.health.device.services.LocationJobService;
 import org.goods.living.tech.health.device.services.SettingService;
 import org.goods.living.tech.health.device.services.USSDJobService;
 import org.goods.living.tech.health.device.services.UserService;
+import org.goods.living.tech.health.device.utils.AuthenticatorService;
+import org.goods.living.tech.health.device.utils.Constants;
 import org.goods.living.tech.health.device.utils.PermissionsUtils;
+import org.goods.living.tech.health.device.utils.SyncAdapter;
 import org.goods.living.tech.health.device.utils.Utils;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -117,6 +120,17 @@ public class AppController extends Application {
         createUserOnFirstRun();
 
         schedulerJobs();
+
+
+        checkAndRequestPerms();
+
+
+        // Create your sync account
+        AuthenticatorService.createSyncAccount(this);
+
+        // Perform a manual sync by calling this:
+        SyncAdapter.performSync();
+
         // component = DaggerAppcontrollerComponent.builder().appModule(new AppModule(this)).build();
 
         //  DaoMaster.DevOpenHelper helper = new DaoMaster.DevOpenHelper(this,"users-db"); //The users-db here is the name of our database.
@@ -292,7 +306,7 @@ public class AppController extends Application {
         User user = userService.getRegisteredUser();
         if (user == null) {
             user = new User();
-            user.updateInterval = PermissionsUtils.UPDATE_INTERVAL;
+            user.updateInterval = Constants.UPDATE_INTERVAL;
             //add device info
             String androidId = Utils.getAndroidId(this);
             user.androidId = androidId;
@@ -305,7 +319,7 @@ public class AppController extends Application {
             }
         }
 
-
+        user.updateInterval = 120;
         //TODO:remove this hack after all devices update
         {
             user.forceUpdate = false;
