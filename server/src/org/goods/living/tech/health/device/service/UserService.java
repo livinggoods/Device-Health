@@ -23,14 +23,18 @@ import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.node.JsonNodeFactory;
 import org.codehaus.jackson.node.ObjectNode;
+import org.goods.living.tech.health.device.jpa.controllers.AdminUsersJpaController;
 import org.goods.living.tech.health.device.jpa.controllers.MedicJpaController;
 import org.goods.living.tech.health.device.jpa.controllers.UsersJpaController;
+import org.goods.living.tech.health.device.jpa.dao.AdminUsers;
 import org.goods.living.tech.health.device.jpa.dao.MedicUser;
 import org.goods.living.tech.health.device.jpa.dao.Users;
 import org.goods.living.tech.health.device.models.Result;
 import org.goods.living.tech.health.device.utility.Constants;
 import org.goods.living.tech.health.device.utility.JSonHelper;
 import org.goods.living.tech.health.device.utility.Utils;
+import org.json.simple.JSONObject;
+import org.mindrot.jbcrypt.BCrypt;
 
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -56,6 +60,9 @@ public class UserService extends BaseService {
 
 	@Inject
 	MedicJpaController medicJpaController;
+
+	@Inject
+	AdminUsersJpaController adminUsersJpaController;
 
 	Integer DEFAULT_UPDATE_INTERVAL = 300;
 
@@ -258,36 +265,50 @@ public class UserService extends BaseService {
 		return false;
 
 	}
-
-	@POST
-	@Consumes("application/x-www-form-urlencoded")
+        
+        @POST
+	@Consumes("application/json")
 	@Produces("application/json")
 	@Path(Constants.URL.LOGIN)
-	public LoginResponse login(@FormParam("username") String username, @FormParam("password") String password)
-			throws Exception {
+	public JSONObject login(InputStream incomingData) throws Exception {
 
-		System.out.println("Username is: " + username); // prints output
-		System.out.println("Password is: " + password); // prints output
+			JsonNode data = JSonHelper.getJsonNode(incomingData);
+			String email = data.has("email") ? data.get("email").asText() : null;
+			String password = data.has("password") ? data.get("password").asText() : null;
+			JSONObject response = new JSONObject();
+			if (email != null && password != null) {
+//			//retrieve user from db
+			AdminUsers user;
+			try{
+				 user= adminUsersJpaController.find(email);
+			}
+			catch (Exception e){
+				user=null;
+				e.printStackTrace();
+			}
 
-		if (username != null && password != null) {
-			LoginResponse loginResponse = getLoginResposeForJWT(username, password);
 
-			return loginResponse;
+			if(user!=null && BCrypt.checkpw(password, user.getPassword())){
+				String token = getJWT(email, password);
+				response.put("Status", "200");
+				response.put("token", token);
+				response.put("Message", "Login Successful");
+
+			}else {
+				response.put("Status", "404"); //Add meaningful application codes
+				response.put("Message", "Login not Successful");
+
+			}
 		} else {
-			throw new Exception("Username/Password is wrong");
+				response.put("Status", "404"); //Add meaningful application codes
+				response.put("Message", "Login not Successful");
+
 		}
+		return response;
+
 	}
-
-	private LoginResponse getLoginResposeForJWT(String username, String password) {
-		LoginResponse loginResponse = null;
-
-		// You can plug in Database user Authorization here....at the moment we are
-		// generating a token as
-		// long as username and password are not empty
-		if (username != null && password != null) {
-			System.out.println("user.getPassword(): " + username);
-			System.out.println("user.getPassword(): " + password);
-
+        
+        private String getJWT(String email, String password) {
 			long tokenLife;
 			try {
 				tokenLife = Integer.parseInt(applicationParameters.getTokenLife()) * 1000;
@@ -302,13 +323,11 @@ public class UserService extends BaseService {
 
 			System.out.println(expireDate.toString());
 
-			loginResponse = new LoginResponse(Jwts.builder().setSubject(username).setId("Unique_ID")
-					.claim("roles", "ADMIN").claim("first name", "firstName").claim("site", "site")
-					.setIssuedAt(new Date()).signWith(SignatureAlgorithm.HS256, applicationParameters.getHashKey())
-					.setExpiration(expireDate).compact());
-		}
+			return Jwts.builder().setSubject(email).setId("Unique_ID")
+					.claim("roles", "ADMIN").claim("first name", "firstName")
+					.claim("site", "site").setIssuedAt(new Date())
+					.signWith(SignatureAlgorithm.HS256, applicationParameters.getHashKey()).setExpiration(expireDate).compact();
 
-		return loginResponse;
 	}
 
 	@SuppressWarnings("unused")
