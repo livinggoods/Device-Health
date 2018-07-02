@@ -12,10 +12,7 @@
 		<param-value>org.goods.living.tech.health.device.filter.AuthenticationFilter</param-value>
 	</context-param>
         
-        <context-param>
-		<param-name>resteasy.providers</param-name>
-		<param-value>org.goods.living.tech.health.device.filter.AuthorizationFilter</param-value>
-	</context-param>
+
     
    <listener>
         <listener-class>org.apache.logging.log4j.web.Log4jServletContextListener</listener-class>

@@ -13,6 +13,7 @@ public class Constants {
 		// public static final String DELETE = "/delete";
 
 		public static final String USER = "/user";
+		public static final String ADMIN = "/admin";
 		public static final String FIND = "/find";
 		public static final String LOGIN = "/login";
 		// public static final String USER_CREATE = USER + CREATE;

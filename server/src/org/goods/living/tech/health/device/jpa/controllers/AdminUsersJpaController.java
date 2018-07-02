@@ -5,15 +5,8 @@
  */
 package org.goods.living.tech.health.device.jpa.controllers;
 
-import org.codehaus.jackson.map.ObjectMapper;
 import org.goods.living.tech.health.device.jpa.dao.AdminUsers;
-import org.hibernate.annotations.NamedNativeQuery;
-import org.mindrot.jbcrypt.BCrypt;
 
-import javax.enterprise.inject.Default;
-import javax.enterprise.inject.Model;
-import javax.inject.Inject;
-import javax.inject.Named;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import java.io.Serializable;

@@ -1,31 +1,93 @@
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
 package org.goods.living.tech.health.device.jpa.dao;
 
-import javax.persistence.*;
 import java.io.Serializable;
+import java.util.Date;
+import javax.persistence.Basic;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.NamedQueries;
+import javax.persistence.NamedQuery;
+import javax.persistence.Table;
+import javax.persistence.Temporal;
+import javax.persistence.TemporalType;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
+import javax.xml.bind.annotation.XmlRootElement;
 
+/**
+ *
+ * @author kevinkorir
+ */
 @Entity
-@Table(name = "admin_users", schema = "events", catalog = "device_health_development")
-public class AdminUsers {
-    private long id;
-    private String name;
-    private String email;
-    private String password;
-    private String forgotToken;
-    private Serializable createdAt;
-    private Serializable updatedAt;
+@Table(name = "admin_users")
+@XmlRootElement
+@NamedQueries({
+    @NamedQuery(name = "AdminUsers.findAll", query = "SELECT a FROM AdminUsers a")
+    , @NamedQuery(name = "AdminUsers.findById", query = "SELECT a FROM AdminUsers a WHERE a.id = :id")
+    , @NamedQuery(name = "AdminUsers.findByName", query = "SELECT a FROM AdminUsers a WHERE a.name = :name")
+    , @NamedQuery(name = "AdminUsers.findByEmail", query = "SELECT a FROM AdminUsers a WHERE a.email = :email")
+    , @NamedQuery(name = "AdminUsers.findByPassword", query = "SELECT a FROM AdminUsers a WHERE a.password = :password")
+    , @NamedQuery(name = "AdminUsers.findByForgotToken", query = "SELECT a FROM AdminUsers a WHERE a.forgotToken = :forgotToken")
+    , @NamedQuery(name = "AdminUsers.findByCreatedAt", query = "SELECT a FROM AdminUsers a WHERE a.createdAt = :createdAt")
+    , @NamedQuery(name = "AdminUsers.findByUpdatedAt", query = "SELECT a FROM AdminUsers a WHERE a.updatedAt = :updatedAt")})
+public class AdminUsers implements Serializable {
 
+    private static final long serialVersionUID = 1L;
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Basic(optional = false)
     @Column(name = "id")
-    public long getId() {
-        return id;
+    private Long id;
+    @Size(max = 128)
+    @Column(name = "name")
+    private String name;
+    // @Pattern(regexp="[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?", message="Invalid email")//if the field contains email address consider using this annotation to enforce field validation
+    @Size(max = 128)
+    @Column(name = "email")
+    private String email;
+    @Size(max = 256)
+    @Column(name = "password")
+    private String password;
+    @Size(max = 120)
+    @Column(name = "forgot_token")
+    private String forgotToken;
+    @Basic(optional = false)
+    @NotNull
+    @Column(name = "created_at")
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date createdAt;
+    @Column(name = "updated_at")
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date updatedAt;
+
+    public AdminUsers() {
     }
 
-    public void setId(long id) {
+    public AdminUsers(Long id) {
         this.id = id;
     }
 
-    @Basic
-    @Column(name = "name")
+    public AdminUsers(Long id, Date createdAt) {
+        this.id = id;
+        this.createdAt = createdAt;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
     public String getName() {
         return name;
     }
@@ -34,8 +96,6 @@ public class AdminUsers {
         this.name = name;
     }
 
-    @Basic
-    @Column(name = "email")
     public String getEmail() {
         return email;
     }
@@ -44,8 +104,6 @@ public class AdminUsers {
         this.email = email;
     }
 
-    @Basic
-    @Column(name = "password")
     public String getPassword() {
         return password;
     }
@@ -54,8 +112,6 @@ public class AdminUsers {
         this.password = password;
     }
 
-    @Basic
-    @Column(name = "forgot_token")
     public String getForgotToken() {
         return forgotToken;
     }
@@ -64,53 +120,45 @@ public class AdminUsers {
         this.forgotToken = forgotToken;
     }
 
-    @Basic
-    @Column(name = "created_at")
-    public Serializable getCreatedAt() {
+    public Date getCreatedAt() {
         return createdAt;
     }
 
-    public void setCreatedAt(Serializable createdAt) {
+    public void setCreatedAt(Date createdAt) {
         this.createdAt = createdAt;
     }
 
-    @Basic
-    @Column(name = "updated_at")
-    public Serializable getUpdatedAt() {
+    public Date getUpdatedAt() {
         return updatedAt;
     }
 
-    public void setUpdatedAt(Serializable updatedAt) {
+    public void setUpdatedAt(Date updatedAt) {
         this.updatedAt = updatedAt;
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+    public int hashCode() {
+        int hash = 0;
+        hash += (id != null ? id.hashCode() : 0);
+        return hash;
+    }
 
-        AdminUsers that = (AdminUsers) o;
-
-        if (id != that.id) return false;
-        if (name != null ? !name.equals(that.name) : that.name != null) return false;
-        if (email != null ? !email.equals(that.email) : that.email != null) return false;
-        if (password != null ? !password.equals(that.password) : that.password != null) return false;
-        if (forgotToken != null ? !forgotToken.equals(that.forgotToken) : that.forgotToken != null) return false;
-        if (createdAt != null ? !createdAt.equals(that.createdAt) : that.createdAt != null) return false;
-        if (updatedAt != null ? !updatedAt.equals(that.updatedAt) : that.updatedAt != null) return false;
-
+    @Override
+    public boolean equals(Object object) {
+        // TODO: Warning - this method won't work in the case the id fields are not set
+        if (!(object instanceof AdminUsers)) {
+            return false;
+        }
+        AdminUsers other = (AdminUsers) object;
+        if ((this.id == null && other.id != null) || (this.id != null && !this.id.equals(other.id))) {
+            return false;
+        }
         return true;
     }
 
     @Override
-    public int hashCode() {
-        int result = (int) (id ^ (id >>> 32));
-        result = 31 * result + (name != null ? name.hashCode() : 0);
-        result = 31 * result + (email != null ? email.hashCode() : 0);
-        result = 31 * result + (password != null ? password.hashCode() : 0);
-        result = 31 * result + (forgotToken != null ? forgotToken.hashCode() : 0);
-        result = 31 * result + (createdAt != null ? createdAt.hashCode() : 0);
-        result = 31 * result + (updatedAt != null ? updatedAt.hashCode() : 0);
-        return result;
+    public String toString() {
+        return "org.goods.living.tech.health.device.jpa.dao.AdminUsers[ id=" + id + " ]";
     }
+    
 }

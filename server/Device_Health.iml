@@ -23,7 +23,7 @@
           <factory-entry name="postgresClientDBMMKE" />
           <factory-entry name="postgresClientDBMMUG" />
         </datasource-mapping>
-        <deploymentDescriptor name="persistence.xml" url="file://$MODULE_DIR$/src/META-INF/persistence.xml" />
+        <deploymentDescriptor name="persistence.xml" url="file://$MODULE_DIR$/src/META-INF/persistence2.xml" />
       </configuration>
     </facet>
   </component>
