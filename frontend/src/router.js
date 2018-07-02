@@ -14,7 +14,7 @@ export default new Router({
             path: '/',
             name: 'locationTracker',
             component: LocationStatistics,
-            // meta: { requiresAuth: true }
+            meta: { requiresAuth: true }
         },
         {
             path: '/config',

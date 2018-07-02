@@ -98,17 +98,15 @@
                                     </li>
 
                                     <li>
-                                        <a href="#" class="dropdown-toggle" data-toggle="dropdown">
-                                            <i class="fa fa-cog"></i>
-                                            <b class="caret hidden-sm hidden-xs"></b>
-                                        </a>
-                                        <ul class="dropdown-menu">
-                                            <li><a href="#">Notification 1</a></li>
-                                            <li><a href="#">Notification 2</a></li>
-                                            <li><a href="#">Notification 3</a></li>
-                                            <li><a href="#">Notification 4</a></li>
-                                            <li><a href="#">Another notification</a></li>
-                                        </ul>
+                                        <el-dropdown @command="settingsHandler" style="font-size: 20px;margin-right: 30px; margin-top: 15px;">
+                                            <a href="#" class="el-dropdown-link" >
+                                                <i class="fa fa-cog"></i>
+                                                <b class="caret hidden-sm hidden-xs"></b>
+                                            </a>
+                                            <el-dropdown-menu slot="dropdown">
+                                                <el-dropdown-item command="logout">Logout</el-dropdown-item>
+                                            </el-dropdown-menu>
+                                        </el-dropdown>
                                     </li>
                                     <li class="separator hidden-lg hidden-md"></li>
                                 </ul>
@@ -188,6 +186,7 @@ export default {
     name: 'LocationTracker',
     data () {
         return {
+            'authToken': window.localStorage.getItem('auth-token'),
             'countryOptions': [
                 {'name': 'Uganda', 'code': 'UG'},
                 {'name': 'Kenya', 'code': 'KE'},
@@ -264,6 +263,18 @@ export default {
                     map.removeSource('medic-data-source')
                 }
             }
+            if (map.getLayer('device-health-line-layer')) {
+                map.removeLayer('device-health-line-layer')
+                if (map.getSource('device-health-line-source')) {
+                    map.removeSource('device-health-line-source')
+                }
+            }
+            if (map.getLayer('medic-line-layer')) {
+                map.removeLayer('medic-line-layer')
+                if (map.getSource('medic-line-source')) {
+                    map.removeSource('medic-line-source')
+                }
+            }
             this.deviceHealthLayerSelected = false
             this.medicLayerSelected = false
             this.medicActivitiesWithLocation = [] // Activities that have coordinates collected by Medic
@@ -303,6 +314,7 @@ export default {
             this.filterMedicActivities(locations)
             this.filterDeviceHealthActivities(locations)
             this.createDataSources()
+            this.animateChpMovement()
             if (this.matchedDeviceHealthActivities.length > 0) {
                 this.deviceHealthLayerSelected = true
                 this.medicLayerSelected = false
@@ -311,7 +323,6 @@ export default {
                 this.deviceHealthLayerSelected = false
                 this.medicLayerSelected = true
                 this.toggleMedicData()
-
             }
             this.repositionMap()
         },
@@ -505,38 +516,16 @@ export default {
 
                 }
                 map.addLayer(medicLayer)
-            }
-        },
-
-        animateChpMovement: function (locations) {
-            if (locations.length > 0) {
-                var geoJson = {
-                    'type': 'FeatureCollection',
-                    'features': [{
-                        'type': 'Feature',
-                        'geometry': {
-                            'type': 'LineString',
-                            'coordinates': [
-                                [locations[0].longitude, locations[0].latitude]
-                            ]
-                        }
-                    }]
-                }
-                // try {
-                //     map.removeLayer('line-animation')
-                // } catch (e) {
-                //     //
-                // }
-                var lineString = {
-                    'id': 'line-animation',
+            } else if (type === 'device-health-line-string') {
+                var deviceHealthLineString = {
+                    'id': 'device-health-line-layer',
                     'type': 'line',
-                    'source': {
-                        'type': 'geojson',
-                        'data': geoJson
-                    },
+                    'source': 'device-health-line-source',
+                    'symbol-placement': 'line',
                     'layout': {
                         'line-cap': 'round',
-                        'line-join': 'round'
+                        'line-join': 'round',
+                        'visibility': 'none'
                     },
                     'paint': {
                         'line-color': '#ed6498',
@@ -544,25 +533,110 @@ export default {
                         'line-opacity': 0.8
                     }
                 }
+                map.addLayer(deviceHealthLineString)
+            } else if (type === 'medic-line-string') {
+                var medicLineString = {
+                    'id': 'medic-line-layer',
+                    'type': 'line',
+                    'source': 'medic-line-source',
+                    'symbol-placement': 'line',
+                    'layout': {
+                        'line-cap': 'round',
+                        'line-join': 'round',
+                        'visibility': 'none'
+                    },
+                    'paint': {
+                        'line-color': '#ed6498',
+                        'line-width': 5,
+                        'line-opacity': 0.8
+                    }
+                }
+                map.addLayer(medicLineString)
+            }
+        },
 
-                map.addLayer(lineString)
-
-                // click the button to pause or play
-
-                var i = 0
-                var timer = window.setInterval(function () {
-                    if (i < locations.length) {
-                        var x = locations[i].longitude
-                        var y = locations[i].latitude
-                        geoJson.features[0].geometry.coordinates.push([x, y])
-                        map.getSource('line-animation').setData(geoJson)
+        animateChpMovement: function () {
+            var i = 0
+            var self = this
+            if (this.medicActivitiesWithLocation.length > 0) {
+                var medicLineString = {
+                    'type': 'FeatureCollection',
+                    'features': []
+                }
+                map.addSource('medic-line-source',
+                    {
+                        'type': 'geojson',
+                        'data': medicLineString
+                    })
+                var feature =
+                {
+                    'type': 'Feature',
+                    'geometry': {
+                        'type': 'LineString',
+                        'coordinates': []
+                    }
+                }
+                window.setInterval(function () {
+                    if (i < self.medicActivitiesWithLocation.length) {
+                        var x = self.medicActivitiesWithLocation[i].coordinates.longitude
+                        var y = self.medicActivitiesWithLocation[i].coordinates.latitude
+                        feature.geometry.coordinates.push([x, y])
+                        medicLineString.features.push(feature)
+                        map.getSource('medic-line-source').setData(medicLineString)
                         i++
                     } else {
-                        geoJson.features[0].geometry.coordinates = []
-                        map.getSource('line-animation').setData(geoJson)
+                        feature.geometry.coordinates = []
+                        medicLineString.features.push(feature)
+                        map.getSource('medic-line-source').setData(medicLineString)
                         i = 0
                     }
                 }, 500)
+
+                // add Linestring layers
+                this.addLayersToMap('medic-line-string')
+            }
+            if (this.matchedDeviceHealthActivities.length > 0) {
+                var deviceHealthLineString = {
+                    'type': 'FeatureCollection',
+                    'features': []
+                }
+                map.addSource('device-health-line-source',
+                    {
+                        'type': 'geojson',
+                        'data': deviceHealthLineString
+                    })
+                var lineStringFeature =
+                    {
+                        'type': 'Feature',
+                        'geometry': {
+                            'type': 'LineString',
+                            'coordinates': []
+                        }
+                    }
+                window.setInterval(function () {
+                    if (i < self.matchedDeviceHealthActivities.length) {
+                        var x = self.matchedDeviceHealthActivities[i].coordinates.longitude
+                        var y = self.matchedDeviceHealthActivities[i].coordinates.latitude
+                        lineStringFeature.geometry.coordinates.push([x, y])
+                        deviceHealthLineString.features.push(lineStringFeature)
+                        map.getSource('device-health-line-source').setData(deviceHealthLineString)
+                        i++
+                    } else {
+                        lineStringFeature.geometry.coordinates = []
+                        deviceHealthLineString.features.push(lineStringFeature)
+                        map.getSource('device-health-line-source').setData(deviceHealthLineString)
+                        i = 0
+                    }
+                }, 500)
+
+                // add Linestring layers
+                this.addLayersToMap('device-health-line-string')
+            }
+        },
+        settingsHandler: function (command) {
+            if (command === 'logout') {
+                localStorage.setItem('auth-token', 'null')
+                this.$router.push({'path': '/login'})
             }
         },
         repositionMap: function () {
@@ -613,13 +687,15 @@ export default {
         },
         toggleMedicData: function () {
             try {
-                var visibility = map.getLayoutProperty('medic-data-layer', 'visibility')
-                if (visibility === 'visible') {
+                var markerVisibility = map.getLayoutProperty('medic-data-layer', 'visibility')
+                if (markerVisibility === 'visible') {
                     this.medicLayerSelected = false
                     map.setLayoutProperty('medic-data-layer', 'visibility', 'none')
+                    map.setLayoutProperty('medic-line-layer', 'visibility', 'none')
                 } else {
                     this.medicLayerSelected = true
                     map.setLayoutProperty('medic-data-layer', 'visibility', 'visible')
+                    map.setLayoutProperty('medic-line-layer', 'visibility', 'visible')
                 }
             } catch (e) {
                 this.medicLayerSelected = false
@@ -633,10 +709,11 @@ export default {
                 if (visibility === 'visible') {
                     this.deviceHealthLayerSelected = false
                     map.setLayoutProperty('device-health-data-layer', 'visibility', 'none')
-                    // map.setLayoutProperty('line-animation', 'visibility', 'none')
+                    map.setLayoutProperty('device-health-line-layer', 'visibility', 'none')
                 } else {
                     this.deviceHealthLayerSelected = true
                     map.setLayoutProperty('device-health-data-layer', 'visibility', 'visible')
+                    map.setLayoutProperty('device-health-line-layer', 'visibility', 'visible')
                 }
             } catch (e) {
                 this.deviceHealthLayerSelected = false
@@ -665,6 +742,9 @@ export default {
         },
         deviceHealthLayerSelected: function () {
             this.repositionMap()
+        },
+        authToken: function (newValue) {
+            console.log(newValue)
         }
     }
 

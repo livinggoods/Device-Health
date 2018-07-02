@@ -14,7 +14,7 @@ Vue.config.productionTip = false
 router.beforeEach((to, from, next) => {
     // Check Auth
     if (to.meta.requiresAuth) {
-        if (localStorage.getItem('auth-token')) {
+        if (localStorage.getItem('auth-token') !== 'null') {
             // if (generalConfig.siteModules.includes(from.name) === false) {
             //     next()
             // } else if (!to.matched[0].length) {
@@ -31,7 +31,29 @@ router.beforeEach((to, from, next) => {
 
 Vue.use(ElementUI, {locale})
 
-new Vue({
+var app = new Vue({
     router,
-    render: h => h(App)
+    render: h => h(App),
+    methods: {
+        observeAuthChange: function () {
+            // listen for changes in localstorage
+            var originalSetItemFn = localStorage.setItem
+
+            localStorage.setItem = function () {
+                var event = new CustomEvent('localStorageChange')
+                document.dispatchEvent(event)
+
+                originalSetItemFn.apply(this, arguments)
+            }
+            document.addEventListener('localStorageChange', this.storageHandler, false)
+        },
+        storageHandler: function (e) {
+            if (localStorage.getItem('auth-token') === 'null') {
+                this.$router.push({'path': '/login'})
+            }
+        }
+    },
+    created: function () {
+        this.observeAuthChange()
+    }
 }).$mount('#app')
