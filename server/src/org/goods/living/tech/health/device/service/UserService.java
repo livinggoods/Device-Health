@@ -7,7 +7,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.TimeZone;
 
-import javax.annotation.security.RolesAllowed;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -220,8 +219,8 @@ public class UserService extends BaseService {
 	// Roles can be found at
 	// org.goods.living.tech.health.device.service.security.qualifier
 
-	 @Secured(value=UserCategory.ADMIN)
-	 @POST
+	@Secured(value = UserCategory.ADMIN)
+	@POST
 	// @Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path(Constants.URL.FIND)
@@ -301,10 +300,11 @@ public class UserService extends BaseService {
 
 		System.out.println(expireDate.toString());
 
-		return Jwts.builder().setSubject(user.getUsername()).setId(user.getId().toString()).claim("roles", "USER")
-				.claim("first name", "firstName").claim("chvId", user.getChvId()).claim("site", "site")
-				.setIssuedAt(new Date()).signWith(SignatureAlgorithm.HS256, applicationParameters.getHashKey())
-				.setExpiration(expireDate).compact();
+		return Jwts.builder().setSubject(user.getUsername()).setId(user.getId().toString())
+				.claim("roles", UserCategory.USER).claim("name", user.getName()).claim("chvId", user.getChvId())
+				.claim("site", "site").setIssuedAt(new Date())
+				.signWith(SignatureAlgorithm.HS256, applicationParameters.getHashKey()).setExpiration(expireDate)
+				.compact();
 
 	}
 

@@ -1,5 +1,9 @@
 package org.goods.living.tech.health.device.models;
 
+import android.util.Log;
+
+import com.crashlytics.android.Crashlytics;
+
 import org.goods.living.tech.health.device.utils.Utils;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -33,22 +37,28 @@ public class Stats extends BaseModel {
     }
 
 
-    public JSONObject toJSONObject() throws JSONException {
+    public JSONObject toJSONObject() {
 
-        JSONObject JSONObject = super.toJSONObject();
+        try {
+            JSONObject JSONObject = super.toJSONObject();
 
-        JSONObject.put("id", String.valueOf(id));
-        JSONObject.put("latitude", latitude);
-        JSONObject.put("longitude", longitude);
-        JSONObject.put("accuracy", accuracy);
-        if (provider != null) JSONObject.put("provider", provider);
-        if (message != null) JSONObject.put("message", message);
-        if (recordedAt != null) {
-            String formattedDate = Utils.getStringTimeStampWithTimezoneFromDate(recordedAt, TimeZone.getTimeZone(Utils.TIMEZONE_UTC));
-            JSONObject.put("recordedAt", formattedDate);
+            JSONObject.put("id", String.valueOf(id));
+            JSONObject.put("latitude", latitude);
+            JSONObject.put("longitude", longitude);
+            JSONObject.put("accuracy", accuracy);
+            if (provider != null) JSONObject.put("provider", provider);
+            if (message != null) JSONObject.put("message", message);
+            if (recordedAt != null) {
+                String formattedDate = Utils.getStringTimeStampWithTimezoneFromDate(recordedAt, TimeZone.getTimeZone(Utils.TIMEZONE_UTC));
+                JSONObject.put("recordedAt", formattedDate);
+            }
+
+
+            return JSONObject;
+        } catch (JSONException e) {
+            Log.e("", "", e);
+            Crashlytics.logException(e);
+            return null;
         }
-
-
-        return JSONObject;
     }
 }

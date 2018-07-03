@@ -88,8 +88,6 @@ public class SyncService extends BaseService {
             final User u = userService.getRegisteredUser();
             serverRestClient.setAuthHeader(u.token);
 
-            User us = register();
-
             User user = syncUser();
 
 
@@ -136,7 +134,7 @@ public class SyncService extends BaseService {
 
     }
 
-    User syncUser() throws JSONException {
+    User syncUser() {
 
         final User user = userService.getRegisteredUser();
         user.deviceTime = deviceSyncTime;
@@ -217,74 +215,6 @@ public class SyncService extends BaseService {
         return user;
     }
 
-    public User register() throws JSONException {
-
-        final User user = userService.getRegisteredUser();
-        user.deviceTime = new Date();
-
-
-        StringEntity entity = new StringEntity(user.toJSONObject().toString(), "UTF-8");
-        //RequestParams params = new RequestParams(user.toJSONObject());
-        //params.setUseJsonStreamer(true);
-
-        serverRestClient.postSync(Constants.URL.USER_CREATE, entity, new TextHttpResponseHandler() {
-            @Override
-            public void onFailure(int statusCode, Header[] headers, String responseString, Throwable throwable) {
-                Crashlytics.log(Log.DEBUG, TAG, "onFailure " + responseString);
-
-                user.lastSync = new Date();
-                userService.insertUser(user);
-
-                Crashlytics.logException(throwable);
-            }
-
-            @Override
-            public void onSuccess(int statusCode, Header[] headers, String responseString) {
-                Crashlytics.log(Log.DEBUG, TAG, "onSuccess " + responseString);
-                try {
-                    JSONObject response = new JSONObject(responseString);
-                    String data = response.toString();
-                    Crashlytics.log(Log.DEBUG, TAG, "Data : " + data);
-
-                    // If the response is JSONObject instead of JSONArray
-                    boolean success = response.has(Constants.STATUS) && response.getBoolean(Constants.STATUS);
-                    String msg = response.has(Constants.MESSAGE) ? response.getString(Constants.MESSAGE) : response.getString(Constants.MESSAGE);
-                    boolean changeLocationUpdateInterval = false;
-                    if (success && response.has(Constants.DATA)) {
-                        User updatedUser = new User(response.getJSONObject(Constants.DATA));
-
-                        //         Answers.getInstance().logCustom(new CustomEvent("User Update")
-                        //                .putCustomAttribute("Reason", "androidId: " + updatedUser.androidId + " username: " + updatedUser.username));
-
-                        user.masterId = updatedUser.masterId;
-                        changeLocationUpdateInterval = user.updateInterval != updatedUser.updateInterval;
-                        user.updateInterval = updatedUser.updateInterval;
-                        user.serverApi = updatedUser.serverApi;
-                        user.forceUpdate = updatedUser.forceUpdate;
-                        user.phone = updatedUser.phone;
-                        user.token = updatedUser.token;
-
-                        user.lastSync = new Date();
-                        userService.insertUser(user);
-
-
-                    } else {
-                        Crashlytics.log(Log.ERROR, TAG, "problem registering user");
-                    }
-
-                    if (changeLocationUpdateInterval) {
-                        PermissionsUtils.requestLocationUpdates(c, user.updateInterval);
-                    }
-
-                } catch (JSONException e) {
-                    Log.e(TAG, "", e);
-                    Crashlytics.logException(e);
-                }
-            }
-        });
-        return user;
-    }
-
     public void refreshToken() {
 
         final User user = userService.getRegisteredUser();
@@ -336,7 +266,7 @@ public class SyncService extends BaseService {
         // return user;
     }
 
-    void syncStats() throws JSONException {
+    void syncStats() {
 
         final User user = userService.getRegisteredUser();
 
@@ -415,7 +345,7 @@ public class SyncService extends BaseService {
 
     }
 
-    void syncDataBalance() throws JSONException {
+    void syncDataBalance() {
 
         final User user = userService.getRegisteredUser();
 
@@ -473,9 +403,9 @@ public class SyncService extends BaseService {
                         dataBalanceService.deleteSyncedRecords(list);//deleteSyncedRecordsOlder(CLEANUP_LIMIT);
 
                     } else {
-                        Crashlytics.log(Log.DEBUG, TAG, "problem syncing stats");
-                        Crashlytics.log("problem syncing stats");
-                        Crashlytics.logException(new Exception("problem syncing stats "));
+                        Crashlytics.log(Log.DEBUG, TAG, "problem syncing databalance");
+                        Crashlytics.log("problem syncing databalance");
+                        Crashlytics.logException(new Exception("problem syncing databalance "));
                     }
 
 

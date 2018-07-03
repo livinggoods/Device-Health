@@ -1,5 +1,9 @@
 package org.goods.living.tech.health.device.models;
 
+import android.util.Log;
+
+import com.crashlytics.android.Crashlytics;
+
 import org.goods.living.tech.health.device.utils.Utils;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -23,17 +27,23 @@ public class BaseModel {
 
     }
 
-    public JSONObject toJSONObject() throws JSONException {
+    public JSONObject toJSONObject() {
 
-        JSONObject JSONObject = new JSONObject();
-        // JSONObject.put("addsharedfields", api);
-        if (deviceTime != null) {
-            String formattedDate = Utils.getStringTimeStampWithTimezoneFromDate(deviceTime, TimeZone.getTimeZone(Utils.TIMEZONE_UTC));
-            JSONObject.put("recordedAt", formattedDate);
+        try {
+            JSONObject JSONObject = new JSONObject();
+            // JSONObject.put("addsharedfields", api);
+            if (deviceTime != null) {
+                String formattedDate = Utils.getStringTimeStampWithTimezoneFromDate(deviceTime, TimeZone.getTimeZone(Utils.TIMEZONE_UTC));
+                JSONObject.put("recordedAt", formattedDate);
+            }
+            if (JSONObject.has("clockDrift")) clockDrift = JSONObject.getLong("clockDrift");
+
+
+            return JSONObject;
+        } catch (JSONException e) {
+            Log.e("", "", e);
+            Crashlytics.logException(e);
+            return null;
         }
-        if (JSONObject.has("clockDrift")) clockDrift = JSONObject.getLong("clockDrift");
-        
-
-        return JSONObject;
     }
 }

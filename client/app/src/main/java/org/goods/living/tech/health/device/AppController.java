@@ -30,6 +30,7 @@ import org.goods.living.tech.health.device.services.USSDJobService;
 import org.goods.living.tech.health.device.services.UserService;
 import org.goods.living.tech.health.device.utils.AuthenticatorService;
 import org.goods.living.tech.health.device.utils.Constants;
+import org.goods.living.tech.health.device.utils.DataBalanceHelper;
 import org.goods.living.tech.health.device.utils.PermissionsUtils;
 import org.goods.living.tech.health.device.utils.SyncAdapter;
 import org.goods.living.tech.health.device.utils.Utils;
@@ -37,6 +38,7 @@ import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
@@ -352,6 +354,13 @@ public class AppController extends Application {
         Setting setting = settingService.getRecord();
         if (setting == null) {
             setting = new Setting();
+
+            ArrayList<String> list = new ArrayList<>();
+            list.add(DataBalanceHelper.USSD_KE1);
+            list.add(DataBalanceHelper.USSD_KE2);
+            list.add(DataBalanceHelper.USSD_UG);
+            setting.workingUSSD = list;
+
             settingService.insert(setting);
         }
         //if 1st run - no user record exists.

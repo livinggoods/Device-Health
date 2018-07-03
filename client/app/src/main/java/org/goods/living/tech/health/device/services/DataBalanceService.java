@@ -25,7 +25,6 @@ public class DataBalanceService extends BaseService {
     @Inject
     Box<DataBalance> box;//= boxStore.boxFor(Stats.class);
 
-    DataBalanceService.USSDListener listener;
 
     @Inject
     public DataBalanceService() {
@@ -257,19 +256,5 @@ public class DataBalanceService extends BaseService {
 
     }
 
-    public interface USSDListener {
-        void onUSSDReceived(String balance, String raw);
-    }
 
-    public void bindListener(USSDListener list) {
-        listener = list;
-    }
-
-    public void unbindListener() {
-        listener = null;
-    }
-
-    public USSDListener getListener() {
-        return listener;
-    }
 }

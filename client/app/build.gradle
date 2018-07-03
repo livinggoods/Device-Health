@@ -111,6 +111,7 @@ dependencies {
     // https://mvnrepository.com/artifact/org.slf4j/slf4j-android
     implementation group: 'org.slf4j', name: 'slf4j-android', version: '1.7.25'
 
+    implementation 'agency.tango.android:material-intro-screen:0.0.5'
 
 }
 

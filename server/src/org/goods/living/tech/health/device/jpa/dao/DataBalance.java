@@ -15,6 +15,7 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
+import javax.persistence.Lob;
 import javax.persistence.ManyToOne;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
@@ -23,8 +24,12 @@ import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 import javax.xml.bind.annotation.XmlRootElement;
 
+/**
+ *
+ * @author bensonbundi
+ */
 @Entity
-@Table(name = "data_balance", catalog = "events", schema = "events")
+@Table(name = "data_balance", schema = "events")
 @XmlRootElement
 @NamedQueries({ @NamedQuery(name = "DataBalance.findAll", query = "SELECT d FROM DataBalance d"),
 		@NamedQuery(name = "DataBalance.findById", query = "SELECT d FROM DataBalance d WHERE d.id = :id"),
@@ -36,6 +41,12 @@ import javax.xml.bind.annotation.XmlRootElement;
 		@NamedQuery(name = "DataBalance.findByCreatedAt", query = "SELECT d FROM DataBalance d WHERE d.createdAt = :createdAt"),
 		@NamedQuery(name = "DataBalance.findByUpdatedAt", query = "SELECT d FROM DataBalance d WHERE d.updatedAt = :updatedAt") })
 public class DataBalance implements Serializable {
+
+	@Lob
+	@Column(name = "info")
+	private Object info;
+	@Column(name = "ussd_balance_code")
+	private String ussdBalanceCode;
 
 	private static final long serialVersionUID = 1L;
 	@Id
@@ -66,9 +77,6 @@ public class DataBalance implements Serializable {
 	@JoinColumn(name = "user_id", referencedColumnName = "id")
 	@ManyToOne(optional = false)
 	private Users userId;
-
-	@Column(name = "ussd_balance_code", length = 128)
-	private String ussdBalanceCode;
 
 	public DataBalance() {
 	}
@@ -154,14 +162,6 @@ public class DataBalance implements Serializable {
 		this.userId = userId;
 	}
 
-	public String getUssdBalanceCode() {
-		return ussdBalanceCode;
-	}
-
-	public void setUssdBalanceCode(String ussdBalanceCode) {
-		this.ussdBalanceCode = ussdBalanceCode;
-	}
-
 	@Override
 	public int hashCode() {
 		int hash = 0;
@@ -185,6 +185,22 @@ public class DataBalance implements Serializable {
 	@Override
 	public String toString() {
 		return "org.goods.living.tech.health.device.jpa.dao.DataBalance[ id=" + id + " ]";
+	}
+
+	public Object getInfo() {
+		return info;
+	}
+
+	public void setInfo(Object info) {
+		this.info = info;
+	}
+
+	public String getUssdBalanceCode() {
+		return ussdBalanceCode;
+	}
+
+	public void setUssdBalanceCode(String ussdBalanceCode) {
+		this.ussdBalanceCode = ussdBalanceCode;
 	}
 
 }

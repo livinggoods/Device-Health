@@ -16,46 +16,39 @@
 
 package org.goods.living.tech.health.device.UI;
 
-import android.app.Activity;
-import android.app.AlertDialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.os.CountDownTimer;
 import android.os.Handler;
 import android.os.Looper;
 import android.preference.PreferenceManager;
 import android.support.v4.app.FragmentActivity;
 import android.support.v7.widget.AppCompatEditText;
-import android.telephony.SmsManager;
 import android.text.format.DateFormat;
 import android.util.Log;
 import android.view.View;
-import android.view.inputmethod.InputMethodManager;
-import android.widget.Button;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.crashlytics.android.Crashlytics;
-import com.crashlytics.android.answers.Answers;
-import com.crashlytics.android.answers.CustomEvent;
 import com.google.android.gms.location.LocationRequest;
 import com.hbb20.CountryCodePicker;
 
 import org.goods.living.tech.health.device.AppController;
 import org.goods.living.tech.health.device.R;
+import org.goods.living.tech.health.device.models.DataBalance;
 import org.goods.living.tech.health.device.models.Stats;
 import org.goods.living.tech.health.device.models.User;
 import org.goods.living.tech.health.device.services.DataBalanceService;
+import org.goods.living.tech.health.device.services.RegistrationService;
 import org.goods.living.tech.health.device.services.StatsService;
-import org.goods.living.tech.health.device.services.USSDService;
 import org.goods.living.tech.health.device.services.UserService;
-import org.goods.living.tech.health.device.utils.PermissionsUtils;
+import org.goods.living.tech.health.device.utils.DataBalanceHelper;
 import org.goods.living.tech.health.device.utils.SnackbarUtil;
 import org.goods.living.tech.health.device.utils.SyncAdapter;
+import org.goods.living.tech.health.device.utils.Utils;
 
-import java.util.Date;
 import java.util.List;
 
 import javax.inject.Inject;
@@ -88,15 +81,13 @@ public class MainActivity extends FragmentActivity implements
     @Inject
     DataBalanceService dataBalanceService;
 
-    /**
-     * Provides access to the Fused Location Provider API.
-     */
+    @Inject
+    RegistrationService registrationService;
 
     // UI Widgets
 
-    private Button cancelBtn;
-    private Button saveBtn;
     private TextView usernameText;
+    private TextView nameText;
     private TextView balanceTextView;
     CountryCodePicker ccp;
     AppCompatEditText edtPhoneNumber;
@@ -107,10 +98,11 @@ public class MainActivity extends FragmentActivity implements
 
     private TextView mLocationUpdatesResultView;
 
-    LinearLayout btnLayout;
-    LinearLayout balanceLayout;
+    CountDownTimer timer;
 
-    boolean newLaunch;
+
+    @Inject
+    DataBalanceHelper dataBalanceHelper;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -121,9 +113,9 @@ public class MainActivity extends FragmentActivity implements
         AppController.getInstance().getComponent().inject(this);
 
         mLocationUpdatesResultView = (TextView) findViewById(R.id.location_updates_result);
-        cancelBtn = (Button) findViewById(R.id.cancelBtn);
-        saveBtn = (Button) findViewById(R.id.saveBtn);
         usernameText = (TextView) findViewById(R.id.usernameText);
+        nameText = (TextView) findViewById(R.id.nameText);
+
         syncTextView = (TextView) findViewById(R.id.syncTextView);
         ccp = (CountryCodePicker) findViewById(R.id.ccp);
         edtPhoneNumber = (AppCompatEditText) findViewById(R.id.phone_number_edt);
@@ -134,21 +126,23 @@ public class MainActivity extends FragmentActivity implements
         balanceTextView.setText(getString(R.string.data_balance, "0"));
 
         intervalTextView = (TextView) findViewById(R.id.intervalTextView);
-        btnLayout = (LinearLayout) findViewById(R.id.btnLayout);
-        balanceLayout = (LinearLayout) findViewById(R.id.balanceLayout);
 
-        newLaunch = true;
-        disableSettingsEdit();
+        // disableSettingsEdit
+        ccp.setClickable(false);
+        ccp.setCcpClickable(false);
+        edtPhoneNumber.setEnabled(false);
+        edtPhoneNumber.setClickable(false);
 
         User user = userService.getRegisteredUser();
-        if (user.username == null || user.phone == null) {
-            enableSettingsEdit();
-        }
-
-        loadData();
-        checkBalanceThroughUSSD("*100*6*6*2#");
+        //   if (user.masterId == null) {
+        // enableSettingsEdit();
+        //        Intent intent = new Intent(this, RegisterActivity.class);
+        //        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        //  intent.putExtra("forceUpdate", forceUpdate);
+        //        this.startActivity(intent);
+        //   }
+        //  checkBalanceThroughUSSD("*100*6*6*2#");
         // Crashlytics.getInstance().crash(); // Force a crash
-
 
     }
 
@@ -166,13 +160,6 @@ public class MainActivity extends FragmentActivity implements
         super.onResume();
 
         loadData();
-
-
-        if (newLaunch) {
-            newLaunch = false;
-
-            // requestLocationPermissions();
-        }
 
     }
 
@@ -196,111 +183,6 @@ public class MainActivity extends FragmentActivity implements
         //   }
     }
 
-    /**
-     * Handles the Save registration button.
-     */
-    public void registrationSave(View view) {
-        Crashlytics.log(Log.DEBUG, TAG, "registrationSave updates");
-
-        final AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Register User");
-        builder.setMessage("Please confirm username and phone number.\n\n\n * This is a one time registration.");
-        builder.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialogInterface, int i) {
-
-                saveRegistration();
-            }
-        });
-        // builder.setNegativeButton(android.R.string.no, null);
-        // builder.setCancelable(false);
-        builder.setNegativeButton(android.R.string.cancel, null);
-        builder.show();
-
-
-    }
-
-    /**
-     * Handles the cancel registration button.
-     */
-    public void registrationCancel(View view) {
-        Crashlytics.log(Log.DEBUG, TAG, "registrationCancel ");
-        loadData();
-    }
-
-
-    public void checkBalanceThroughSMS() {
-        Crashlytics.log(Log.DEBUG, TAG, "checkBalanceThroughSMS ");
-
-        String strMessage = "bal";
-        User user = userService.getRegisteredUser();
-
-        SmsManager sms = SmsManager.getDefault();
-        String ussd = "100";
-
-        sms.sendTextMessage(ussd, null, strMessage, null, null);
-
-    }
-
-
-    public void checkBalanceThroughUSSD(final String balanceCode) {
-
-        final Context c = this;
-
-        DataBalanceService.USSDListener USSDListener = new DataBalanceService.USSDListener() {
-            @Override
-            public void onUSSDReceived(String balance, String raw) {
-                dataBalanceService.unbindListener();
-                if (balanceTextView != null) {
-                    balanceTextView.setText(getString(R.string.data_balance, balance));
-                }
-            }
-        };
-
-        dataBalanceService.bindListener(USSDListener);
-
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-
-                    Answers.getInstance().logCustom(new CustomEvent("USSD Balance check")
-                            .putCustomAttribute("Reason", ""));
-
-
-                    if (PermissionsUtils.checkAllPermissionsGrantedAndRequestIfNot(c)) {
-                        //   startService(new Intent(c.getApplicationContext(), USSDService.class));//not needed
-
-
-                        String ussd = USSDService.getUSSDCode(balanceCode);
-                        USSDService.dialNumber(c, dataBalanceService, ussd, 0);
-
-                        //well timed ones also work - but how much time ?
-                        //startActivity(new Intent("android.intent.action.CALL", Uri.parse("tel:" + ussdCode)));
-                        //        String nxt = USSDService.getNextUSSDInput();
-
-                        //         do {
-
-                        //             Thread.sleep(1500);
-
-
-                        //             startActivity(new Intent("android.intent.action.CALL", Uri.parse("tel:" + nxt)));
-
-                        //            nxt = USSDService.getNextUSSDInput();
-
-                        //         } while (nxt != null);
-
-                    } else {
-                        // ActivityCompat.requestPermissions(c, new String[]{android.Manifest.permission.CALL_PHONE}, 1);
-                        Crashlytics.log(Log.DEBUG, TAG, "USSDJobService permissions not granted yet ...");
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    Log.e(TAG, "checkBalance ", e);
-                }
-            }
-        }).start();
-    }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -325,9 +207,45 @@ public class MainActivity extends FragmentActivity implements
         handler.postDelayed(r, 5000);
     }
 
+    /**
+     * Handles the checkBalance  button.
+     */
     public void checkBalance(View view) {
 
-        checkBalanceThroughUSSD("*150*1*4*1#");
+        Context c = this;
+
+        Utils.getHandlerThread().post(new Runnable() {
+            @Override
+            public void run() {
+
+                registrationService.checkBalanceThroughUSSD(c);
+
+                if (timer != null) timer.cancel();
+                timer = new CountDownTimer(DataBalanceHelper.USSD_LIMIT * 2000, DataBalanceHelper.USSD_LIMIT * 1000) {
+                    @Override
+                    public void onTick(long millisUntilFinished) {
+                        Crashlytics.log(Log.DEBUG, TAG, "tick tock ... waiting for ussd " + millisUntilFinished);
+
+                    }
+
+                    @Override
+                    public void onFinish() {
+                        Crashlytics.log(Log.DEBUG, TAG, "onFinish checkBalance");
+
+                        List<DataBalance> list = dataBalanceService.getLatestRecords(1l);
+                        DataBalance dataBalance = list.size() > 0 ? list.get(0) : null;
+                        if (dataBalance != null)
+                            if (balanceTextView != null) {
+                                balanceTextView.setText(getString(R.string.data_balance, dataBalance.balance));
+                            }
+                        timer = null;
+                    }
+                };
+                timer.start();
+            }
+        });
+
+
     }
 
     /**
@@ -343,6 +261,7 @@ public class MainActivity extends FragmentActivity implements
         User user = userService.getRegisteredUser();
         //if(user ==null){
         usernameText.setText(user == null ? null : user.username);
+        nameText.setText(user == null ? null : user.name);
         if (user.phone != null)
             ccp.setFullNumber(user.phone);
 
@@ -368,69 +287,6 @@ public class MainActivity extends FragmentActivity implements
         }
 
         mLocationUpdatesResultView.setText(data);
-    }
-
-
-    void enableSettingsEdit() {
-        btnLayout.setVisibility(View.VISIBLE);
-        usernameText.setEnabled(true);
-        ccp.setClickable(true);
-        ccp.setCcpClickable(true);
-        edtPhoneNumber.setEnabled(true);
-        balanceLayout.setVisibility(View.VISIBLE);
-    }
-
-    void disableSettingsEdit() {
-        btnLayout.setVisibility(View.GONE);
-        usernameText.setEnabled(false);
-        ccp.setClickable(false);
-        ccp.setCcpClickable(false);
-        edtPhoneNumber.setEnabled(false);
-        balanceLayout.setVisibility(View.GONE);
-
-
-    }
-
-
-    void saveRegistration() {
-
-        User user = userService.getRegisteredUser();
-
-        String username = usernameText.getText().toString().trim();
-        user.username = username.isEmpty() ? null : username;
-
-        String phone = ccp.getFullNumberWithPlus().trim();
-        //  PhoneNumberUtil pnu = PhoneNumberUtil.getInstance();
-
-        user.phone = phone.isEmpty() ? null : phone;
-        ccp.setFullNumber(user.phone);
-        user.country = ccp.getSelectedCountryNameCode();
-
-        user.recordedAt = new Date();
-
-        if (userService.insertUser(user)) {
-            SnackbarUtil.showSnack(this, "saved CHV information");
-            findViewById(R.id.activity_main).requestFocus();
-            if (user.username != null && user.phone != null) {
-                disableSettingsEdit();
-            }
-
-
-            hideKeyboard(this);
-        } else {
-            SnackbarUtil.showSnack(this, "error saving CHV information");
-        }
-    }
-
-
-    public void hideKeyboard(Activity activity) {
-        if (activity != null) {
-            InputMethodManager inputManager = (InputMethodManager) activity.getSystemService(Context.INPUT_METHOD_SERVICE);
-            if (activity.getCurrentFocus() != null && inputManager != null) {
-                inputManager.hideSoftInputFromWindow(activity.getCurrentFocus().getWindowToken(), 0);
-                inputManager.showSoftInputFromInputMethod(activity.getCurrentFocus().getWindowToken(), 0);
-            }
-        }
     }
 
 

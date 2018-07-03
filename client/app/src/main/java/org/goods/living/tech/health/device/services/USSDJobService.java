@@ -10,6 +10,7 @@ import com.firebase.jobdispatcher.JobParameters;
 
 import org.goods.living.tech.health.device.AppController;
 import org.goods.living.tech.health.device.models.User;
+import org.goods.living.tech.health.device.utils.DataBalanceHelper;
 import org.goods.living.tech.health.device.utils.PermissionsUtils;
 
 import java.util.concurrent.TimeUnit;
@@ -28,6 +29,12 @@ public class USSDJobService extends com.firebase.jobdispatcher.JobService {
 
     @Inject
     DataBalanceService dataBalanceService;
+
+    @Inject
+    DataBalanceHelper dataBalanceHelper;
+
+    @Inject
+    RegistrationService registrationService;
 
     @Override
     public boolean onStartJob(final JobParameters job) {
@@ -50,12 +57,23 @@ public class USSDJobService extends com.firebase.jobdispatcher.JobService {
                     Answers.getInstance().logCustom(new CustomEvent("USSD Job service")
                             .putCustomAttribute("Reason", ""));
 
-                    // USSDService.sendUSSD(c, user.balanceCode);
-                    String ussdFull = "";
-                    String ussd = USSDService.getUSSDCode(ussdFull);
-                    if (ussd != null) {
-                        USSDService.dialNumber(c, dataBalanceService, ussd, 0);
-                    }
+                    registrationService.checkBalanceThroughUSSD(c);
+
+
+//                    dataBalanceHelper.dialNumber(c, ussdFull, new DataBalanceHelper.USSDResult() {
+//                        @Override
+//                        public void onResult(@NonNull List<DataBalanceHelper.Balance> list) {
+//
+//                            Crashlytics.log(Log.DEBUG, TAG, "saving balance ...");
+//                            for (DataBalanceHelper.Balance b : list) {
+//                                dataBalanceService.insert(b.balance, b.rawBalance);
+//                            }
+//                            ;
+//
+//                        }
+//                    });
+
+
                     jobFinished(job, false);
                 } else {
                     // ActivityCompat.requestPermissions(c, new String[]{android.Manifest.permission.CALL_PHONE}, 1);

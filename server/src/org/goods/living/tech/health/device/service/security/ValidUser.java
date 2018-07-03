@@ -13,7 +13,6 @@ public class ValidUser implements Principal {
 	private String username;
 	private String apiToken;
 	private String role;
-	private String firstName;
 	private String site;
 	private Long id;
 
@@ -26,14 +25,6 @@ public class ValidUser implements Principal {
 	}
 
 	private String jwtToken;
-
-	public String getFirstName() {
-		return this.firstName;
-	}
-
-	public void setFirstName(String firstName) {
-		this.firstName = firstName;
-	}
 
 	public String getLastName() {
 		return this.lastName;

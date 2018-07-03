@@ -28,6 +28,9 @@ import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.location.Location;
 import android.os.Build;
+import android.os.Handler;
+import android.os.HandlerThread;
+import android.os.Looper;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
@@ -187,4 +190,23 @@ public class Utils {
 
     }
 
+    public static Handler getHandlerThread() {
+
+        new Handler(Looper.getMainLooper()).post(new Runnable() {
+            @Override
+            public void run() {
+                //this runs on the UI thread
+            }
+        });
+        boolean isUiThread = Build.VERSION.SDK_INT >= Build.VERSION_CODES.M
+                ? Looper.getMainLooper().isCurrentThread()
+                : Thread.currentThread() == Looper.getMainLooper().getThread();
+        HandlerThread handlerThread = new HandlerThread("NetworkOperation");
+        handlerThread.start();
+        Handler requestHandler = new Handler(handlerThread.getLooper());
+
+        return requestHandler;
+
+
+    }
 }

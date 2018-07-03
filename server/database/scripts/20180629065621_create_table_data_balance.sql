@@ -27,6 +27,7 @@ CREATE TABLE events.data_balance
    balance double precision ,
    balance_message character varying(256),
    phone character varying(128),
+   info jsonb,
    ussd_balance_code character varying(128),
    message character varying(256),
    recorded_at timestamp with time zone,

@@ -14,7 +14,6 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.Provider;
 import javax.xml.bind.DatatypeConverter;
 
-import io.jsonwebtoken.SignatureAlgorithm;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.goods.living.tech.health.device.service.security.CustomSecurityContext;
@@ -39,7 +38,7 @@ public class AuthenticationFilter implements ContainerRequestFilter {
 	@Override
 	public void filter(ContainerRequestContext requestContext) throws IOException {
 
-		System.out.println("request filter: " + applicationParameters.getTokenLife());
+		logger.debug("request filter: " + applicationParameters.getTokenLife());
 
 		// Get the HTTP Authorization header from the request
 		String authorizationHeader = requestContext.getHeaderString(HttpHeaders.AUTHORIZATION);
@@ -68,9 +67,8 @@ public class AuthenticationFilter implements ContainerRequestFilter {
 		Claims claim = Jwts.parser().setSigningKey(DatatypeConverter.parseBase64Binary("itShouldNotBeSecret"))
 				.parseClaimsJws(token).getBody();
 		String username = (String) claim.getSubject();
-		String id = claim.getId();
+		Long id = Long.parseLong(claim.getId());
 		String site = (String) claim.get("site");
-		String firstname = (String) claim.get("firstName");
 		String role = (String) claim.get("roles");
 		Long chvId = (Long) claim.get("chvId");
 
@@ -79,11 +77,11 @@ public class AuthenticationFilter implements ContainerRequestFilter {
 		logger.debug("Site of the user is: " + site);
 
 		ValidUser user = new ValidUser();
+		user.setId(id);
 		user.setUserName(username);
 		user.setSite(site);
-		user.setFirstName(firstname);
 		user.setJwtToken(token);
-		user.setApiToken(id);
+		// user.setApiToken();
 		user.setRole(role);
 
 		return user;

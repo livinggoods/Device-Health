@@ -51,10 +51,11 @@
         <activity android:name=".UI.PermissionActivity">
 
         </activity>
-        <activity android:name=".UI.UpgradeActivity">
+        <activity android:name=".UI.UpgradeActivity"></activity>
 
-        </activity>
-
+        <activity
+            android:name=".UI.RegisterActivity"
+            android:theme="@style/Theme.Intro" />
         <!--  <service
               android:name=".services.LocationUpdatesIntentService"
               android:exported="false" /> -->

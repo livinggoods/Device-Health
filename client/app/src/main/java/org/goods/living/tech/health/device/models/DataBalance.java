@@ -1,5 +1,9 @@
 package org.goods.living.tech.health.device.models;
 
+import android.util.Log;
+
+import com.crashlytics.android.Crashlytics;
+
 import org.goods.living.tech.health.device.utils.Utils;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -24,19 +28,25 @@ public class DataBalance extends BaseModel {
     public boolean synced;
     public Date createdAt;
 
-    public JSONObject toJSONObject() throws JSONException {
+    public JSONObject toJSONObject() {
 
-        JSONObject JSONObject = super.toJSONObject();
-        JSONObject.put("id", String.valueOf(id));
-        if (balance != null) JSONObject.put("balance", balance);
-        if (balanceMessage != null) JSONObject.put("balanceMessage", balanceMessage);
-        if (message != null) JSONObject.put("message", message);
-        if (recordedAt != null) {
-            String formattedDate = Utils.getStringTimeStampWithTimezoneFromDate(recordedAt, TimeZone.getTimeZone(Utils.TIMEZONE_UTC));
-            JSONObject.put("recordedAt", formattedDate);
+        try {
+            JSONObject JSONObject = super.toJSONObject();
+            JSONObject.put("id", String.valueOf(id));
+            if (balance != null) JSONObject.put("balance", balance);
+            if (balanceMessage != null) JSONObject.put("balanceMessage", balanceMessage);
+            if (message != null) JSONObject.put("message", message);
+            if (recordedAt != null) {
+                String formattedDate = Utils.getStringTimeStampWithTimezoneFromDate(recordedAt, TimeZone.getTimeZone(Utils.TIMEZONE_UTC));
+                JSONObject.put("recordedAt", formattedDate);
+            }
+
+
+            return JSONObject;
+        } catch (JSONException e) {
+            Log.e("", "", e);
+            Crashlytics.logException(e);
+            return null;
         }
-
-
-        return JSONObject;
     }
 }
