@@ -17,6 +17,7 @@ import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.xml.bind.DatatypeConverter;
 
+import io.jsonwebtoken.SignatureAlgorithm;
 import org.goods.living.tech.health.device.service.security.CustomSecurityContext;
 import org.goods.living.tech.health.device.service.security.ValidUser;
 import org.goods.living.tech.health.device.service.security.qualifier.Secured;
@@ -60,7 +61,7 @@ public class AuthenticationFilter implements ContainerRequestFilter {
 
     public ValidUser validateToken(String token) throws Exception {
 
-        Claims claim = Jwts.parser().setSigningKey(DatatypeConverter.parseBase64Binary("itShouldNotBeSecret")).parseClaimsJws(token).getBody();
+        Claims claim = Jwts.parser().setSigningKey(applicationParameters.getHashKey()).parseClaimsJws(token).getBody();
         String username = (String) claim.getSubject();
         String api = (String) claim.getId();
         String site = (String) claim.get("site");

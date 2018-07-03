@@ -5,6 +5,7 @@ import io.jsonwebtoken.SignatureAlgorithm;
 import org.codehaus.jackson.JsonNode;
 import org.goods.living.tech.health.device.jpa.controllers.AdminUsersJpaController;
 import org.goods.living.tech.health.device.jpa.dao.AdminUsers;
+import org.goods.living.tech.health.device.service.security.qualifier.UserCategory;
 import org.goods.living.tech.health.device.utility.Constants;
 import org.goods.living.tech.health.device.utility.JSonHelper;
 import org.json.simple.JSONObject;
@@ -96,7 +97,7 @@ public class AdminService extends BaseService {
 			System.out.println(expireDate.toString());
 
 			return Jwts.builder().setSubject(email).setId("Unique_ID")
-					.claim("roles", "ADMIN").claim("first name", "firstName")
+					.claim("roles", UserCategory.ADMIN).claim("first name", "firstName")
 					.claim("site", "site").setIssuedAt(new Date())
 					.signWith(SignatureAlgorithm.HS256, applicationParameters.getHashKey()).setExpiration(expireDate).compact();
 

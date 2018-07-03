@@ -26,6 +26,8 @@ import org.goods.living.tech.health.device.jpa.dao.ChvActivity;
 import org.goods.living.tech.health.device.jpa.dao.Stats;
 import org.goods.living.tech.health.device.jpa.dao.Users;
 import org.goods.living.tech.health.device.models.Result;
+import org.goods.living.tech.health.device.service.security.qualifier.Secured;
+import org.goods.living.tech.health.device.service.security.qualifier.UserCategory;
 import org.goods.living.tech.health.device.utility.Constants;
 import org.goods.living.tech.health.device.utility.JSonHelper;
 
@@ -106,6 +108,7 @@ public class StatsService extends BaseService {
 
 	}
 
+	@Secured(value=UserCategory.ADMIN)
 	@POST
 	// @Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)

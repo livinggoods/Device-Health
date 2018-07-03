@@ -80,10 +80,12 @@ public class AuthorizationFilter implements ContainerRequestFilter {
     private void checkPermissions(SecurityContext securityContext,List<UserCategory> allowedRoles) throws Exception {
         // Check if the user contains one of the allowed roles
         // Throw an Exception if the user has not permission to execute the method
-    	for (UserCategory category:allowedRoles){
+        if(allowedRoles.isEmpty()) return;
+        for (UserCategory category:allowedRoles){
     		if(securityContext.isUserInRole(category.toString().toUpperCase()))
     			return;
     	}
+
     	throw new Exception("User is not allowed to use this method");
     }
 

@@ -33,7 +33,7 @@
 
 	<!-- JWT token duration -->
 	<Parameter name="org.goods.living.tech.health.device.jwt.token.hash.key"
-		value="org.goods.living.tech.health.device" />
+		value="itShouldNotBeSecret" />
 	<Parameter name="org.goods.living.tech.health.device.jwt.token.life"
 		value="123400" />
 	<Parameter name="org.goods.living.tech.health.device.api"

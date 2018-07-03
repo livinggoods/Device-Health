@@ -8,6 +8,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.TimeZone;
 
+import javax.annotation.security.RolesAllowed;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -29,6 +30,8 @@ import org.goods.living.tech.health.device.jpa.dao.AdminUsers;
 import org.goods.living.tech.health.device.jpa.dao.MedicUser;
 import org.goods.living.tech.health.device.jpa.dao.Users;
 import org.goods.living.tech.health.device.models.Result;
+import org.goods.living.tech.health.device.service.security.qualifier.Secured;
+import org.goods.living.tech.health.device.service.security.qualifier.UserCategory;
 import org.goods.living.tech.health.device.utility.Constants;
 import org.goods.living.tech.health.device.utility.JSonHelper;
 import org.goods.living.tech.health.device.utility.Utils;
@@ -209,9 +212,8 @@ public class UserService extends BaseService {
 	// Roles can be found at
 	// org.goods.living.tech.health.device.service.security.qualifier
 
-	// @Secured
-	// @RolesAllowed({"ADMIN"})
-	@POST
+	 @Secured(value=UserCategory.ADMIN)
+	 @POST
 	// @Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path(Constants.URL.FIND)

@@ -29,7 +29,8 @@ public class CustomSecurityContext implements SecurityContext {
 
     @Override
     public boolean isSecure() {
-        return "https".equals(this.scheme);
+        //return "https".equals(this.scheme);
+        return true;
     }
 
     @Override
