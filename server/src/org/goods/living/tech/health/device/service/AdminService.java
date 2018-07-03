@@ -98,10 +98,6 @@ public class AdminService extends BaseService {
 		long expMillis = nowMillis + tokenLife;
 		Date expireDate = new Date(expMillis);
 
-			return Jwts.builder().setSubject(email).setId("Unique_ID")
-					.claim("roles", UserCategory.ADMIN).claim("first name", "firstName")
-					.claim("site", "site").setIssuedAt(new Date())
-					.signWith(SignatureAlgorithm.HS256, applicationParameters.getHashKey()).setExpiration(expireDate).compact();
 
 		return Jwts.builder().setSubject(email).setId(id.toString()).claim("roles", "ADMIN")
 				.claim("first name", "firstName").claim("site", "site").setIssuedAt(new Date())
