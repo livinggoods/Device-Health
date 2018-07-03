@@ -11,7 +11,7 @@ xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/persistence http://xmlns.jcp.org
 	<persistence-unit name="postgresClientDBDeviceHealth" transaction-type="RESOURCE_LOCAL">
 	<provider>org.hibernate.jpa.HibernatePersistenceProvider</provider>
 		<non-jta-data-source>java:comp/env/jdbc/postgresClientDBDeviceHealth</non-jta-data-source>
-		<class>org.goods.living.tech.health.device.jpa.dao.AdminUsers</class>
+		<!-- <class></class>  -->
 
 		<properties>
 			<property name="hibernate.archive.autodetection" value="class,hbm" />

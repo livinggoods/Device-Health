@@ -56,9 +56,6 @@ import javax.xml.bind.annotation.XmlTransient;
 		@NamedQuery(name = "Users.findByUsernameLike", query = "SELECT u FROM Users u WHERE u.username like :username") })
 public class Users implements Serializable {
 
-	@Column(name = "ussd_balance_code", length = 128)
-	private String ussdBalanceCode;
-
 	private static final long serialVersionUID = 1L;
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -109,6 +106,8 @@ public class Users implements Serializable {
 	private Object deviceInfo;
 	@OneToMany(cascade = CascadeType.ALL, mappedBy = "userId")
 	private Collection<Stats> statsCollection;
+	@OneToMany(cascade = CascadeType.ALL, mappedBy = "userId")
+	private Collection<DataBalance> dataBalanceCollection;
 
 	public Users() {
 	}
@@ -271,6 +270,15 @@ public class Users implements Serializable {
 		this.statsCollection = statsCollection;
 	}
 
+	@XmlTransient
+	public Collection<DataBalance> getDataBalanceCollection() {
+		return dataBalanceCollection;
+	}
+
+	public void setDataBalanceCollection(Collection<DataBalance> collection) {
+		this.dataBalanceCollection = collection;
+	}
+
 	@Override
 	public int hashCode() {
 		int hash = 0;
@@ -294,14 +302,6 @@ public class Users implements Serializable {
 	@Override
 	public String toString() {
 		return "org.goods.living.tech.health.device.jpa.dao.Users[ id=" + id + " ]";
-	}
-
-	public String getUssdBalanceCode() {
-		return ussdBalanceCode;
-	}
-
-	public void setUssdBalanceCode(String ussdBalanceCode) {
-		this.ussdBalanceCode = ussdBalanceCode;
 	}
 
 }

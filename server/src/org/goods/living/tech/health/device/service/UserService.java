@@ -1,7 +1,6 @@
 package org.goods.living.tech.health.device.service;
 
 import java.io.InputStream;
-import java.text.SimpleDateFormat;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Date;
@@ -11,7 +10,6 @@ import java.util.TimeZone;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.inject.Named;
-import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
@@ -25,15 +23,13 @@ import org.codehaus.jackson.node.ObjectNode;
 import org.goods.living.tech.health.device.jpa.controllers.AdminUsersJpaController;
 import org.goods.living.tech.health.device.jpa.controllers.MedicJpaController;
 import org.goods.living.tech.health.device.jpa.controllers.UsersJpaController;
-import org.goods.living.tech.health.device.jpa.dao.AdminUsers;
 import org.goods.living.tech.health.device.jpa.dao.MedicUser;
 import org.goods.living.tech.health.device.jpa.dao.Users;
 import org.goods.living.tech.health.device.models.Result;
+import org.goods.living.tech.health.device.service.security.qualifier.Secured;
 import org.goods.living.tech.health.device.utility.Constants;
 import org.goods.living.tech.health.device.utility.JSonHelper;
 import org.goods.living.tech.health.device.utility.Utils;
-import org.json.simple.JSONObject;
-import org.mindrot.jbcrypt.BCrypt;
 
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -51,8 +47,6 @@ public class UserService extends BaseService {
 
 	// @Inject
 	// private ApplicationParameters applicationParameters;
-
-	SimpleDateFormat dateFormat = new SimpleDateFormat("MM-dd-yyyy HH:mm:ss");
 
 	@Inject
 	UsersJpaController usersJpaController;
@@ -105,6 +99,10 @@ public class UserService extends BaseService {
 			MedicUser mu = medicJpaController.findByUsername(country, username);
 			users.setChvId(mu == null ? null : mu.getUuid());
 			users.setPhone(data.has("phone") ? data.get("phone").asText() : null);
+			users.setBranch(mu.getBranch());
+			users.setName(mu.getName());
+
+			// generate token
 
 		}
 
@@ -113,7 +111,7 @@ public class UserService extends BaseService {
 		users.setVersionName(data.has("versionName") ? data.get("versionName").asText() : null);
 		users.setDeviceTime(deviceTime);
 
-		// TODO: data.has("deviceInfo") ? data.get("deviceInfo").asText() : null;
+		users.setDeviceInfo(data.has("deviceInfo") ? data.get("deviceInfo") : null);
 
 		if (data.has("recordedAt")) {
 			Date recordedAt = dateFormat.parse(data.get("recordedAt").asText());
@@ -121,38 +119,18 @@ public class UserService extends BaseService {
 			users.setRecordedAt(recordedAt);
 		}
 
-		// new or update
-		if (users.getId() == null) {
-			logger.debug("create new user");
-			users.setCreatedAt(new Date());
-			usersJpaController.create(users);
-		} else { // update?
-			logger.debug("ignore create: update user");
+		logger.debug("create new user");
+		users.setCreatedAt(new Date());
+		usersJpaController.create(users);
 
-			// set chvId if blank - retrieve from medic
-			if (users.getChvId() == null) {
-				MedicUser mu = medicJpaController.findByUsername(country, username);
-				users.setChvId(mu == null ? null : mu.getUuid());
-				users.setBranch(mu == null ? null : mu.getBranch());
-				users.setName(mu == null ? null : mu.getName());
-
-			}
-			users.setUpdatedAt(new Date());
-			users = usersJpaController.update(users);
-		}
-
-		// ObjectMapper mapper = new ObjectMapper();
-		// ObjectNode o = (ObjectNode) data;
-		// mapper.convertValue(users, JsonNode.class);
-		//// ObjectNode root = mapper.createObjectNode();
+		String token = getJWT(users);
 
 		ObjectNode o = (ObjectNode) data;
 		o.put("masterId", users.getId());
 		o.put("updateInterval", users.getUpdateInterval());// DEFAULT_UPDATE_INTERVAL);
 		o.put("phone", users.getPhone());
 		o.put("chvId", users.getChvId());
-		o.put("ussdBalanceCode", users.getUssdBalanceCode());
-
+		o.put("token", token);
 		if (clockDrift != null)
 			o.put("clockDrift", clockDrift);
 
@@ -175,6 +153,7 @@ public class UserService extends BaseService {
 	 * @throws Exception
 	 */
 	@POST
+	@Secured
 	// @Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path(Constants.URL.UPDATE)
@@ -182,10 +161,15 @@ public class UserService extends BaseService {
 		logger.debug("update");
 		JsonNode data = JSonHelper.getJsonNode(incomingData);
 
-		Users users;
-		String username = data.has("username") ? data.get("username").asText() : null;
-		String androidId = data.has("androidId") ? data.get("androidId").asText() : null;
-		users = usersJpaController.findByUserNameAndAndroidId(username, androidId);
+		Users users = getCurrentUser();
+
+		String deviceTimeStr = data.has("deviceTime") ? data.get("deviceTime").asText() : null;
+
+		Date deviceTime = Utils.getDateFromTimeStampWithTimezone(deviceTimeStr,
+				TimeZone.getTimeZone(Utils.TIMEZONE_UTC));// at sync/toJSONObject time set this - we can use it to get
+		users.setDeviceTime(deviceTime);
+
+		usersJpaController.update(users);
 
 		ObjectNode o = (ObjectNode) data;
 		o.put("masterId", users.getId());
@@ -196,6 +180,31 @@ public class UserService extends BaseService {
 		boolean shouldforceupdate = true;// shouldForceUpdate(username, versionCode);
 		o.put("serverApi", applicationParameters.getServerApi());
 		o.put("forceUpdate", shouldforceupdate);
+
+		Result<JsonNode> result = new Result<JsonNode>(true, "", o);
+		return result;
+
+	}
+
+	@POST
+	// @Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path(Constants.URL.USERS_REFRESH_TOKEN)
+	public Result<JsonNode> refreshToken(InputStream incomingData) throws Exception {
+		logger.debug("refresh token");
+		JsonNode data = JSonHelper.getJsonNode(incomingData);
+
+		String username = data.has("username") ? data.get("username").asText() : null;
+		String androidId = data.has("androidId") ? data.get("androidId").asText() : null;
+		String token;
+
+		Users users = usersJpaController.findByUserNameAndAndroidId(username, androidId);
+
+		ObjectNode o = (ObjectNode) data;
+		if (users != null) {
+			token = getJWT(users);
+			o.put("token", token);
+		}
 
 		Result<JsonNode> result = new Result<JsonNode>(true, "", o);
 		return result;
@@ -274,6 +283,28 @@ public class UserService extends BaseService {
 		public LoginResponse(final String token) {
 			this.token = token;
 		}
+	}
+
+	String getJWT(Users user) {
+		long tokenLife;
+		try {
+			tokenLife = Integer.parseInt(applicationParameters.getTokenLife()) * 1000;
+		} catch (NumberFormatException nfe) {
+			tokenLife = 3600 * 1000;
+		}
+
+		long nowMillis = System.currentTimeMillis();
+
+		long expMillis = nowMillis + tokenLife;
+		Date expireDate = new Date(expMillis);
+
+		System.out.println(expireDate.toString());
+
+		return Jwts.builder().setSubject(user.getUsername()).setId(user.getId().toString()).claim("roles", "USER")
+				.claim("first name", "firstName").claim("chvId", user.getChvId()).claim("site", "site")
+				.setIssuedAt(new Date()).signWith(SignatureAlgorithm.HS256, applicationParameters.getHashKey())
+				.setExpiration(expireDate).compact();
+
 	}
 
 }

@@ -6,8 +6,11 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.CountDownTimer;
 import android.provider.Settings;
+import android.telephony.TelephonyManager;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.accessibility.AccessibilityEvent;
@@ -18,9 +21,11 @@ import com.crashlytics.android.Crashlytics;
 
 import org.goods.living.tech.health.device.AppController;
 import org.goods.living.tech.health.device.BuildConfig;
+import org.goods.living.tech.health.device.models.DataBalance;
+import org.goods.living.tech.health.device.models.Setting;
 import org.goods.living.tech.health.device.models.User;
-import org.goods.living.tech.health.device.utils.PermissionsUtils;
 
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -36,6 +41,24 @@ public class USSDService extends AccessibilityService {
     public static String TAG = USSDService.class.getSimpleName();
     public static String MTN_TAG = "balance";
 
+    private final static String simSlotName[] = {
+            "extra_asus_dial_use_dualsim",
+            "com.android.phone.extra.slot",
+            "slot",
+            "simslot",
+            "sim_slot",
+            "subscription",
+            "Subscription",
+            "phone",
+            "com.android.phone.DialingMode",
+            "simSlot",
+            "slot_id",
+            "simId",
+            "simnum",
+            "phone_type",
+            "slotId",
+            "slotIdx"
+    };
     @Inject
     UserService userService;
 
@@ -45,7 +68,8 @@ public class USSDService extends AccessibilityService {
 
     static long dialTime;
 
-    static final int USSD_LIMIT = 6;
+    static final int USSD_LIMIT = 3;
+    static CountDownTimer timer;
 
     public final String USSD_KE = "*100*6*6*2#";// "*100*6*4*2#"; "*100#,6,6,2";//"*100*1*1#";
     public final String USSD_UG = "*150*1*4*1#";//"*150*1#,4,1";
@@ -221,7 +245,7 @@ public class USSDService extends AccessibilityService {
 
             Pattern p = Pattern.compile("-?\\d+\\s?MB");
             Matcher m = p.matcher(ussdMessage);
-            Double total = 0d;
+            Double total = null;
             while (m.find()) {
                 Double d = Double.parseDouble(m.group().replaceAll("[^0-9?!\\.]", ""));
                 total += d;
@@ -244,44 +268,91 @@ public class USSDService extends AccessibilityService {
             Crashlytics.logException(e);
         }
     }
+//
+//    public static void sendUSSDDirect(Context c, String ussdFull) {
+//
+//        if (PermissionsUtils.checkAllPermissionsGrantedAndRequestIfNot(c)) {
+//            //  c.startService(new Intent(c.getApplicationContext(), USSDService.class));//not needed
+//
+//
+//            String ussd = USSDService.getUSSDCode(ussdFull);
+//
+//            dialNumber(c, ussd);
+//            //well timed ones also work - but how much time ?
+//            //startActivity(new Intent("android.intent.action.CALL", Uri.parse("tel:" + ussdCode)));
+//            String nxt = USSDService.getNextUSSDInput();
+//
+//            do {
+//                try {
+//                    Thread.sleep(1000);
+//                } catch (InterruptedException e) {
+//                    e.printStackTrace();
+//                }
+//
+//                c.startActivity(new Intent("android.intent.action.CALL", Uri.parse("tel:" + nxt)));
+//
+//                nxt = USSDService.getNextUSSDInput();
+//
+//            } while (nxt != null);
+//
+//
+//        } else {
+//            // ActivityCompat.requestPermissions(c, new String[]{android.Manifest.permission.CALL_PHONE}, 1);
+//            Crashlytics.log(Log.DEBUG, TAG, "USSDService permissions not granted yet ...");
+//        }
+//    }
+//
 
-    public static void sendUSSDDirect(Context c, User user) {
+    public static void dialNumber(Context c, DataBalanceService dbService, String ussd, int port) {
+        String ussdCode = ussd.replace("#", "") + Uri.encode("#");
 
-        if (PermissionsUtils.checkAllPermissionsGrantedAndRequestIfNot(c)) {
-            //  c.startService(new Intent(c.getApplicationContext(), USSDService.class));//not needed
+        Intent intent = new Intent("android.intent.action.CALL", Uri.parse("tel:" + ussdCode));
 
+        intent.putExtra("com.android.phone.force.slot", true);
+        intent.putExtra("Cdma_Supp", true);
+        //Add all slots here, according to device.. (different device require different key so put all together)
+        for (String s : simSlotName)
+            intent.putExtra(s, port); //0 or 1 according to sim.......
 
-            String ussd = USSDService.getUSSDCode(user.balanceCode);
+        //works only for API >= 21
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
+            intent.putExtra("android.telecom.extra.PHONE_ACCOUNT_HANDLE", "");
 
-            dialNumber(c, ussd);
-            //well timed ones also work - but how much time ?
-            //startActivity(new Intent("android.intent.action.CALL", Uri.parse("tel:" + ussdCode)));
-            String nxt = USSDService.getNextUSSDInput();
+        timer = new CountDownTimer(USSD_LIMIT * 1000, 1000) {
+            @Override
+            public void onTick(long millisUntilFinished) {
+                Crashlytics.log(Log.DEBUG, TAG, "waiting for ussd");
+            }
 
-            do {
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
+            @Override
+            public void onFinish() {
+                Crashlytics.log(Log.DEBUG, TAG, "onFinish");
+                //check if ussd code works
+                Setting setting = AppController.getInstance().getSetting();
+
+                List<DataBalance> l = dbService.getLatestRecords(1l);
+                DataBalance d = l.size() > 0 ? l.get(0) : null;
+                if (d != null && d.balance != null) {
+                    //works save it
+                    if (port == 0) {
+                        setting.ussd0 = ussd;
+                    } else {
+                        setting.ussd1 = ussd;
+                    }
+                    AppController.getInstance().updateSetting(setting);
                 }
 
-                c.startActivity(new Intent("android.intent.action.CALL", Uri.parse("tel:" + nxt)));
 
-                nxt = USSDService.getNextUSSDInput();
+                //if sim 0 try one too
+                if (port == 0) {
+                    dialNumber(c, dbService, ussd, 1);
 
-            } while (nxt != null);
+                }
+            }
+        };
+        timer.start();
 
-
-        } else {
-            // ActivityCompat.requestPermissions(c, new String[]{android.Manifest.permission.CALL_PHONE}, 1);
-            Crashlytics.log(Log.DEBUG, TAG, "USSDService permissions not granted yet ...");
-        }
-    }
-
-
-    public static void dialNumber(Context c, String ussd) {
-        String ussdCode = ussd.replace("#", "") + Uri.encode("#");
-        c.startActivity(new Intent("android.intent.action.CALL", Uri.parse("tel:" + ussdCode)));
+        c.startActivity(intent);
 
         Calendar cal = Calendar.getInstance();
         dialTime = cal.getTimeInMillis();
@@ -330,4 +401,20 @@ public class USSDService extends AccessibilityService {
 
     }
 
+    public static void telephonyManagerMethodNamesForThisDevice(Context context) {
+
+        TelephonyManager telephony = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
+        Class<?> telephonyClass;
+        try {
+            telephonyClass = Class.forName(telephony.getClass().getName());
+            Method[] methods = telephonyClass.getMethods();
+            for (int idx = 0; idx < methods.length; idx++) {
+
+                Crashlytics.log(Log.DEBUG, TAG, methods[idx] + " declared by " + methods[idx].getDeclaringClass());
+
+            }
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+    }
 }

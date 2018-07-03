@@ -1,5 +1,9 @@
 package org.goods.living.tech.health.device.models;
 
+import android.util.Log;
+
+import com.crashlytics.android.Crashlytics;
+
 import org.goods.living.tech.health.device.BuildConfig;
 import org.goods.living.tech.health.device.utils.Constants;
 import org.goods.living.tech.health.device.utils.Utils;
@@ -26,7 +30,6 @@ public class User extends BaseModel {
     public String androidId;
     public long updateInterval = Constants.UPDATE_INTERVAL; // seconds
     public String phone;
-    public String ussdBalanceCode;
     public String country;
     public String branch;
 
@@ -43,6 +46,8 @@ public class User extends BaseModel {
     public Date updatedAt;
 
     public Date recordedAt;
+
+    public String token;
 
 
     public User() {
@@ -72,46 +77,52 @@ public class User extends BaseModel {
         if (JSONObject.has("serverApi")) serverApi = JSONObject.getInt("serverApi");
         if (JSONObject.has("forceUpdate")) forceUpdate = JSONObject.getBoolean("forceUpdate");
 
-
+        if (JSONObject.has("token")) token = JSONObject.getString("token");
     }
 
-    public JSONObject toJSONObject() throws JSONException {
+    public JSONObject toJSONObject() {
 
-        JSONObject JSONObject = super.toJSONObject();
-        // JSONObject JSONObject = new JSONObject();
-        JSONObject.put("id", String.valueOf(id));
-        if (masterId != null) JSONObject.put("masterId", masterId);
-        if (chvId != null) JSONObject.put("chvId", chvId);
-        if (androidId != null) JSONObject.put("androidId", androidId);
-        JSONObject.put("updateInterval", String.valueOf(updateInterval));
-        if (createdAt != null) {
-            String formattedDate = Utils.getStringTimeStampWithTimezoneFromDate(createdAt, TimeZone.getTimeZone(Utils.TIMEZONE_UTC));
-            JSONObject.put("createdAt", formattedDate);
+        try {
+            JSONObject JSONObject = super.toJSONObject();
+            // JSONObject JSONObject = new JSONObject();
+            JSONObject.put("id", String.valueOf(id));
+            if (masterId != null) JSONObject.put("masterId", masterId);
+            if (chvId != null) JSONObject.put("chvId", chvId);
+            if (androidId != null) JSONObject.put("androidId", androidId);
+            JSONObject.put("updateInterval", String.valueOf(updateInterval));
+            if (createdAt != null) {
+                String formattedDate = Utils.getStringTimeStampWithTimezoneFromDate(createdAt, TimeZone.getTimeZone(Utils.TIMEZONE_UTC));
+                JSONObject.put("createdAt", formattedDate);
+            }
+            if (recordedAt != null) {
+                String formattedDate = Utils.getStringTimeStampWithTimezoneFromDate(recordedAt, TimeZone.getTimeZone(Utils.TIMEZONE_UTC));
+                JSONObject.put("recordedAt", formattedDate);
+            }
+
+            if (username != null) JSONObject.put("username", username);
+            if (password != null) JSONObject.put("password", password);
+            if (name != null) JSONObject.put("name", name);
+            if (branch != null) JSONObject.put("branch", branch);
+            if (country != null) JSONObject.put("country", country);
+
+            if (phone != null) JSONObject.put("phone", phone);
+
+            if (deviceInfo != null) JSONObject.put("deviceInfo", deviceInfo.toString());
+
+            if (token != null) JSONObject.put("token", token);
+
+            int versionCode = BuildConfig.VERSION_CODE;
+            String versionName = BuildConfig.VERSION_NAME;
+            JSONObject.put("versionCode", versionCode);
+            if (versionName != null) JSONObject.put("versionName", versionName);
+            JSONObject.put("serverApi", serverApi);
+
+            return JSONObject;
+        } catch (JSONException e) {
+            Log.e("", "", e);
+            Crashlytics.logException(e);
+            return null;
         }
-        if (recordedAt != null) {
-            String formattedDate = Utils.getStringTimeStampWithTimezoneFromDate(recordedAt, TimeZone.getTimeZone(Utils.TIMEZONE_UTC));
-            JSONObject.put("recordedAt", formattedDate);
-        }
-
-        if (username != null) JSONObject.put("username", username);
-        if (password != null) JSONObject.put("password", password);
-        if (name != null) JSONObject.put("name", name);
-        if (branch != null) JSONObject.put("branch", branch);
-        if (country != null) JSONObject.put("country", country);
-
-        if (phone != null) JSONObject.put("phone", phone);
-
-        if (ussdBalanceCode != null) JSONObject.put("ussdBalanceCode", phone);
-        if (deviceInfo != null) JSONObject.put("deviceInfo", deviceInfo.toString());
-
-
-        int versionCode = BuildConfig.VERSION_CODE;
-        String versionName = BuildConfig.VERSION_NAME;
-        JSONObject.put("versionCode", versionCode);
-        if (versionName != null) JSONObject.put("versionName", versionName);
-        JSONObject.put("serverApi", serverApi);
-
-        return JSONObject;
     }
 
 

@@ -53,6 +53,11 @@ public class ControllerManager {
 	}
 
 	@Produces
+	public DataBalanceJpaController getDataBalanceJpaController() {
+		return new DataBalanceJpaController(entityManagerFactoryDH);
+	}
+
+	@Produces
 	public UsersJpaController getUsersJpaController() {
 		return new UsersJpaController(entityManagerFactoryDH);
 	}
