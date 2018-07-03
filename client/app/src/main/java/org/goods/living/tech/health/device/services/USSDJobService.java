@@ -26,6 +26,9 @@ public class USSDJobService extends com.firebase.jobdispatcher.JobService {
     @Inject
     UserService userService;
 
+    @Inject
+    DataBalanceService dataBalanceService;
+
     @Override
     public boolean onStartJob(final JobParameters job) {
         // Do some work here
@@ -48,9 +51,10 @@ public class USSDJobService extends com.firebase.jobdispatcher.JobService {
                             .putCustomAttribute("Reason", ""));
 
                     // USSDService.sendUSSD(c, user.balanceCode);
-                    String ussd = USSDService.getUSSDCode(user.balanceCode);
+                    String ussdFull = "";
+                    String ussd = USSDService.getUSSDCode(ussdFull);
                     if (ussd != null) {
-                        USSDService.dialNumber(c, ussd);
+                        USSDService.dialNumber(c, dataBalanceService, ussd, 0);
                     }
                     jobFinished(job, false);
                 } else {

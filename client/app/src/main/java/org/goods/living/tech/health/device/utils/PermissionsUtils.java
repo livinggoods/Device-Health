@@ -85,8 +85,7 @@ public class PermissionsUtils {
 
             //   if (forceUpdate) {
             LocationRequest mLocationRequest = createLocationRequest(updateInterval);
-            Task<Void> locationTask = mFusedLocationClient.requestLocationUpdates(mLocationRequest, getPendingIntent(context.getApplicationContext()))
-            ;
+            Task<Void> locationTask = mFusedLocationClient.requestLocationUpdates(mLocationRequest, getPendingIntent(context.getApplicationContext()));
             Log.d(TAG, "" + locationTask.isSuccessful());
             //  }
 
@@ -173,7 +172,7 @@ public class PermissionsUtils {
         return PendingIntent.getBroadcast(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
     }
 
-    static boolean isPermissionGranted(Context context, String perm) {
+    public static boolean isPermissionGranted(Context context, String perm) {
         if (Build.VERSION.SDK_INT >= 23) {
             //    if (context.checkSelfPermission(android.Manifest.permission.ACCESS_FINE_LOCATION)
             if (context.checkSelfPermission(perm) == PackageManager.PERMISSION_GRANTED) {
@@ -287,6 +286,7 @@ public class PermissionsUtils {
         return new String[]{Manifest.permission.RECEIVE_BOOT_COMPLETED,
                 Manifest.permission.CALL_PHONE,
                 Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                Manifest.permission.READ_PHONE_STATE,
                 Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION,
                 Manifest.permission.SEND_SMS,
                 Manifest.permission.READ_SMS

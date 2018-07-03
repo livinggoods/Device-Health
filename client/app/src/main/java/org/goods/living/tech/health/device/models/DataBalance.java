@@ -15,12 +15,9 @@ public class DataBalance extends BaseModel {
 
     @Id
     public long id;
-    public long userId; // ToOne target ID property
-    public Long userMasterId;
-    //  public ToOne<User> user;
 
-    public double balance;
-    public String text;
+    public Double balance;
+    public String balanceMessage;
     public String message;
     public Date recordedAt;
 
@@ -31,10 +28,8 @@ public class DataBalance extends BaseModel {
 
         JSONObject JSONObject = super.toJSONObject();
         JSONObject.put("id", String.valueOf(id));
-        JSONObject.put("userId", userId);
-        if (userMasterId != null) JSONObject.put("userMasterId", userMasterId);
-        if (text != null) JSONObject.put("text", text);
-        JSONObject.put("balance", balance);
+        if (balance != null) JSONObject.put("balance", balance);
+        if (balanceMessage != null) JSONObject.put("balanceMessage", balanceMessage);
         if (message != null) JSONObject.put("message", message);
         if (recordedAt != null) {
             String formattedDate = Utils.getStringTimeStampWithTimezoneFromDate(recordedAt, TimeZone.getTimeZone(Utils.TIMEZONE_UTC));

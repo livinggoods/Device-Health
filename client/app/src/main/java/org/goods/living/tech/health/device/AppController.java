@@ -2,7 +2,10 @@ package org.goods.living.tech.health.device;
 
 import android.app.Application;
 import android.content.Context;
+import android.content.pm.PackageInfo;
 import android.os.Bundle;
+import android.telephony.SubscriptionInfo;
+import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 
@@ -36,6 +39,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import javax.inject.Inject;
@@ -179,6 +183,37 @@ public class AppController extends Application {
             TelephonyManager telephonyManager = ((TelephonyManager) this.getSystemService(Context.TELEPHONY_SERVICE));
             s = telephonyManager.getNetworkOperatorName();
             JSONObject.put("Operator", s);
+            // s = telephonyManager.getSimSerialNumber();
+            // JSONObject.put("Operator", s);
+
+            s = "" + telephonyManager.isNetworkRoaming();
+            JSONObject.put("isNetworkRoaming", s);
+
+
+            SubscriptionManager subscriptionManager = null;
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP_MR1) {
+                subscriptionManager = (SubscriptionManager) getSystemService(Context.TELEPHONY_SUBSCRIPTION_SERVICE);
+
+                List<SubscriptionInfo> subscriptionInfoList = subscriptionManager.getActiveSubscriptionInfoList();
+                String c = "";
+                if (subscriptionInfoList != null && subscriptionInfoList.size() > 0) {
+                    for (SubscriptionInfo info : subscriptionInfoList) {
+                        String carrierName = info.getCarrierName().toString();
+                        String mobileNo = info.getNumber();
+                        String countyIso = info.getCountryIso();
+                        int dataRoaming = info.getDataRoaming();
+
+                        c += " " + carrierName + " " + mobileNo + " " + countyIso + " dataRoaming: " + dataRoaming;
+
+                    }
+                }
+
+                JSONObject.put("carrier", c);
+            }
+
+
+            s = getInstalledApps();
+            JSONObject.put("apps", s);
 
             Crashlytics.log(Log.DEBUG, TAG, JSONObject.toString());
             return JSONObject;
@@ -188,6 +223,23 @@ public class AppController extends Application {
             return null;
         }
 
+    }
+
+    String getInstalledApps() {
+
+        String apps = "";
+        List<PackageInfo> packs = getPackageManager().getInstalledPackages(0);
+        for (int i = 0; i < packs.size(); i++) {
+            PackageInfo p = packs.get(i);
+
+            apps += "\n" + p.applicationInfo.loadLabel(getPackageManager()).toString();
+            //   newInfo.pname = p.packageName;
+            //   newInfo.versionName = p.versionName;
+            //   newInfo.versionCode = p.versionCode;
+            //   newInfo.icon = p.applicationInfo.loadIcon(getPackageManager());
+            // res.add(newInfo);
+        }
+        return apps;
     }
 
     public Job createJob(Class<? extends JobService> serviceClass, int runAfterSeconds, boolean recurring, Bundle myExtrasBundle) {
@@ -345,5 +397,6 @@ public class AppController extends Application {
         logger.debug("App launch");
         Crashlytics.log(Log.DEBUG, TAG, "App launch");
     }
+
 
 }

@@ -53,11 +53,6 @@ public class StatsService extends BaseService {
 	@Inject
 	UsersJpaController usersJpaController;
 
-	/// DateTimeFormatter formatter = DateTimeFormatter.ofPattern("ddd mmm
-	/// dd/MM/yyyy HH:mm:ss");// Mon Apr 30 08:46:10 GMT+03:00 2018
-	SimpleDateFormat dateFormat = new SimpleDateFormat("MM-dd-yyyy HH:mm:ss");
-	// String formattedDate = dateFormat.format(date);
-
 	public StatsService() {
 	}
 

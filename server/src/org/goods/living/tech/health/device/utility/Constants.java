@@ -21,5 +21,8 @@ public class Constants {
 		// public static final String USER_UPDATE = USER + UPDATE;
 		// public static final String USER_DELETE = USER + DELETE;
 		public static final String STATS = "/stats";
+		public static final String DATABALANCE = "/databalance";
+		public static final String DATABALANCE_USSDCODES = "/ussdCodes";
+		public static final String USERS_REFRESH_TOKEN = "/refreshToken";
 	}
 }

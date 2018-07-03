@@ -19,6 +19,8 @@ public class ServerRestClient {
     private SyncHttpClient clientSync = new SyncHttpClient();
 
     public void getAsync(String url, RequestParams params, AsyncHttpResponseHandler responseHandler) {//RequestParams
+
+
         clientAsync.get(getAbsoluteUrl(url), params, responseHandler);
     }
 
@@ -33,6 +35,12 @@ public class ServerRestClient {
     public void postSync(String url, StringEntity params, AsyncHttpResponseHandler responseHandler) {
 
         clientSync.post(null, getAbsoluteUrl(url), params, "application/json", responseHandler);
+    }
+
+    public void setAuthHeader(String token) {
+
+        clientAsync.addHeader("Authorization", "Bearer " + token);
+        clientSync.addHeader("Authorization", "Bearer " + token);
     }
 
     private String getAbsoluteUrl(String relativeUrl) {

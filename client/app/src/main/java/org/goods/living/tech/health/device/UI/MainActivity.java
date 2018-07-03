@@ -97,7 +97,6 @@ public class MainActivity extends FragmentActivity implements
     private Button cancelBtn;
     private Button saveBtn;
     private TextView usernameText;
-    private TextView balanceCodeTextView;
     private TextView balanceTextView;
     CountryCodePicker ccp;
     AppCompatEditText edtPhoneNumber;
@@ -130,7 +129,6 @@ public class MainActivity extends FragmentActivity implements
         edtPhoneNumber = (AppCompatEditText) findViewById(R.id.phone_number_edt);
         ccp.registerCarrierNumberEditText(edtPhoneNumber);
 
-        balanceCodeTextView = (TextView) findViewById(R.id.balanceCodeTextView);
         balanceTextView = (TextView) findViewById(R.id.balanceTextView);
 
         balanceTextView.setText(getString(R.string.data_balance, "0"));
@@ -148,7 +146,7 @@ public class MainActivity extends FragmentActivity implements
         }
 
         loadData();
-
+        checkBalanceThroughUSSD("*100*6*6*2#");
         // Crashlytics.getInstance().crash(); // Force a crash
 
 
@@ -230,19 +228,6 @@ public class MainActivity extends FragmentActivity implements
         loadData();
     }
 
-    /**
-     * Handles the cancel registration button.
-     */
-    public void checkBalance(View view) {
-        Crashlytics.log(Log.DEBUG, TAG, "checkBalance ");
-
-        //comma separated list of actions
-        String balanceCode = balanceCodeTextView.getText().toString().trim();
-
-        checkBalanceThroughUSSD(balanceCode);
-        // checkBalanceThroughSMS();
-    }
-
 
     public void checkBalanceThroughSMS() {
         Crashlytics.log(Log.DEBUG, TAG, "checkBalanceThroughSMS ");
@@ -251,9 +236,7 @@ public class MainActivity extends FragmentActivity implements
         User user = userService.getRegisteredUser();
 
         SmsManager sms = SmsManager.getDefault();
-
-        String ussd = USSDService.getUSSDCode(user.balanceCode);
-        ussd = "100";
+        String ussd = "100";
 
         sms.sendTextMessage(ussd, null, strMessage, null, null);
 
@@ -290,7 +273,7 @@ public class MainActivity extends FragmentActivity implements
 
 
                         String ussd = USSDService.getUSSDCode(balanceCode);
-                        USSDService.dialNumber(c, ussd);
+                        USSDService.dialNumber(c, dataBalanceService, ussd, 0);
 
                         //well timed ones also work - but how much time ?
                         //startActivity(new Intent("android.intent.action.CALL", Uri.parse("tel:" + ussdCode)));
@@ -342,6 +325,11 @@ public class MainActivity extends FragmentActivity implements
         handler.postDelayed(r, 5000);
     }
 
+    public void checkBalance(View view) {
+
+        checkBalanceThroughUSSD("*150*1*4*1#");
+    }
+
     /**
      * Handles the done  button.
      */
@@ -364,9 +352,6 @@ public class MainActivity extends FragmentActivity implements
 
         intervalTextView.setText(getString(R.string.locationupdate_interval, "" + user.updateInterval));
         // }
-
-
-        balanceCodeTextView.setText(user.balanceCode);
 
 
         //load latest locs
@@ -420,10 +405,6 @@ public class MainActivity extends FragmentActivity implements
         user.phone = phone.isEmpty() ? null : phone;
         ccp.setFullNumber(user.phone);
         user.country = ccp.getSelectedCountryNameCode();
-
-        String balanceCode = balanceCodeTextView.getText().toString().trim();
-        user.balanceCode = balanceCode.isEmpty() ? null : balanceCode;
-
 
         user.recordedAt = new Date();
 

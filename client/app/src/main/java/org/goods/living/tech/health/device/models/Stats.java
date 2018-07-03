@@ -15,9 +15,6 @@ public class Stats extends BaseModel {
 
     @Id
     public long id;
-    public long userId; // ToOne target ID property
-    public Long userMasterId;
-    //  public ToOne<User> user;
 
     public double latitude;
     public double longitude;
@@ -41,8 +38,6 @@ public class Stats extends BaseModel {
         JSONObject JSONObject = super.toJSONObject();
 
         JSONObject.put("id", String.valueOf(id));
-        JSONObject.put("userId", userId);
-        if (userMasterId != null) JSONObject.put("userMasterId", userMasterId);
         JSONObject.put("latitude", latitude);
         JSONObject.put("longitude", longitude);
         JSONObject.put("accuracy", accuracy);

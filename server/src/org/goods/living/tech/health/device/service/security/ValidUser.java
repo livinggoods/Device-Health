@@ -8,66 +8,76 @@ import java.security.Principal;
  * @purpose: getters and setters for the claims present in the context (token header).
  * 
  */
-public class ValidUser implements Principal{
+public class ValidUser implements Principal {
 
-    private String username;
-    private String apiToken;
-    private String role;
-    private String firstName;
-    private String site;
-    
-    private String jwtToken;
+	private String username;
+	private String apiToken;
+	private String role;
+	private String firstName;
+	private String site;
+	private Long id;
 
-    public String getFirstName() {
-        return this.firstName;
-    }
+	public Long getId() {
+		return id;
+	}
 
-    public void setFirstName(String firstName) {
-        this.firstName = firstName;
-    }
+	public void setId(Long id) {
+		this.id = id;
+	}
 
-    public String getLastName() {
-        return this.lastName;
-    }
+	private String jwtToken;
 
-    public void setLastName(String lastName) {
-        this.lastName = lastName;
-    }
-    private String lastName;
+	public String getFirstName() {
+		return this.firstName;
+	}
 
-    public String getUserName() {
-        return this.username;
-    }
+	public void setFirstName(String firstName) {
+		this.firstName = firstName;
+	}
 
-    public void setUserName(String username) {
-        this.username = username;
-    }
+	public String getLastName() {
+		return this.lastName;
+	}
 
-    public String getApiToken() {
-        return this.apiToken;
-    }
+	public void setLastName(String lastName) {
+		this.lastName = lastName;
+	}
 
-    public void setApiToken(String apiToken) {
-        this.apiToken = apiToken;
-    }
+	private String lastName;
 
-    public String getRole() {
-        return this.role;
-    }
+	public String getUserName() {
+		return this.username;
+	}
 
-    public void setRole(String role) {
-        this.role = role;
-    }
-    
-    public String getSite() {
-        return this.site;
-    }
+	public void setUserName(String username) {
+		this.username = username;
+	}
 
-    public void setSite(String site) {
-        this.site = site;
-    }
-    
-    public String getJwtToken() {
+	public String getApiToken() {
+		return this.apiToken;
+	}
+
+	public void setApiToken(String apiToken) {
+		this.apiToken = apiToken;
+	}
+
+	public String getRole() {
+		return this.role;
+	}
+
+	public void setRole(String role) {
+		this.role = role;
+	}
+
+	public String getSite() {
+		return this.site;
+	}
+
+	public void setSite(String site) {
+		this.site = site;
+	}
+
+	public String getJwtToken() {
 		return jwtToken;
 	}
 
@@ -76,8 +86,8 @@ public class ValidUser implements Principal{
 	}
 
 	@Override
-    public String getName() {
-        return this.firstName+" "+this.lastName; //To change body of generated methods, choose Tools | Templates.
-    }
+	public String getName() {
+		return this.firstName + " " + this.lastName; // To change body of generated methods, choose Tools | Templates.
+	}
 
 }

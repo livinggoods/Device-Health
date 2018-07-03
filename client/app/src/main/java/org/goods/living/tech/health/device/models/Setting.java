@@ -11,4 +11,8 @@ public class Setting extends BaseModel {
 
     public boolean loglocationOffEvent;
 
+    public String ussd0;
+
+    public String ussd1;
+
 }

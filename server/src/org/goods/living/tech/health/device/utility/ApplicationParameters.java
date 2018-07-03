@@ -68,4 +68,17 @@ public class ApplicationParameters {
 		return temp;
 	}
 
+	public String getUSSDBalanceCodes() {
+
+		try {
+			String s = servletContext.getInitParameter("org.goods.living.tech.health.device.ussdBalanceCodes");
+			logger.debug(s);
+			return s;
+		} catch (Exception e) {
+			logger.error(e);
+			return null;
+		}
+
+	}
+
 }

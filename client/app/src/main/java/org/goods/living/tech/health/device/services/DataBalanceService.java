@@ -137,7 +137,7 @@ public class DataBalanceService extends BaseService {
 
             DataBalance model = new DataBalance();
             model.balance = bal;
-            model.text = raw;
+            model.balanceMessage = raw;
             model.recordedAt = new Date();
             model.createdAt = model.recordedAt;
 
@@ -231,6 +231,31 @@ public class DataBalanceService extends BaseService {
         }
     }
 
+    public @Nonnull
+    List<DataBalance> getLatestRecords(@Nullable Long limit) {
+
+        try {
+
+            //if 1st run - no user record exists.
+            // Box<User> userBox = boxStore.boxFor(User.class);
+            Query<DataBalance> q = box.query().orderDesc(DataBalance_.createdAt).build();
+
+            List<DataBalance> list;
+
+            if (limit != null) {
+                list = q.find(0, limit);//find(0, 15);//.orderDesc(User_.createdAt).build().findFirst();
+            } else {
+                list = q.find();
+            }
+
+
+            return list;
+        } catch (Exception e) {
+            Crashlytics.logException(e);
+            return new ArrayList<>();
+        }
+
+    }
 
     public interface USSDListener {
         void onUSSDReceived(String balance, String raw);

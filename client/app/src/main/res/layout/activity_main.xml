@@ -117,14 +117,6 @@
                 android:orientation="horizontal"
                 android:visibility="visible">
 
-                <EditText
-                    android:id="@+id/balanceCodeTextView"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1"
-                    android:gravity="center_vertical"
-                    android:text="USSD Balance code eg *100*6*6*2#" />
-
                 <Button
                     android:id="@+id/checkBalBtn"
                     android:layout_width="match_parent"
