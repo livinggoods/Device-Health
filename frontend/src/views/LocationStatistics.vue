@@ -253,27 +253,27 @@ export default {
         reinitializeMap: function () {
             if (map.getLayer('device-health-data-layer')) {
                 map.removeLayer('device-health-data-layer')
-                if (map.getSource('device-health-data-source')) {
-                    map.removeSource('device-health-data-source')
-                }
+            }
+            if (map.getSource('device-health-data-source')) {
+                map.removeSource('device-health-data-source')
             }
             if (map.getLayer('medic-data-layer')) {
                 map.removeLayer('medic-data-layer')
-                if (map.getSource('medic-data-source')) {
-                    map.removeSource('medic-data-source')
-                }
+            }
+            if (map.getSource('medic-data-source')) {
+                map.removeSource('medic-data-source')
             }
             if (map.getLayer('device-health-line-layer')) {
                 map.removeLayer('device-health-line-layer')
-                if (map.getSource('device-health-line-source')) {
-                    map.removeSource('device-health-line-source')
-                }
+            }
+            if (map.getSource('device-health-line-source')) {
+                map.removeSource('device-health-line-source')
             }
             if (map.getLayer('medic-line-layer')) {
                 map.removeLayer('medic-line-layer')
-                if (map.getSource('medic-line-source')) {
-                    map.removeSource('medic-line-source')
-                }
+            }
+            if (map.getSource('medic-line-source')) {
+                map.removeSource('medic-line-source')
             }
             this.deviceHealthLayerSelected = false
             this.medicLayerSelected = false
@@ -418,11 +418,15 @@ export default {
             })
         },
         createDataSources: function () {
+            var medicData = {
+                'type': 'FeatureCollection',
+                'features': []
+            }
+            var deviceHealthData = {
+                'type': 'FeatureCollection',
+                'features': []
+            }
             if (this.matchedDeviceHealthActivities.length > 0) {
-                var deviceHealthData = {
-                    'type': 'FeatureCollection',
-                    'features': []
-                }
                 this.matchedDeviceHealthActivities.forEach(function (location) {
                     deviceHealthData.features.push({
                         'type': 'Feature',
@@ -443,18 +447,9 @@ export default {
                         }
                     })
                 })
-                map.addSource('device-health-data-source',
-                    {
-                        'type': 'geojson',
-                        'data': deviceHealthData
-                    })
-                this.addLayersToMap('device-health')
             }
+
             if (this.medicActivitiesWithLocation.length > 0) {
-                var medicData = {
-                    'type': 'FeatureCollection',
-                    'features': []
-                }
                 this.medicActivitiesWithLocation.forEach(function (location) {
                     medicData.features.push({
                         'type': 'Feature',
@@ -475,13 +470,19 @@ export default {
                         }
                     })
                 })
-                map.addSource('medic-data-source',
-                    {
-                        'type': 'geojson',
-                        'data': medicData
-                    })
-                this.addLayersToMap('medic')
             }
+            map.addSource('device-health-data-source',
+                {
+                    'type': 'geojson',
+                    'data': deviceHealthData
+                })
+            map.addSource('medic-data-source',
+                {
+                    'type': 'geojson',
+                    'data': medicData
+                })
+            this.addLayersToMap('medic')
+            this.addLayersToMap('device-health')
         },
         addLayersToMap: function (type) {
             if (type === 'device-health') {
@@ -522,6 +523,8 @@ export default {
                     'type': 'line',
                     'source': 'device-health-line-source',
                     'symbol-placement': 'line',
+                    'allow-overlap': true,
+                    'icon-allow-overlap': true,
                     'layout': {
                         'line-cap': 'round',
                         'line-join': 'round',
@@ -540,6 +543,8 @@ export default {
                     'type': 'line',
                     'source': 'medic-line-source',
                     'symbol-placement': 'line',
+                    'allow-overlap': true,
+                    'icon-allow-overlap': true,
                     'layout': {
                         'line-cap': 'round',
                         'line-join': 'round',
@@ -558,17 +563,16 @@ export default {
         animateChpMovement: function () {
             var i = 0
             var self = this
-            if (this.medicActivitiesWithLocation.length > 0) {
-                var medicLineString = {
-                    'type': 'FeatureCollection',
-                    'features': []
-                }
-                map.addSource('medic-line-source',
-                    {
-                        'type': 'geojson',
-                        'data': medicLineString
-                    })
-                var feature =
+            var medicLineString = {
+                'type': 'FeatureCollection',
+                'features': []
+            }
+            map.addSource('medic-line-source',
+                {
+                    'type': 'geojson',
+                    'data': medicLineString
+                })
+            var feature =
                 {
                     'type': 'Feature',
                     'geometry': {
@@ -576,6 +580,24 @@ export default {
                         'coordinates': []
                     }
                 }
+            var deviceHealthLineString = {
+                'type': 'FeatureCollection',
+                'features': []
+            }
+            map.addSource('device-health-line-source',
+                {
+                    'type': 'geojson',
+                    'data': deviceHealthLineString
+                })
+            var lineStringFeature =
+                {
+                    'type': 'Feature',
+                    'geometry': {
+                        'type': 'LineString',
+                        'coordinates': []
+                    }
+                }
+            if (this.medicActivitiesWithLocation.length > 0) {
                 window.setInterval(function () {
                     if (i < self.medicActivitiesWithLocation.length) {
                         var x = self.medicActivitiesWithLocation[i].coordinates.longitude
@@ -587,7 +609,10 @@ export default {
                     } else {
                         feature.geometry.coordinates = []
                         medicLineString.features.push(feature)
-                        map.getSource('medic-line-source').setData(medicLineString)
+                        try {
+                            map.getSource('medic-line-source').setData(medicLineString)
+                        } catch (e) {
+                        }
                         i = 0
                     }
                 }, 500)
@@ -596,23 +621,6 @@ export default {
                 this.addLayersToMap('medic-line-string')
             }
             if (this.matchedDeviceHealthActivities.length > 0) {
-                var deviceHealthLineString = {
-                    'type': 'FeatureCollection',
-                    'features': []
-                }
-                map.addSource('device-health-line-source',
-                    {
-                        'type': 'geojson',
-                        'data': deviceHealthLineString
-                    })
-                var lineStringFeature =
-                    {
-                        'type': 'Feature',
-                        'geometry': {
-                            'type': 'LineString',
-                            'coordinates': []
-                        }
-                    }
                 window.setInterval(function () {
                     if (i < self.matchedDeviceHealthActivities.length) {
                         var x = self.matchedDeviceHealthActivities[i].coordinates.longitude
@@ -624,7 +632,10 @@ export default {
                     } else {
                         lineStringFeature.geometry.coordinates = []
                         deviceHealthLineString.features.push(lineStringFeature)
-                        map.getSource('device-health-line-source').setData(deviceHealthLineString)
+                        try {
+                            map.getSource('device-health-line-source').setData(deviceHealthLineString)
+                        } catch (e) {
+                        }
                         i = 0
                     }
                 }, 500)
@@ -691,11 +702,15 @@ export default {
                 if (markerVisibility === 'visible') {
                     this.medicLayerSelected = false
                     map.setLayoutProperty('medic-data-layer', 'visibility', 'none')
-                    map.setLayoutProperty('medic-line-layer', 'visibility', 'none')
+                    if (map.getLayer('medic-line-layer')){
+                        map.setLayoutProperty('medic-line-layer', 'visibility', 'none')
+                    }
                 } else {
                     this.medicLayerSelected = true
                     map.setLayoutProperty('medic-data-layer', 'visibility', 'visible')
-                    map.setLayoutProperty('medic-line-layer', 'visibility', 'visible')
+                    if (map.getLayer('medic-line-layer')){
+                        map.setLayoutProperty('medic-line-layer', 'visibility', 'visible')
+                    }
                 }
             } catch (e) {
                 this.medicLayerSelected = false
@@ -709,11 +724,15 @@ export default {
                 if (visibility === 'visible') {
                     this.deviceHealthLayerSelected = false
                     map.setLayoutProperty('device-health-data-layer', 'visibility', 'none')
-                    map.setLayoutProperty('device-health-line-layer', 'visibility', 'none')
+                    if (map.getLayer('device-health-line-layer')) {
+                        map.setLayoutProperty('device-health-line-layer', 'visibility', 'none')
+                    }
                 } else {
                     this.deviceHealthLayerSelected = true
                     map.setLayoutProperty('device-health-data-layer', 'visibility', 'visible')
-                    map.setLayoutProperty('device-health-line-layer', 'visibility', 'visible')
+                    if (map.getLayer('device-health-line-layer')) {
+                        map.setLayoutProperty('device-health-line-layer', 'visibility', 'visible')
+                    }
                 }
             } catch (e) {
                 this.deviceHealthLayerSelected = false

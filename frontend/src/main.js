@@ -3,7 +3,7 @@ import router from './router'
 import './assets/scss/element-variables.scss'
 import ElementUI from 'element-ui'
 import locale from 'element-ui/lib/locale/lang/en'
-import {generalConfig} from '../config/config'
+import {generalConfig, api} from '../config/config'
 import './registerServiceWorker'
 import App from './App'
 import 'vue-loading-overlay/dist/vue-loading.min.css'
@@ -57,3 +57,14 @@ var app = new Vue({
         this.observeAuthChange()
     }
 }).$mount('#app')
+
+// Intercept Errors and redirect to Login
+var errorCodes = [401, 403]
+api.interceptors.response.use((response) => {
+    return response
+}, function (error) {
+    if (errorCodes.includes(error.response.status)) {
+        localStorage.setItem('auth-token', 'null')
+        app.$router.push({'path': '/login'})
+    }
+})
