@@ -15,8 +15,8 @@ import org.goods.living.tech.health.device.models.Setting;
 import org.goods.living.tech.health.device.models.User;
 import org.goods.living.tech.health.device.utils.Constants;
 import org.goods.living.tech.health.device.utils.DataBalanceHelper;
-import org.goods.living.tech.health.device.utils.PermissionsUtils;
 import org.goods.living.tech.health.device.utils.ServerRestClient;
+import org.goods.living.tech.health.device.utils.TelephonyUtil;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -110,7 +110,8 @@ public class RegistrationService extends BaseService {
                     }
 
                     if (changeLocationUpdateInterval) {
-                        PermissionsUtils.requestLocationUpdates(c, user.updateInterval);
+                        AppController appController = (AppController) c.getApplicationContext();
+                        appController.requestLocationUpdates(user.updateInterval);
                     }
 
                 } catch (JSONException e) {
@@ -126,19 +127,32 @@ public class RegistrationService extends BaseService {
 
         final User user = userService.getRegisteredUser();
 
+        Setting setting = AppController.getInstance().getSetting();
+        if (setting.fetchingUSSD) {
 
+            return setting.workingUSSD0;
+        }
+
+        setting.fetchingUSSD = true;
+        AppController.getInstance().updateSetting(setting);
         //  String  deviceSyncTimeStr = Utils.getStringTimeStampWithTimezoneFromDate(deviceSyncTime, TimeZone.getTimeZone(Utils.TIMEZONE_UTC));
 
         StringEntity entity = new StringEntity(user.toJSONObject().toString(), "UTF-8");
         //RequestParams params = new RequestParams(user.toJSONObject());
         //params.setUseJsonStreamer(true);
 
-        serverRestClient.postSync(Constants.URL.USER_UPDATE, entity, new TextHttpResponseHandler() {
+        serverRestClient.postSync(Constants.URL.DATABALANCE_USSDCODES, entity, new TextHttpResponseHandler() {
             @Override
             public void onFailure(int statusCode, Header[] headers, String responseString, Throwable throwable) {
                 Crashlytics.log(Log.DEBUG, TAG, responseString);
                 Crashlytics.logException(throwable);
 
+                //TODO: remove
+                Setting setting = AppController.getInstance().getSetting();
+                setting.workingUSSD0 = DataBalanceHelper.USSDList;
+                setting.workingUSSD1 = DataBalanceHelper.USSDList;//set default
+                setting.fetchingUSSD = false;
+                AppController.getInstance().updateSetting(setting);
             }
 
             @Override
@@ -157,65 +171,80 @@ public class RegistrationService extends BaseService {
                         ArrayList<String> list = USSDService.getUSSDCodesFromString(ussdList);
 
                         Setting setting = AppController.getInstance().getSetting();
-
-                        setting.workingUSSD = list;
-                        AppController.getInstance().updateSetting(setting);
+                        setting.workingUSSD0 = DataBalanceHelper.USSDList;
+                        setting.workingUSSD1 = DataBalanceHelper.USSDList;
 
                     } else {
                         Crashlytics.log(Log.ERROR, TAG, "problem fetching ussd");
                     }
 
+                    Setting setting = AppController.getInstance().getSetting();
+                    setting.fetchingUSSD = false;
+                    AppController.getInstance().updateSetting(setting);
 
                 } catch (JSONException e) {
                     Log.e(TAG, "", e);
                     Crashlytics.logException(e);
+                    Setting setting = AppController.getInstance().getSetting();
+                    setting.fetchingUSSD = false;
+                    AppController.getInstance().updateSetting(setting);
                 }
             }
         });
+        setting = AppController.getInstance().getSetting();
 
 
-        return AppController.getInstance().getSetting().workingUSSD;
+        return setting.workingUSSD0;
     }
 
-    public void checkBalanceThroughUSSD(
-            Context c) {
+    private void checkBalanceThroughUSSD(
+            Context c, int port) {
+
+        Crashlytics.log(Log.DEBUG, TAG, "checkBalanceThroughUSSD");
 
         Setting setting = AppController.getInstance().getSetting();
 
-        if (setting.workingUSSD != null && setting.workingUSSD.size() > 0) {
-            String ussd = setting.workingUSSD.get(0);
-            dataBalanceHelper.dialNumber(c, ussd, new DataBalanceHelper.USSDResult() {
+        List<String> ussdlist = (port == 0) ? setting.workingUSSD0 : setting.workingUSSD1;
+
+
+        String ussd = (ussdlist != null && ussdlist.size() > 0) ? ussdlist.get(0) : null;
+        if (ussd != null) {
+            dataBalanceHelper.dialNumber(c, ussd, port, new DataBalanceHelper.USSDResult() {
                 @Override
-                public void onResult(@NonNull List<DataBalanceHelper.Balance> list) {
+                public void onResult(@NonNull DataBalanceHelper.Balance bal) {
 
+                    if (bal.balance != null) { //this method works -good code and there is sim?
 
-                    boolean USSDWorks = false;
-                    for (DataBalanceHelper.Balance b : list) {
+                        Crashlytics.log(Log.DEBUG, TAG, "saving balance ...");
+                        String sim = TelephonyUtil.getSimSerial(c);
 
-                        if (b.balance != null) { //this method works -good code and there is sim?
-                            USSDWorks = true;
-                            Crashlytics.log(Log.DEBUG, TAG, "saving balance ...");
-                            dataBalanceService.insert(b.balance, b.rawBalance);
+                        dataBalanceService.insert(bal.balance, bal.rawBalance, sim);
 
-                        }
+                        //switch to line 2 if any
+                        if (port == 0)
+                            checkBalanceThroughUSSD(c, 1);
+                        else //we r done
+                            return;
 
+                    } else {
 
-                    }
-                    if (!USSDWorks) {//none works delete entry
-                        setting.workingUSSD.remove(ussd);
+                        ussdlist.remove(ussd);
                         AppController.getInstance().updateSetting(setting);
 
-                        if (setting.workingUSSD.size() > 0) { //try again
+                        if (ussdlist.size() > 0) { //try again
                             Crashlytics.log(Log.DEBUG, TAG, "trying again balance check ...");
 
-                            checkBalanceThroughUSSD(c);
-                        } else { //refetch list from server
-                            getUSSDCodes();
+                            checkBalanceThroughUSSD(c, port);
+                        } else {
+                            //switch to line 2 if any
+                            if (port == 0)
+                                checkBalanceThroughUSSD(c, 1);
+                            else //we r done
+                                return;
                         }
 
 
                     }
-                    ;
 
 
                 }
@@ -226,5 +255,10 @@ public class RegistrationService extends BaseService {
             getUSSDCodes();
         }
 
+    }
+
+    public void checkBalanceThroughUSSD(
+            Context c) {
+        checkBalanceThroughUSSD(c, 0);
     }
 }

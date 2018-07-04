@@ -21,6 +21,8 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.support.v7.widget.AppCompatEditText;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -36,12 +38,14 @@ import com.hbb20.CountryCodePicker;
 
 import org.goods.living.tech.health.device.AppController;
 import org.goods.living.tech.health.device.R;
+import org.goods.living.tech.health.device.models.Setting;
 import org.goods.living.tech.health.device.models.User;
 import org.goods.living.tech.health.device.services.DataBalanceService;
 import org.goods.living.tech.health.device.services.RegistrationService;
 import org.goods.living.tech.health.device.services.StatsService;
 import org.goods.living.tech.health.device.services.UserService;
 import org.goods.living.tech.health.device.utils.SnackbarUtil;
+import org.goods.living.tech.health.device.utils.Utils;
 
 import java.util.Date;
 
@@ -130,7 +134,10 @@ public class RegisterUserFragment extends SlideFragment {
     public boolean canMoveFurther() {
 
         User user = userService.getRegisteredUser();
-        return user.masterId != null;
+        //return user.masterId != null;
+
+        Setting setting = AppController.getInstance().getSetting();
+        return user.masterId != null && !setting.fetchingUSSD;
     }
 
     @Override
@@ -169,7 +176,6 @@ public class RegisterUserFragment extends SlideFragment {
     void saveRegistration() {
 
         User user = userService.getRegisteredUser();
-
         String username = usernameText.getText().toString().trim();
         user.username = username.isEmpty() ? null : username;
 
@@ -185,19 +191,38 @@ public class RegisterUserFragment extends SlideFragment {
         hideKeyboard(this.getActivity());
         SnackbarUtil.showSnack(this.getActivity(), "saving CHV information ... ");
 
-        User updatedUser = registrationService.register(this.getActivity());
-        if (updatedUser.masterId != null) {
 
-            SnackbarUtil.showSnack(this.getActivity(), "CHV record saved");
+        Context c = this.getActivity();
 
-            //step 2 get ussdcodes
-            registrationService.getUSSDCodes();
+        Utils.showProgressDialog(c);
 
-            //step 3 find ussd code for this device
+        Utils.getHandlerThread().post(new Runnable() {
+            @Override
+            public void run() {
 
-        } else {
-            SnackbarUtil.showSnack(this.getActivity(), "Could not save record. Try again");
-        }
+                User updatedUser = registrationService.register(c);
+                if (updatedUser.masterId != null) {
+                    //SnackbarUtil.showSnack(c, "CHV record saved");
+
+                    //step 2 get ussdcodes
+                    registrationService.checkBalanceThroughUSSD(c);//will fetch ussdcodes
+
+
+                } else {
+                    //  SnackbarUtil.showSnack(c, "Could not save record. Try again");
+                }
+
+                new Handler(Looper.getMainLooper()).post(new Runnable() {
+                    @Override
+                    public void run() {
+                        //this runs on the UI thread
+                        Utils.dismissProgressDialog();
+                    }
+                });
+            }
+        });
+
+
     }
 
 

@@ -17,7 +17,6 @@ import org.goods.living.tech.health.device.models.DataBalance;
 import org.goods.living.tech.health.device.models.Stats;
 import org.goods.living.tech.health.device.models.User;
 import org.goods.living.tech.health.device.utils.Constants;
-import org.goods.living.tech.health.device.utils.PermissionsUtils;
 import org.goods.living.tech.health.device.utils.ServerRestClient;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -201,7 +200,8 @@ public class SyncService extends BaseService {
                     }
 
                     if (changeLocationUpdateInterval) {
-                        PermissionsUtils.requestLocationUpdates(c, user.updateInterval);
+                        AppController appController = (AppController) c.getApplicationContext();
+                        appController.requestLocationUpdates(user.updateInterval);
                     }
 
                 } catch (JSONException e) {

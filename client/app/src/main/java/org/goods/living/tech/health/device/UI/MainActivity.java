@@ -19,6 +19,7 @@ package org.goods.living.tech.health.device.UI;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.location.Location;
 import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.os.Handler;
@@ -33,6 +34,7 @@ import android.widget.TextView;
 
 import com.crashlytics.android.Crashlytics;
 import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.hbb20.CountryCodePicker;
 
 import org.goods.living.tech.health.device.AppController;
@@ -49,6 +51,7 @@ import org.goods.living.tech.health.device.utils.SnackbarUtil;
 import org.goods.living.tech.health.device.utils.SyncAdapter;
 import org.goods.living.tech.health.device.utils.Utils;
 
+import java.util.Date;
 import java.util.List;
 
 import javax.inject.Inject;
@@ -134,13 +137,13 @@ public class MainActivity extends FragmentActivity implements
         edtPhoneNumber.setClickable(false);
 
         User user = userService.getRegisteredUser();
-        //   if (user.masterId == null) {
-        // enableSettingsEdit();
-        //        Intent intent = new Intent(this, RegisterActivity.class);
-        //        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-        //  intent.putExtra("forceUpdate", forceUpdate);
-        //        this.startActivity(intent);
-        //   }
+        if (user.masterId == null) {
+            // enableSettingsEdit();
+            Intent intent = new Intent(this, RegisterActivity.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            // intent.putExtra("forceUpdate", forceUpdate);
+            this.startActivity(intent);
+        }
         //  checkBalanceThroughUSSD("*100*6*6*2#");
         // Crashlytics.getInstance().crash(); // Force a crash
 
@@ -214,38 +217,93 @@ public class MainActivity extends FragmentActivity implements
 
         Context c = this;
 
+        Utils.showProgressDialog(this);
+
         Utils.getHandlerThread().post(new Runnable() {
             @Override
             public void run() {
 
                 registrationService.checkBalanceThroughUSSD(c);
 
-                if (timer != null) timer.cancel();
-                timer = new CountDownTimer(DataBalanceHelper.USSD_LIMIT * 2000, DataBalanceHelper.USSD_LIMIT * 1000) {
+                new Handler(Looper.getMainLooper()).post(new Runnable() {
                     @Override
-                    public void onTick(long millisUntilFinished) {
-                        Crashlytics.log(Log.DEBUG, TAG, "tick tock ... waiting for ussd " + millisUntilFinished);
-
+                    public void run() {
+                        //this runs on the UI thread
+                        updateUI();
                     }
-
-                    @Override
-                    public void onFinish() {
-                        Crashlytics.log(Log.DEBUG, TAG, "onFinish checkBalance");
-
-                        List<DataBalance> list = dataBalanceService.getLatestRecords(1l);
-                        DataBalance dataBalance = list.size() > 0 ? list.get(0) : null;
-                        if (dataBalance != null)
-                            if (balanceTextView != null) {
-                                balanceTextView.setText(getString(R.string.data_balance, dataBalance.balance));
-                            }
-                        timer = null;
-                    }
-                };
-                timer.start();
+                });
             }
         });
 
 
+    }
+
+
+    void updateUI() {
+        if (timer != null) timer.cancel();
+        timer = new CountDownTimer(DataBalanceHelper.USSD_LIMIT * 1000 + 1000, 1000) {
+            @Override
+            public void onTick(long millisUntilFinished) {
+                Crashlytics.log(Log.DEBUG, TAG, "tick tock ... waiting for ussd " + (millisUntilFinished / 1000));
+
+            }
+
+            @Override
+            public void onFinish() {
+                Crashlytics.log(Log.DEBUG, TAG, "onFinish checkBalance");
+
+                List<DataBalance> list = dataBalanceService.getLatestRecords(1l);
+                DataBalance dataBalance = list.size() > 0 ? list.get(0) : null;
+                if (dataBalance != null)
+                    if (balanceTextView != null) {
+                        balanceTextView.setText(getString(R.string.data_balance, dataBalance.balance));
+                    }
+                timer = null;
+
+                Utils.dismissProgressDialog();
+            }
+        };
+        timer.start();
+    }
+
+    /**
+     * Handles the checkLocation  button.
+     */
+    public void checkLocation(View view) {
+
+        try {
+            Context c = this;
+
+            Utils.showProgressDialog(this);
+
+            AppController appController = (AppController) c.getApplicationContext();
+            appController.getlastKnownLocation()
+                    .addOnSuccessListener(this, new OnSuccessListener<Location>() {
+                        @Override
+                        public void onSuccess(Location location) {
+                            // Got last known location. In some rare situations this can be null.
+                            if (location != null) {
+                                // Logic to handle location object
+                                String result = "Current Location Latitude is " +
+                                        location.getLatitude() + "\n" +
+                                        "Current location Longitude is " + location.getLongitude()
+                                        + "Time " + new Date(location.getTime());
+
+                                Crashlytics.log(Log.DEBUG, TAG, result);
+
+                                statsService.insertLocation(location);
+                                loadData();
+
+                            }
+                            Utils.dismissProgressDialog();
+                        }
+                    });
+
+        } catch (Exception e) {
+            Log.e(TAG, "", e);
+            Crashlytics.logException(e);
+            Utils.dismissProgressDialog();
+        }
     }
 
     /**

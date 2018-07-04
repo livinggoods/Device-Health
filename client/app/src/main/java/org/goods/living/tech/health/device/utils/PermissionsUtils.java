@@ -20,7 +20,6 @@ package org.goods.living.tech.health.device.utils;
 import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.app.PendingIntent;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -31,10 +30,6 @@ import android.support.v4.app.ActivityCompat;
 import android.util.Log;
 
 import com.crashlytics.android.Crashlytics;
-import com.google.android.gms.location.FusedLocationProviderClient;
-import com.google.android.gms.location.LocationRequest;
-import com.google.android.gms.location.LocationServices;
-import com.google.android.gms.tasks.Task;
 
 import org.goods.living.tech.health.device.UI.PermissionActivity;
 import org.goods.living.tech.health.device.services.USSDService;
@@ -50,11 +45,8 @@ public class PermissionsUtils {
 
     final static String TAG = PermissionsUtils.class.getSimpleName();//BaseService.class.getSimpleName();
 
-    private static final long MAX_WAIT_RECORDS = 2; // Every 5 items
 
-    private static final long SMALLEST_DISPLACEMENT_LIMIT = 10; //metres
-
-    static FusedLocationProviderClient mFusedLocationClient;
+    static AlertDialog alertDialog;
 
     public static boolean isLocationOn(Context context) {
 
@@ -66,110 +58,6 @@ public class PermissionsUtils {
         return (isGpsEnabled || isNetworkEnabled);
 
 
-    }
-
-
-    /**
-     * request updates if not already setup
-     */
-    public static void requestLocationUpdates(Context context, long updateInterval) {
-        try {
-
-            //  long upInterval = PermissionsUtils.UPDATE_INTERVAL * 1000;
-
-            if (mFusedLocationClient == null) {
-                mFusedLocationClient = LocationServices.getFusedLocationProviderClient(context.getApplicationContext());
-                // LocationRequest mLocationRequest = createLocationRequest(updateInterval);
-                // mFusedLocationClient.requestLocationUpdates(mLocationRequest, getPendingIntent(context));
-            }
-
-            //   if (forceUpdate) {
-            LocationRequest mLocationRequest = createLocationRequest(updateInterval);
-            Task<Void> locationTask = mFusedLocationClient.requestLocationUpdates(mLocationRequest, getPendingIntent(context.getApplicationContext()));
-            Log.d(TAG, "" + locationTask.isSuccessful());
-            //  }
-
-
-        } catch (SecurityException e) {
-            Log.wtf(TAG, e);
-            Crashlytics.logException(e);
-        }
-    }
-
-    public static void flushLocations() {
-        try {
-
-            //  long upInterval = PermissionsUtils.UPDATE_INTERVAL * 1000;
-
-            if (mFusedLocationClient != null) {
-                mFusedLocationClient.flushLocations();
-            }
-
-
-        } catch (SecurityException e) {
-            Log.wtf(TAG, e);
-            Crashlytics.logException(e);
-        }
-    }
-
-    /**
-     * Sets up the location request. Android has two location request settings:
-     * {@code ACCESS_COARSE_LOCATION} and {@code ACCESS_FINE_LOCATION}. These settings control
-     * the accuracy of the current location. This sample uses ACCESS_FINE_LOCATION, as defined in
-     * the AndroidManifest.xml.
-     * <p/>
-     * When the ACCESS_FINE_LOCATION setting is specified, combined with a fast update
-     * interval (5 seconds), the Fused Location Provider API returns location updates that are
-     * accurate to within a few feet.
-     * <p/>
-     * These settings are appropriate for mapping applications that show real-time location
-     * updates.
-     */
-    private static LocationRequest createLocationRequest(long updateInterval) {
-        LocationRequest mLocationRequest = new LocationRequest();
-
-        // Sets the desired interval for active location updates. This interval is
-        // inexact. You may not receive updates at all if no location sources are available, or
-        // you may receive them slower than requested. You may also receive updates faster than
-        // requested if other applications are requesting location at a faster interval.
-        // Note: apps running on "O" devices (regardless of targetSdkVersion) may receive updates
-        // less frequently than this interval when the app is no longer in the foreground.
-
-        long fastestUpdateInterval = updateInterval / 2;
-
-        mLocationRequest.setInterval(updateInterval);
-
-        // Sets the fastest rate for active location updates. This interval is exact, and your
-        // application will never receive updates faster than this value.
-        mLocationRequest.setFastestInterval(fastestUpdateInterval);
-
-        mLocationRequest.setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);//ocationRequest.PRIORITY_HIGH_ACCURACY
-
-        // Sets the maximum time when batched location updates are delivered. Updates may be
-        // delivered sooner than this interval.
-
-        long maxWaitTime = updateInterval * MAX_WAIT_RECORDS;
-        mLocationRequest.setMaxWaitTime(maxWaitTime);
-
-        mLocationRequest.setSmallestDisplacement(SMALLEST_DISPLACEMENT_LIMIT);//metres
-        return mLocationRequest;
-    }
-
-    private static PendingIntent getPendingIntent(Context context) {
-        // Note: for apps targeting API level 25 ("Nougat") or lower, either
-        // PendingIntent.getService() or PendingIntent.getBroadcast() may be used when requesting
-        // location updates. For apps targeting API level O, only
-        // PendingIntent.getBroadcast() should be used. This is due to the limits placed on services
-        // started in the background in "O".
-
-        // TODO(developer): uncomment to use PendingIntent.getService().
-        //  Intent intent = new Intent(this, LocationUpdatesIntentService.class);
-        //  intent.setAction(LocationUpdatesIntentService.ACTION_PROCESS_UPDATES);
-        //  return PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
-
-        Intent intent = new Intent(context, LocationUpdatesBroadcastReceiver.class);
-        intent.setAction(LocationUpdatesBroadcastReceiver.ACTION_PROCESS_UPDATES);
-        return PendingIntent.getBroadcast(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
     }
 
     public static boolean isPermissionGranted(Context context, String perm) {
@@ -253,20 +141,32 @@ public class PermissionsUtils {
     }
 
     public static void requestSettingPermissionsWithDialog(final Context context, final String permission, String title) {
-        final AlertDialog.Builder builder = new AlertDialog.Builder(context);
+        dismissAlert();
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(context);
         builder.setTitle(title + " Permission");
         builder.setMessage("The app needs permissions. Please grant this permission to continue using the features of the app.");
         builder.setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialogInterface, int i) {
+
+
                 Intent intent = new Intent(permission);
                 context.startActivity(intent);
+
+
             }
         });
         // builder.setNegativeButton(android.R.string.no, null);
         builder.setCancelable(false);
         builder.setNegativeButton(null, null);
-        builder.show();
+        alertDialog = builder.show();
+    }
+
+    public static void dismissAlert() {
+        if (alertDialog != null) {
+            alertDialog.dismiss();
+        }
     }
 
     public static boolean areAllPermissionsGranted(Context c) {

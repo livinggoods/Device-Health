@@ -50,7 +50,7 @@ public class PermissionActivity extends FragmentActivity {
     private static final int REQUEST_PERMISSIONS_REQUEST_CODE = 34;
 
 
-    boolean newLaunch;
+    boolean checkPerms;
 
     /**
      * The max time before batched results are delivered by location services. Results may be
@@ -63,7 +63,7 @@ public class PermissionActivity extends FragmentActivity {
 
         AppController.getInstance().getComponent().inject(this);
 
-        newLaunch = true;
+        checkPerms = true;
 
     }
 
@@ -72,21 +72,24 @@ public class PermissionActivity extends FragmentActivity {
     protected void onResume() {
         super.onResume();
 
-        if (newLaunch) {
+        PermissionsUtils.dismissAlert();
+        if (checkPerms) {
             // requestLocationPermissions();
-            newLaunch = false;
 
             if (!PermissionsUtils.areAllPermissionsGranted(this)) {
                 //request permissions
                 PermissionsUtils.requestAllPermissions(this);
-
-            } else if (!PermissionsUtils.checkAllSettingPermissionsGrantedAndDialogRequestIfNot(this)) {
-
             } else {
-                minimise();
+                if (!PermissionsUtils.checkAllSettingPermissionsGrantedAndDialogRequestIfNot(this)) {
+                    checkPerms = true;
+                } else {
+                    checkPerms = false;
+                    minimise();
+                }
             }
 
         } else {
+            checkPerms = false;
             minimise();
         }
     }
@@ -201,7 +204,8 @@ public class PermissionActivity extends FragmentActivity {
                             || permissions[i].equals(Manifest.permission.ACCESS_COARSE_LOCATION)) {
 
                         User user = AppController.getInstance().getUser();
-                        PermissionsUtils.requestLocationUpdates(this, user.updateInterval);
+                        AppController appController = (AppController) this.getApplicationContext();
+                        appController.requestLocationUpdates(user.updateInterval);
                     }
                 }
             }
@@ -212,10 +216,9 @@ public class PermissionActivity extends FragmentActivity {
 
     public void minimise() {
 
-
         Intent intent = new Intent(this, MainActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(intent);
-        //  moveTaskToBack(true);
+        //moveTaskToBack(true);
     }
 }

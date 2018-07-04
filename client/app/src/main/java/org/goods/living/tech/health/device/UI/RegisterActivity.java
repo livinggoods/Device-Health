@@ -101,14 +101,14 @@ public class RegisterActivity extends MaterialIntroActivity implements RegisterU
                 .backgroundColor(R.color.fourth_slide_background)
                 .buttonsColor(R.color.fourth_slide_buttons)
                 .title("That's it")
-                .description("Would you join us?")
+                .description("Device health is ready for use")
                 .build());
     }
 
     @Override
     public void onFinish() {
         super.onFinish();
-        Toast.makeText(this, "Try this library in your project! :)", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, "Ill be running in the background! :)", Toast.LENGTH_SHORT).show();
         Intent intent = new Intent(this, MainActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         //  intent.putExtra("forceUpdate", forceUpdate);

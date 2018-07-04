@@ -201,6 +201,28 @@ public class StatsService extends BaseService {
         }
     }
 
+    public boolean insertLocation(Location location) {
+        try {
+
+
+            Stats stats = new Stats();
+            stats.longitude = location.getLongitude();
+            stats.latitude = location.getLatitude();
+            stats.accuracy = Math.round(location.getAccuracy() * 100) / 100;//2dp
+            stats.provider = location.getProvider();
+            stats.recordedAt = new Date(location.getTime());
+            stats.createdAt = new Date();
+
+            box.put(stats);
+
+
+            return true;
+        } catch (Exception e) {
+            Crashlytics.logException(e);
+            return false;
+        }
+    }
+
     public boolean insertFailedLocationData(String reason) {
         try {
 

@@ -76,7 +76,7 @@ public class DatabalanceService extends BaseService {
 			model.setBalanceMessage(j.has("balanceMessage") ? j.get("balanceMessage").asText() : null);
 			model.setMessage(j.has("message") ? j.get("message").asText() : null);
 			model.setPhone(j.has("phone") ? j.get("phone").asText() : null);
-
+			model.setInfo(j.has("info") ? j.get("info") : null);
 			if (j.has("recordedAt")) {
 				Date recordedAt = dateFormat.parse(j.get("recordedAt").asText());
 
@@ -93,19 +93,19 @@ public class DatabalanceService extends BaseService {
 		return result;
 
 	}
+
 	@POST
 	// @Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path(Constants.URL.DATABALANCE_USSDCODES)
 	public Result<String> ussdCodes(InputStream incomingData) {
 		logger.debug("ussdCodes");
-		
+
 		String ussd = applicationParameters.getUSSDBalanceCodes();
-		
+
 		Result<String> result = new Result<String>(true, "", ussd);
 		return result;
 
 	}
-	
-	
+
 }

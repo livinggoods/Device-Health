@@ -5,12 +5,12 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.support.design.widget.Snackbar;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ProgressBar;
 
 import org.goods.living.tech.health.device.R;
 
-/**
- * Created by Devrath on 23-03-2016.
- */
+
 public class SnackbarUtil {
     /************************************ ShowSnackbar with message, KeepItDisplayedOnScreen for few seconds*****************************/
     public static void showSnakbarTypeOne(View rootView, String mMessage) {
@@ -95,4 +95,14 @@ public class SnackbarUtil {
                 .setAction(R.string.settings, null)
                 .show();
     }
+
+    public static void showSnackWithProgress(Activity activity, String text) {
+        Snackbar bar = Snackbar.make(activity.getWindow().getDecorView().getRootView(), "processing...", Snackbar.LENGTH_INDEFINITE);
+        ViewGroup contentLay = (ViewGroup) bar.getView().findViewById(android.support.design.R.id.snackbar_text).getParent();
+        ProgressBar item = new ProgressBar(activity);
+        contentLay.addView(item, 0);
+        bar.show();
+    }
+
+
 }

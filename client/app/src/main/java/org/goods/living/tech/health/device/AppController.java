@@ -1,9 +1,14 @@
 package org.goods.living.tech.health.device;
 
+import android.Manifest;
 import android.app.Application;
+import android.app.PendingIntent;
 import android.content.Context;
-import android.content.pm.PackageInfo;
+import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.location.Location;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.telephony.SubscriptionInfo;
 import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
@@ -19,6 +24,10 @@ import com.firebase.jobdispatcher.JobService;
 import com.firebase.jobdispatcher.Lifetime;
 import com.firebase.jobdispatcher.RetryStrategy;
 import com.firebase.jobdispatcher.Trigger;
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.analytics.FirebaseAnalytics;
 
 import org.goods.living.tech.health.device.models.Setting;
@@ -31,14 +40,15 @@ import org.goods.living.tech.health.device.services.UserService;
 import org.goods.living.tech.health.device.utils.AuthenticatorService;
 import org.goods.living.tech.health.device.utils.Constants;
 import org.goods.living.tech.health.device.utils.DataBalanceHelper;
+import org.goods.living.tech.health.device.utils.LocationUpdatesBroadcastReceiver;
 import org.goods.living.tech.health.device.utils.PermissionsUtils;
 import org.goods.living.tech.health.device.utils.SyncAdapter;
+import org.goods.living.tech.health.device.utils.TelephonyUtil;
 import org.goods.living.tech.health.device.utils.Utils;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
@@ -59,6 +69,8 @@ public class AppController extends Application {
 
     public FirebaseJobDispatcher dispatcher;
 
+    FusedLocationProviderClient mFusedLocationClient;
+
     final String TAG = this.getClass().getSimpleName();//BaseService.class.getSimpleName();
     Logger logger = LoggerFactory.getLogger(this.getClass());
 
@@ -66,6 +78,11 @@ public class AppController extends Application {
     UserService userService;
     @Inject
     SettingService settingService;
+
+
+    private static final long MAX_WAIT_RECORDS = 2; // Every 5 items
+
+    private static final long SMALLEST_DISPLACEMENT_LIMIT = 10; //metres
 
 
     public static AppController getInstance() {
@@ -122,6 +139,7 @@ public class AppController extends Application {
         // Create a new dispatcher using the Google Play driver.
         dispatcher = new FirebaseJobDispatcher(new GooglePlayDriver(this));
 
+        mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
 
         createUserOnFirstRun();
 
@@ -153,7 +171,7 @@ public class AppController extends Application {
 // do this in your activities/fragments to get hold of a Box
         // notesBox = ((AppController) getApplication()).getBoxStore().boxFor(Note.class);
 
-        PermissionsUtils.requestLocationUpdates(this, this.getUser().updateInterval);
+        requestLocationUpdates(this.getUser().updateInterval);
 
     }
 
@@ -185,8 +203,12 @@ public class AppController extends Application {
             TelephonyManager telephonyManager = ((TelephonyManager) this.getSystemService(Context.TELEPHONY_SERVICE));
             s = telephonyManager.getNetworkOperatorName();
             JSONObject.put("Operator", s);
-            // s = telephonyManager.getSimSerialNumber();
-            // JSONObject.put("Operator", s);
+
+            String sim = TelephonyUtil.getSimSerial(this);
+            JSONObject.put("serial", sim);
+
+            String myAndroidDeviceId = Settings.Secure.getString(getApplicationContext().getContentResolver(), Settings.Secure.ANDROID_ID);
+            JSONObject.put("myAndroidDeviceId", myAndroidDeviceId);
 
             s = "" + telephonyManager.isNetworkRoaming();
             JSONObject.put("isNetworkRoaming", s);
@@ -214,7 +236,7 @@ public class AppController extends Application {
             }
 
 
-            s = getInstalledApps();
+            s = Utils.getInstalledApps(this);
             JSONObject.put("apps", s);
 
             Crashlytics.log(Log.DEBUG, TAG, JSONObject.toString());
@@ -227,22 +249,6 @@ public class AppController extends Application {
 
     }
 
-    String getInstalledApps() {
-
-        String apps = "";
-        List<PackageInfo> packs = getPackageManager().getInstalledPackages(0);
-        for (int i = 0; i < packs.size(); i++) {
-            PackageInfo p = packs.get(i);
-
-            apps += "\n" + p.applicationInfo.loadLabel(getPackageManager()).toString();
-            //   newInfo.pname = p.packageName;
-            //   newInfo.versionName = p.versionName;
-            //   newInfo.versionCode = p.versionCode;
-            //   newInfo.icon = p.applicationInfo.loadIcon(getPackageManager());
-            // res.add(newInfo);
-        }
-        return apps;
-    }
 
     public Job createJob(Class<? extends JobService> serviceClass, int runAfterSeconds, boolean recurring, Bundle myExtrasBundle) {
         // Bundle myExtrasBundle = new Bundle();
@@ -354,15 +360,13 @@ public class AppController extends Application {
         Setting setting = settingService.getRecord();
         if (setting == null) {
             setting = new Setting();
-
-            ArrayList<String> list = new ArrayList<>();
-            list.add(DataBalanceHelper.USSD_KE1);
-            list.add(DataBalanceHelper.USSD_KE2);
-            list.add(DataBalanceHelper.USSD_UG);
-            setting.workingUSSD = list;
+            setting.fetchingUSSD = false;
+            setting.workingUSSD0 = DataBalanceHelper.USSDList;
+            setting.workingUSSD1 = DataBalanceHelper.USSDList;
 
             settingService.insert(setting);
         }
+        setting.fetchingUSSD = false;
         //if 1st run - no user record exists.
         User user = userService.getRegisteredUser();
         if (user == null) {
@@ -387,7 +391,7 @@ public class AppController extends Application {
             userService.insertUser(user);
         }
         JSONObject JSONObject = deviceInfo();
-        user.deviceInfo = JSONObject;//== null ? null : JSONObject.toString();
+        user.deviceInfoObj = JSONObject;//== null ? null : JSONObject.toString();
 
 
         logUser(user);
@@ -408,4 +412,96 @@ public class AppController extends Application {
     }
 
 
+    /**
+     * request updates if not already setup
+     */
+    public void requestLocationUpdates(long updateInterval) {
+        try {
+
+            //   if (forceUpdate) {
+            LocationRequest mLocationRequest = createLocationRequest(updateInterval);
+            Task<Void> locationTask = mFusedLocationClient.requestLocationUpdates(mLocationRequest, getPendingIntent(this.getApplicationContext()));
+            //Log.d(TAG, "locationTask " + locationTask.isSuccessful());
+            //  }
+
+
+        } catch (SecurityException e) {
+            Log.wtf(TAG, e);
+            Crashlytics.logException(e);
+        }
+    }
+
+
+    /**
+     * Sets up the location request. Android has two location request settings:
+     * {@code ACCESS_COARSE_LOCATION} and {@code ACCESS_FINE_LOCATION}. These settings control
+     * the accuracy of the current location. This sample uses ACCESS_FINE_LOCATION, as defined in
+     * the AndroidManifest.xml.
+     * <p/>
+     * When the ACCESS_FINE_LOCATION setting is specified, combined with a fast update
+     * interval (5 seconds), the Fused Location Provider API returns location updates that are
+     * accurate to within a few feet.
+     * <p/>
+     * These settings are appropriate for mapping applications that show real-time location
+     * updates.
+     */
+    private LocationRequest createLocationRequest(long updateInterval) {
+        LocationRequest mLocationRequest = new LocationRequest();
+
+        // Sets the desired interval for active location updates. This interval is
+        // inexact. You may not receive updates at all if no location sources are available, or
+        // you may receive them slower than requested. You may also receive updates faster than
+        // requested if other applications are requesting location at a faster interval.
+        // Note: apps running on "O" devices (regardless of targetSdkVersion) may receive updates
+        // less frequently than this interval when the app is no longer in the foreground.
+
+        long fastestUpdateInterval = updateInterval / 2;
+
+        mLocationRequest.setInterval(updateInterval);
+
+        // Sets the fastest rate for active location updates. This interval is exact, and your
+        // application will never receive updates faster than this value.
+        mLocationRequest.setFastestInterval(fastestUpdateInterval);
+
+        mLocationRequest.setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);//ocationRequest.PRIORITY_HIGH_ACCURACY
+
+        // Sets the maximum time when batched location updates are delivered. Updates may be
+        // delivered sooner than this interval.
+
+        long maxWaitTime = updateInterval * MAX_WAIT_RECORDS;
+        mLocationRequest.setMaxWaitTime(maxWaitTime);
+
+        mLocationRequest.setSmallestDisplacement(SMALLEST_DISPLACEMENT_LIMIT);//metres
+        return mLocationRequest;
+    }
+
+    private PendingIntent getPendingIntent(Context context) {
+        // Note: for apps targeting API level 25 ("Nougat") or lower, either
+        // PendingIntent.getService() or PendingIntent.getBroadcast() may be used when requesting
+        // location updates. For apps targeting API level O, only
+        // PendingIntent.getBroadcast() should be used. This is due to the limits placed on services
+        // started in the background in "O".
+
+        // TODO(developer): uncomment to use PendingIntent.getService().
+        //  Intent intent = new Intent(this, LocationUpdatesIntentService.class);
+        //  intent.setAction(LocationUpdatesIntentService.ACTION_PROCESS_UPDATES);
+        //  return PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+
+        Intent intent = new Intent(context, LocationUpdatesBroadcastReceiver.class);
+        intent.setAction(LocationUpdatesBroadcastReceiver.ACTION_PROCESS_UPDATES);
+        return PendingIntent.getBroadcast(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+    }
+
+    public Task<Location> getlastKnownLocation() {
+
+        if (android.os.Build.VERSION.SDK_INT > 22) { /*Ask Dungerous Permissions here*/
+            if (this.checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+                return mFusedLocationClient.getLastLocation();
+            } else
+                return null;
+        } else {
+            return mFusedLocationClient.getLastLocation();
+        }
+
+    }
 }

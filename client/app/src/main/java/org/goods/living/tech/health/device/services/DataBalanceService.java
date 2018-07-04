@@ -131,12 +131,13 @@ public class DataBalanceService extends BaseService {
 
     }
 
-    public boolean insert(Double bal, String raw) {
+    public boolean insert(Double bal, String raw, String sim) {
         try {
 
             DataBalance model = new DataBalance();
             model.balance = bal;
             model.balanceMessage = raw;
+            model.phone = sim;
             model.recordedAt = new Date();
             model.createdAt = model.recordedAt;
 

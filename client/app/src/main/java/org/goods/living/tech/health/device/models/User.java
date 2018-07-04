@@ -34,7 +34,8 @@ public class User extends BaseModel {
     public String branch;
 
     @Transient
-    public JSONObject deviceInfo;
+    public JSONObject deviceInfoObj;
+    public String deviceInfo;
 
     public int serverApi;
     public boolean forceUpdate = false;
@@ -62,8 +63,7 @@ public class User extends BaseModel {
         if (JSONObject.has("masterId")) masterId = JSONObject.getLong("masterId");
         if (JSONObject.has("chvId")) chvId = JSONObject.getString("chvId");
         if (JSONObject.has("androidId")) androidId = JSONObject.getString("androidId");
-        if (JSONObject.has("phone")) androidId = JSONObject.getString("phone");
-        if (JSONObject.has("ussdBalanceCode")) androidId = JSONObject.getString("ussdBalanceCode");
+        if (JSONObject.has("phone")) phone = JSONObject.getString("phone");
 
         if (JSONObject.has("name")) name = JSONObject.getString("name");
         if (JSONObject.has("branch")) name = JSONObject.getString("branch");
@@ -107,7 +107,8 @@ public class User extends BaseModel {
 
             if (phone != null) JSONObject.put("phone", phone);
 
-            if (deviceInfo != null) JSONObject.put("deviceInfo", deviceInfo.toString());
+            if (deviceInfo != null) JSONObject.put("deviceInfo", deviceInfo);
+            if (deviceInfoObj != null) JSONObject.put("deviceInfo", deviceInfoObj.toString());
 
             if (token != null) JSONObject.put("token", token);
 

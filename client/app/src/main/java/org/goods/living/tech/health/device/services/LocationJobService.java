@@ -76,7 +76,7 @@ public class LocationJobService extends com.firebase.jobdispatcher.JobService {
                 }
                 Crashlytics.log(Log.DEBUG, TAG, "flushLocations");
                 // PermissionsUtils.flushLocations();//force location dump if any collected
-                PermissionsUtils.requestLocationUpdates(c, appController.getUser().updateInterval);
+                appController.requestLocationUpdates(appController.getUser().updateInterval);
                 appController.checkAndRequestPerms();
 
                 jobFinished(job, false);
@@ -95,4 +95,6 @@ public class LocationJobService extends com.firebase.jobdispatcher.JobService {
         Crashlytics.log(Log.DEBUG, TAG, "LocationJobService stop ...");
         return false; // Answers the question: "Should this job be retried?"
     }
+
+
 }

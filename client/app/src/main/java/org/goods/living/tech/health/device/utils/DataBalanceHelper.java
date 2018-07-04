@@ -5,6 +5,8 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
 import android.os.CountDownTimer;
+import android.os.Handler;
+import android.os.Looper;
 import android.support.annotation.NonNull;
 import android.telephony.TelephonyManager;
 import android.util.Log;
@@ -68,6 +70,7 @@ public class DataBalanceHelper {
     public static final String USSD_KE1 = "*100*6*6*2#";// "*100*6*4*2#"; "*100#,6,6,2";//"*100*1*1#";
     public static final String USSD_KE2 = "*100*6*4*2#";
     public static final String USSD_UG = "*150*1*4*1#";//"*150*1#,4,1";
+    public static final List<String> USSDList = Arrays.asList(USSD_KE1, USSD_KE2, USSD_UG);
 
 
     public Double extractBalance(String rawText) {
@@ -117,18 +120,19 @@ public class DataBalanceHelper {
 //    }
 //
 
-    public void dialNumber(Context c, String ussd, USSDResult USSDResult) {
+    public void dialNumber(Context c, String ussd, int port, USSDResult USSDResult) {
 
-        List<Balance> list = new ArrayList<Balance>();
+        //List<Balance> list = new ArrayList<Balance>();
+        Balance bal = new Balance();
+
         USSDService.USSDListener listen = new USSDService.USSDListener() {
             @Override
             public void onUSSDReceived(String raw) {
                 USSDService.unbindListener();
 
-                Balance bal = new Balance();
                 bal.balance = extractBalance(raw);
                 bal.rawBalance = raw;
-                list.add(bal);
+                //  list.add(bal);
 
             }
         };
@@ -142,7 +146,7 @@ public class DataBalanceHelper {
         intent.putExtra("Cdma_Supp", true);
         //Add all slots here, according to device.. (different device require different key so put all together)
         for (String s : simSlotName)
-            intent.putExtra(s, 0); //0 or 1 according to sim.......
+            intent.putExtra(s, port); //0 or 1 according to sim.......
 
         //works only for API >= 21
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
@@ -154,31 +158,38 @@ public class DataBalanceHelper {
         Calendar cal = Calendar.getInstance();
         dialTime = cal.getTimeInMillis();
 
-
-        if (timer != null) timer.cancel();
-        timer = new CountDownTimer(USSD_LIMIT * 2000, USSD_LIMIT * 1000) {
+        new Handler(Looper.getMainLooper()).post(new Runnable() {
             @Override
-            public void onTick(long millisUntilFinished) {
-                Crashlytics.log(Log.DEBUG, TAG, "2nd dial waiting for ussd " + millisUntilFinished);
+            public void run() {
+                //this runs on the UI thread
+                if (timer != null) timer.cancel();
+                timer = new CountDownTimer(USSD_LIMIT * 1000, 1000) {
+                    @Override
+                    public void onTick(long millisUntilFinished) {
+                        Crashlytics.log(Log.DEBUG, TAG, "2nd dial waiting for ussd " + (millisUntilFinished / 1000));
 
-                for (String s : simSlotName)
-                    intent.putExtra(s, 1); //0 or 1 according to sim.......
+                    }
 
-                USSDService.bindListener(listen);
-                c.startActivity(intent);
-                Calendar cal = Calendar.getInstance();
-                dialTime = cal.getTimeInMillis();
+                    @Override
+                    public void onFinish() {
+                        Crashlytics.log(Log.DEBUG, TAG, "onFinish dials");
+
+                        Utils.getHandlerThread().post(new Runnable() {
+                            @Override
+                            public void run() {
+                                //this runs on the UI thread
+                                USSDResult.onResult(bal);
+                            }
+                        });
+
+
+                        timer = null;
+                    }
+                };
+                timer.start();
             }
+        });
 
-            @Override
-            public void onFinish() {
-                Crashlytics.log(Log.DEBUG, TAG, "onFinish dials");
-
-                USSDResult.onResult(list);
-                timer = null;
-            }
-        };
-        timer.start();
     }
 
     public boolean dialTimeComplete() {
@@ -256,10 +267,12 @@ public class DataBalanceHelper {
     }
 
     public interface USSDResult {
-        void onResult(@NonNull List<Balance> list);
+        void onResult(@NonNull Balance bal);
     }
 
     public class Balance {
+
+        public int port;
         public Double balance;
         public String rawBalance;
 

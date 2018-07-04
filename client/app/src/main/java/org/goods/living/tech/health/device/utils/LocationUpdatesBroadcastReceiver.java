@@ -72,6 +72,14 @@ public class LocationUpdatesBroadcastReceiver extends BroadcastReceiver {
         }
         appController.getComponent().inject(this);
 
+        boolean locationOn = PermissionsUtils.isLocationOn(context);
+
+        if (!Utils.isSmartHealthAppRunning(context)) {
+
+            Crashlytics.log(Log.DEBUG, TAG, "Smarthealth not running. Ignoring location updates. loc on: " + locationOn);
+            return;
+        }
+
 
         if (intent != null) {
 
@@ -79,10 +87,12 @@ public class LocationUpdatesBroadcastReceiver extends BroadcastReceiver {
             if (intent.getAction().contains("PROVIDERS_CHANGED")) {
                 Crashlytics.log(Log.DEBUG, TAG, "Location Providers changed");
 
+                if (!locationOn) {
+                    appController.checkAndRequestPerms();
+                }
             } else if (ACTION_PROCESS_UPDATES.equals(intent.getAction())) {
                 LocationResult result = LocationResult.extractResult(intent);
 
-                boolean locationOn = PermissionsUtils.isLocationOn(context);
                 Setting setting = appController.getSetting();
                 if (!locationOn) {
 
@@ -97,6 +107,7 @@ public class LocationUpdatesBroadcastReceiver extends BroadcastReceiver {
                         setting.loglocationOffEvent = false;
                         appController.updateSetting(setting);
                     }
+                    appController.checkAndRequestPerms();
                 } else {
                     setting.loglocationOffEvent = true;
                     appController.updateSetting(setting);

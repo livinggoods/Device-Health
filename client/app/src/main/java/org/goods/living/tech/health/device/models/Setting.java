@@ -4,6 +4,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import io.objectbox.annotation.Convert;
 import io.objectbox.annotation.Entity;
@@ -20,13 +21,17 @@ public class Setting extends BaseModel {
 
 
     @Convert(converter = StringListConverter.class, dbType = String.class)
-    public ArrayList<String> workingUSSD;
+    public List<String> workingUSSD0;
+    @Convert(converter = StringListConverter.class, dbType = String.class)
+    public List<String> workingUSSD1;
+
+    public boolean fetchingUSSD;
 
 
-    public static class StringListConverter implements PropertyConverter<ArrayList<String>, String> {
+    public static class StringListConverter implements PropertyConverter<List<String>, String> {
 
         @Override
-        public ArrayList<String> convertToEntityProperty(String jsonString) {
+        public List<String> convertToEntityProperty(String jsonString) {
             if (jsonString == null) {
                 return null;
             }
@@ -52,7 +57,7 @@ public class Setting extends BaseModel {
         }
 
         @Override
-        public String convertToDatabaseValue(ArrayList<String> list) {
+        public String convertToDatabaseValue(List<String> list) {
             if (list == null) {
                 return null;
             }

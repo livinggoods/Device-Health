@@ -19,11 +19,14 @@ package org.goods.living.tech.health.device.utils;
 
 //import android.app.NotificationChannel;
 
+import android.app.ActivityManager;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageInfo;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.location.Location;
@@ -63,6 +66,10 @@ public class Utils {
     public final static String DATE_FORMAT_TIMEZONE = "MM-dd-yyyy HH:mm:ss Z";//"MM-dd-yyyy HH:mm:ss"
     static SimpleDateFormat dateFormatWithTimezone = new SimpleDateFormat(DATE_FORMAT_TIMEZONE, Locale.getDefault());
     public final static String TIMEZONE_UTC = "UTC";
+
+    public final static String SMARTHEALTH = "livinggoods";//org.medicmobile.webapp.mobile.livinggoodskenya
+
+    static ProgressDialog progressDialog;
 
 
 /*
@@ -208,5 +215,60 @@ public class Utils {
         return requestHandler;
 
 
+    }
+
+    public static void showProgressDialog(Context c, String message) {
+        dismissProgressDialog();
+        progressDialog = ProgressDialog.show(c, "Please Wait", message, true);
+
+    }
+
+    public static void showProgressDialog(Context c) {
+        showProgressDialog(c, "Processing...");
+
+    }
+
+    public static void dismissProgressDialog() {
+        if (progressDialog != null)
+            progressDialog.dismiss();
+
+    }
+
+    public static String getInstalledApps(Context c) {
+
+        String apps = "";
+        List<PackageInfo> packs = c.getPackageManager().getInstalledPackages(0);
+        for (int i = 0; i < packs.size(); i++) {
+            PackageInfo p = packs.get(i);
+
+            apps += "\n" + p.applicationInfo.loadLabel(c.getPackageManager()).toString() + " - " + p.packageName;
+            //   newInfo.pname = p.packageName;
+            //   newInfo.versionName = p.versionName;
+            //   newInfo.versionCode = p.versionCode;
+            //   newInfo.icon = p.applicationInfo.loadIcon(getPackageManager());
+            // res.add(newInfo);
+        }
+
+
+        return apps;
+    }
+
+    public static boolean isSmartHealthAppRunning(final Context context) {
+        return isAppRunning(context, SMARTHEALTH);
+    }
+
+    static boolean isAppRunning(final Context context, final String packageName) {
+        final ActivityManager activityManager = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
+        final List<ActivityManager.RunningAppProcessInfo> procInfos = activityManager.getRunningAppProcesses();
+        if (procInfos != null) {
+            Crashlytics.log(Log.DEBUG, TAG, "running apps:");
+            for (final ActivityManager.RunningAppProcessInfo processInfo : procInfos) {
+                Crashlytics.log(Log.DEBUG, TAG, processInfo.processName);
+                if (processInfo.processName.contains(packageName)) { //contains not full match
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 }
