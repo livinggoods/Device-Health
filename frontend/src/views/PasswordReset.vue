@@ -7,19 +7,18 @@
                 </div>
             </el-card>
             <el-card class="box-card center-block" style="width: 550px; padding-top: 50px" >
-                <h3 class="text-center" style="margin-bottom: 30px">Login</h3>
-                <el-form style="padding: 0px 30px 0px 30px" label-position="top" :rules="rules" ref="loginForm" :model="user" label-width="120px">
+                <h3 class="text-center" style="margin-bottom: 30px">Password Reset</h3>
+                <el-form v-if="linkSent==false" style="padding: 0px 30px 0px 30px" label-position="top" :rules="rules" ref="resetForm" :model="user" label-width="120px">
+                    <p class="well">Please enter your email address and we will send a reset link to you</p>
                     <el-form-item  prop="email">
                         <el-input placeholder="Email" v-model="user.email"></el-input>
-                    </el-form-item>
-                    <el-form-item prop="password">
-                        <el-input placeholder="Password" type="password" v-model="user.password"></el-input>
                     </el-form-item>
                     <el-form-item style="margin-top: 50px">
                         <el-button class="btn-block" @click="submit" type="primary" >Submit</el-button>
                     </el-form-item>
                 </el-form>
-                <p class="center-block text-center"><a href="password/reset">Forgot your password?</a></p>
+                <p class="well" v-else-if=" linkSent=true">A password reset link has been sent to your email. Click on the link to reset your password</p>
+                <p class="center-block text-center"><a href="login">Go back to Login page</a></p>
 
             </el-card>
         </div>
@@ -34,22 +33,19 @@ import toastr from 'toastr'
 import Loading from 'vue-loading-overlay'
 
 export default {
-    name: 'Login',
+    name: 'PasswordReset',
     data () {
         return {
             'user': {
-                'email': '',
-                'password': ''
+                'email': ''
             },
             rules: {
                 email: [
                     { required: true, message: 'Please input your email', trigger: 'blur' }
-                ],
-                password: [
-                    { required: true, message: 'Please input your password', trigger: 'blur' }
                 ]
             },
-            isLoading: false
+            isLoading: false,
+            linkSent: false
 
         }
     },
@@ -61,14 +57,13 @@ export default {
         submit: function () {
             this.isLoading = true
             var self = this
-            this.$refs['loginForm'].validate((valid) => {
+            this.$refs['resetForm'].validate((valid) => {
                 if (valid) {
-                    api.post('/admin/login', this.user).then(function (response) {
+                    api.post('/admin/password-reset', this.user).then(function (response) {
                         if (response.data.status === '200') {
-                            window.localStorage.setItem('auth-token', response.data.token)
-                            self.$router.push({ path: '/' })
+                            self.linkSent = true
                         } else {
-                            toastr.error('Email/Password mismatch. Please try again')
+                            self.linkSent = true
                         }
                         self.isLoading = false
                     }).catch(function (error) {
@@ -77,7 +72,7 @@ export default {
                         self.isLoading = false
                     })
                 } else {
-                    toastr.error('Please enter your credentials')
+                    toastr.error('Please enter a valid email address')
                     self.isLoading = false
                     return false
                 }

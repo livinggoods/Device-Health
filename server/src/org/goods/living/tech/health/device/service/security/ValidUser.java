@@ -78,7 +78,7 @@ public class ValidUser implements Principal {
 
 	@Override
 	public String getName() {
-		return this.firstName + " " + this.lastName; // To change body of generated methods, choose Tools | Templates.
+		return this.lastName; // To change body of generated methods, choose Tools | Templates.
 	}
 
 }

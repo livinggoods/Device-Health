@@ -19,6 +19,4 @@ const api = axios.create({
     }
 })
 
-
-
 export {api, generalConfig}

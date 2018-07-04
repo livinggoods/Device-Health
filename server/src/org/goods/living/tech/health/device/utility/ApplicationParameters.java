@@ -40,6 +40,9 @@ public class ApplicationParameters {
 	public String getTokenLife() {
 		return servletContext.getInitParameter("org.goods.living.tech.health.device.jwt.token.life");
 	}
+	public String getUrl() {
+		return servletContext.getInitParameter("org.goods.living.tech.health.url");
+	}
 
 	public String getHashKey() {
 		return servletContext.getInitParameter("org.goods.living.tech.health.device.jwt.token.hash.key");
@@ -55,6 +58,7 @@ public class ApplicationParameters {
 		logger.debug("The temp variable value: " + temp);
 		return temp;
 	}
+
 
 	public int getLocationUpdateInterval() {
 		int temp = 1;

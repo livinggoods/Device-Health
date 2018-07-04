@@ -3,12 +3,14 @@ import Router from 'vue-router'
 import LocationStatistics from '@/views/LocationStatistics.vue'
 import DashboardConfig from '@/components/DashboardConfig.vue'
 import Login from '@/views/Login.vue'
+import PasswordReset from '@/views/PasswordReset.vue'
+import PasswordResetVerification from '@/views/PasswordResetVerification.vue'
 import Error from '@/views/Error.vue'
 
 Vue.use(Router)
 
 export default new Router({
-
+    mode: 'history',
     routes: [
         {
             path: '/',
@@ -24,6 +26,14 @@ export default new Router({
         {
             path: '/login',
             component: Login
+        },
+        {
+            path: '/password/reset',
+            component: PasswordReset
+        },
+        {
+            path: '/password/reset/verify',
+            component: PasswordResetVerification
         },
         {
             path: '/error',

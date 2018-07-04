@@ -9,6 +9,7 @@ import org.goods.living.tech.health.device.jpa.dao.AdminUsers;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
+import javax.persistence.Query;
 import java.io.Serializable;
 import java.math.BigInteger;
 
@@ -46,5 +47,59 @@ public class AdminUsersJpaController implements Serializable {
             e.printStackTrace();
             return null;
         }
+    }
+
+    public boolean update(AdminUsers userObject) {
+        EntityManager em = getEntityManager();
+        AdminUsers user = em.find(AdminUsers.class, userObject.getId());
+        em.getTransaction().begin();
+        try {
+            user.setForgotToken(userObject.getForgotToken());
+            em.merge(user);
+            em.getTransaction().commit();
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+
+    }
+    public AdminUsers findByEmail(String email) {
+        EntityManager em = getEntityManager();
+        AdminUsers user = (AdminUsers) em.createNamedQuery("AdminUsers.findByEmail").setParameter("email", email).getSingleResult();
+        return user;
+    }
+    public AdminUsers findByToken(String token) {
+        EntityManager em = getEntityManager();
+        AdminUsers user = (AdminUsers) em.createNamedQuery("AdminUsers.findByForgotToken").setParameter("forgotToken", token).getSingleResult();
+        return user;
+    }
+    public void invalidateToken(AdminUsers user) {
+        EntityManager em = getEntityManager();
+        em.getTransaction().begin();
+        try{
+            AdminUsers adminUser = em.find(AdminUsers.class, user.getId());
+            user.setForgotToken(null);
+            em.merge(user);
+            em.getTransaction().commit();
+        }
+        catch (Exception e){
+            e.printStackTrace();
+        }
+
+    }
+    public void updatePassword(AdminUsers user) {
+        EntityManager em = getEntityManager();
+        em.getTransaction().begin();
+        try{
+            AdminUsers adminUser = em.find(AdminUsers.class, user.getId());
+            adminUser.setPassword(user.getPassword());
+            em.merge(user);
+            em.getTransaction().commit();
+        }
+        catch (Exception e){
+            e.printStackTrace();
+        }
+
     }
 }

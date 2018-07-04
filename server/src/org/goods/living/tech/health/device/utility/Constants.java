@@ -16,6 +16,9 @@ public class Constants {
 		public static final String ADMIN = "/admin";
 		public static final String FIND = "/find";
 		public static final String LOGIN = "/login";
+		public static final String PASSWORDRESET = "/password-reset";
+		public static final String VERIFY = "/verify";
+		public static final String COMPLETE = "/complete";
 		// public static final String USER_CREATE = USER + CREATE;
 		// public static final String USER_READ = USER + READ;
 		// public static final String USER_UPDATE = USER + UPDATE;
