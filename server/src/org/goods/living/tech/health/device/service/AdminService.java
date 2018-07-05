@@ -17,6 +17,9 @@ import org.mindrot.jbcrypt.BCrypt;
 
 import java.io.InputStream;
 import java.net.URLEncoder;
+import java.sql.Timestamp;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Date;
@@ -108,8 +111,7 @@ public class AdminService extends BaseService {
             AdminUsers admin= new AdminUsers();
             admin.setName(name);
             admin.setPassword(BCrypt.hashpw(password, BCrypt.gensalt()));
-            Date date = new Date();
-            admin.setCreatedAt(date);
+            admin.setCreatedAt(new Timestamp(System.currentTimeMillis()));
             admin.setEmail(email);
             boolean status = adminUsersJpaController.create(admin);
 
