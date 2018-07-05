@@ -24,6 +24,7 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.ProgressDialog;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
@@ -253,22 +254,45 @@ public class Utils {
         return apps;
     }
 
-    public static boolean isSmartHealthAppRunning(final Context context) {
-        return isAppRunning(context, SMARTHEALTH);
+    public static boolean isSmartHealthApp(String packageName) {
+        if (packageName == null) return false;
+        return packageName.contains(SMARTHEALTH);
     }
 
-    static boolean isAppRunning(final Context context, final String packageName) {
+    public static boolean isSmartHealthAppRunning(final Context context) {
+        return isAppRunning(context);
+    }
+
+    static boolean isAppRunning(final Context context) {
         final ActivityManager activityManager = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
         final List<ActivityManager.RunningAppProcessInfo> procInfos = activityManager.getRunningAppProcesses();
         if (procInfos != null) {
             Crashlytics.log(Log.DEBUG, TAG, "running apps:");
             for (final ActivityManager.RunningAppProcessInfo processInfo : procInfos) {
                 Crashlytics.log(Log.DEBUG, TAG, processInfo.processName);
-                if (processInfo.processName.contains(packageName)) { //contains not full match
+                if (isSmartHealthApp(processInfo.processName)) { //contains not full match processInfo.processName.contains(packageName)
                     return true;
                 }
             }
         }
+        return false;
+    }
+
+    public static boolean isForeground(Context ctx, String myPackage) {
+
+        if (android.os.Build.VERSION.SDK_INT > 23) { /*Ask Dungerous Permissions here*/
+            ActivityManager manager = (ActivityManager) ctx.getSystemService(Context.ACTIVITY_SERVICE);
+            List<ActivityManager.RunningTaskInfo> runningTaskInfo = manager.getRunningTasks(1);
+
+            ComponentName componentInfo = runningTaskInfo.get(0).topActivity;
+            if (componentInfo.getPackageName().contains(myPackage)) {
+                return true;
+            }
+
+        } else {
+
+        }
+
         return false;
     }
 }

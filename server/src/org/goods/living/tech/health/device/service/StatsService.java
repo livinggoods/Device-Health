@@ -56,6 +56,7 @@ public class StatsService extends BaseService {
 	public StatsService() {
 	}
 
+	@Secured
 	@POST
 	// @Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
@@ -103,7 +104,7 @@ public class StatsService extends BaseService {
 
 	}
 
-	@Secured(value=UserCategory.ADMIN)
+	@Secured(value = UserCategory.ADMIN)
 	@POST
 	// @Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)

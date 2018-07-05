@@ -35,7 +35,6 @@ import javax.xml.bind.annotation.XmlRootElement;
 		@NamedQuery(name = "DataBalance.findById", query = "SELECT d FROM DataBalance d WHERE d.id = :id"),
 		@NamedQuery(name = "DataBalance.findByBalance", query = "SELECT d FROM DataBalance d WHERE d.balance = :balance"),
 		@NamedQuery(name = "DataBalance.findByBalanceMessage", query = "SELECT d FROM DataBalance d WHERE d.balanceMessage = :balanceMessage"),
-		@NamedQuery(name = "DataBalance.findByPhone", query = "SELECT d FROM DataBalance d WHERE d.phone = :phone"),
 		@NamedQuery(name = "DataBalance.findByMessage", query = "SELECT d FROM DataBalance d WHERE d.message = :message"),
 		@NamedQuery(name = "DataBalance.findByRecordedAt", query = "SELECT d FROM DataBalance d WHERE d.recordedAt = :recordedAt"),
 		@NamedQuery(name = "DataBalance.findByCreatedAt", query = "SELECT d FROM DataBalance d WHERE d.createdAt = :createdAt"),
@@ -60,8 +59,6 @@ public class DataBalance implements Serializable {
 	private Double balance;
 	@Column(name = "balance_message")
 	private String balanceMessage;
-	@Column(name = "phone")
-	private String phone;
 	@Column(name = "message")
 	private String message;
 	@Column(name = "recorded_at")
@@ -112,14 +109,6 @@ public class DataBalance implements Serializable {
 
 	public void setBalanceMessage(String balanceMessage) {
 		this.balanceMessage = balanceMessage;
-	}
-
-	public String getPhone() {
-		return phone;
-	}
-
-	public void setPhone(String phone) {
-		this.phone = phone;
 	}
 
 	public String getMessage() {

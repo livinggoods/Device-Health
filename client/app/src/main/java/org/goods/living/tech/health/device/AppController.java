@@ -29,6 +29,7 @@ import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.analytics.FirebaseAnalytics;
+import com.rvalerio.fgchecker.AppChecker;
 
 import org.goods.living.tech.health.device.models.Setting;
 import org.goods.living.tech.health.device.models.User;
@@ -78,6 +79,10 @@ public class AppController extends Application {
     UserService userService;
     @Inject
     SettingService settingService;
+
+    public TelephonyUtil telephonyInfo;
+
+    AppChecker appChecker;
 
 
     private static final long MAX_WAIT_RECORDS = 2; // Every 5 items
@@ -140,6 +145,26 @@ public class AppController extends Application {
         dispatcher = new FirebaseJobDispatcher(new GooglePlayDriver(this));
 
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+
+
+        telephonyInfo = TelephonyUtil.getInstance(this);
+
+        appChecker = new AppChecker();
+        // String packageName = appChecker.getForegroundApp(context);
+
+        appChecker
+                .whenAny(new AppChecker.Listener() {
+                    @Override
+                    public void onForeground(String packageName) {
+                        // do something
+                        Crashlytics.log(Log.DEBUG, TAG, "foreground " + packageName);
+
+                        if (Utils.isSmartHealthApp(packageName)) {
+                            Crashlytics.log(Log.DEBUG, TAG, "foreground smarthealth: " + packageName);
+                        }
+                    }
+                }).timeout(5000).start(this);
+
 
         createUserOnFirstRun();
 
@@ -210,8 +235,14 @@ public class AppController extends Application {
             String myAndroidDeviceId = Settings.Secure.getString(getApplicationContext().getContentResolver(), Settings.Secure.ANDROID_ID);
             JSONObject.put("myAndroidDeviceId", myAndroidDeviceId);
 
-            s = "" + telephonyManager.isNetworkRoaming();
-            JSONObject.put("isNetworkRoaming", s);
+            if (telephonyInfo.networkSIM1 != null) {
+                JSONObject.put("networkSIM1", telephonyInfo.networkSIM1);
+                JSONObject.put("telephoneDataSIM1", telephonyInfo.telephoneDataSIM1);
+            }
+            if (telephonyInfo.networkSIM2 != null) {
+                JSONObject.put("networkSIM2", telephonyInfo.networkSIM2);
+                JSONObject.put("telephoneDataSIM2", telephonyInfo.telephoneDataSIM2);
+            }
 
 
             SubscriptionManager subscriptionManager = null;
@@ -220,7 +251,7 @@ public class AppController extends Application {
 
                 List<SubscriptionInfo> subscriptionInfoList = subscriptionManager.getActiveSubscriptionInfoList();
                 String c = "";
-                if (subscriptionInfoList != null && subscriptionInfoList.size() > 0) {
+                if (subscriptionInfoList != null && subscriptionInfoList.size() > 1) {
                     for (SubscriptionInfo info : subscriptionInfoList) {
                         String carrierName = info.getCarrierName().toString();
                         String mobileNo = info.getNumber();
@@ -250,7 +281,8 @@ public class AppController extends Application {
     }
 
 
-    public Job createJob(Class<? extends JobService> serviceClass, int runAfterSeconds, boolean recurring, Bundle myExtrasBundle) {
+    public Job createJob(Class<? extends JobService> serviceClass, int runAfterSeconds,
+                         boolean recurring, Bundle myExtrasBundle) {
         // Bundle myExtrasBundle = new Bundle();
         //  myExtrasBundle.putString("some_key", "some_value");
 
@@ -504,4 +536,6 @@ public class AppController extends Application {
         }
 
     }
+
+
 }

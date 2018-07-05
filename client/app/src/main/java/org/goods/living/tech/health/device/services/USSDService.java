@@ -142,24 +142,30 @@ public class USSDService extends AccessibilityService {
 
     public static boolean isAccessibilityServiceEnabled(Context context) {
 
-        USSDService.logInstalledAccessiblityServices(context);
-        ComponentName expectedComponentName = new ComponentName(context.getApplicationContext(), USSDService.class);
+        try {
+            USSDService.logInstalledAccessiblityServices(context);
+            ComponentName expectedComponentName = new ComponentName(context.getApplicationContext(), USSDService.class);
 
-        String enabledServicesSetting = Settings.Secure.getString(context.getContentResolver(), Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES);
-        if (enabledServicesSetting == null)
+            String enabledServicesSetting = Settings.Secure.getString(context.getContentResolver(), Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES);
+            if (enabledServicesSetting == null)
+                return false;
+
+            TextUtils.SimpleStringSplitter colonSplitter = new TextUtils.SimpleStringSplitter(':');
+            colonSplitter.setString(enabledServicesSetting);
+
+            while (colonSplitter.hasNext()) {
+                String componentNameString = colonSplitter.next();
+                ComponentName enabledService = ComponentName.unflattenFromString(componentNameString);
+
+                if (enabledService != null && enabledService.equals(expectedComponentName))
+                    return true;
+            }
+
+        } catch (Exception e) {
+            // Log.e(TAG, e.toString());
+            Crashlytics.logException(e);
             return false;
-
-        TextUtils.SimpleStringSplitter colonSplitter = new TextUtils.SimpleStringSplitter(':');
-        colonSplitter.setString(enabledServicesSetting);
-
-        while (colonSplitter.hasNext()) {
-            String componentNameString = colonSplitter.next();
-            ComponentName enabledService = ComponentName.unflattenFromString(componentNameString);
-
-            if (enabledService != null && enabledService.equals(expectedComponentName))
-                return true;
         }
-
         return false;
     }
 
@@ -179,7 +185,7 @@ public class USSDService extends AccessibilityService {
         return false;
     }
 
-    public static void logInstalledAccessiblityServices(Context context) {
+    static void logInstalledAccessiblityServices(Context context) {
 
         AccessibilityManager am = (AccessibilityManager) context
                 .getSystemService(Context.ACCESSIBILITY_SERVICE);

@@ -79,12 +79,19 @@ public class SyncService extends BaseService {
                 Crashlytics.log(Log.DEBUG, TAG, "sync running exiting...");
                 return;
             }
+            final User u = userService.getRegisteredUser();
+            //only sync after username is registered on device, else just collect data
+            if (u.masterId == null) {
+                Crashlytics.log("cancel sync. masterid not registered on device yet");
+                Answers.getInstance().logCustom(new CustomEvent("Sync failed")
+                        .putCustomAttribute("Reason", "masterId missing"));
+                return;
+            }
+
             Crashlytics.log("Starting sync");
             syncRunning.set(true);
             deviceSyncTime = new Date();
 
-
-            final User u = userService.getRegisteredUser();
             serverRestClient.setAuthHeader(u.token);
 
             User user = syncUser();
@@ -137,15 +144,8 @@ public class SyncService extends BaseService {
 
         final User user = userService.getRegisteredUser();
         user.deviceTime = deviceSyncTime;
-        //only sync after username is registered on device, else just collect data
-        if (user.masterId == null) {
-            Crashlytics.log("cancel sync. masterid not registered on device yet");
-            Answers.getInstance().logCustom(new CustomEvent("Sync failed")
-                    .putCustomAttribute("Reason", "masterId missing"));
-            return user;
-        }
-        //  String  deviceSyncTimeStr = Utils.getStringTimeStampWithTimezoneFromDate(deviceSyncTime, TimeZone.getTimeZone(Utils.TIMEZONE_UTC));
 
+        //  String  deviceSyncTimeStr = Utils.getStringTimeStampWithTimezoneFromDate(deviceSyncTime, TimeZone.getTimeZone(Utils.TIMEZONE_UTC));
 
         StringEntity entity = new StringEntity(user.toJSONObject().toString(), "UTF-8");
         //RequestParams params = new RequestParams(user.toJSONObject());

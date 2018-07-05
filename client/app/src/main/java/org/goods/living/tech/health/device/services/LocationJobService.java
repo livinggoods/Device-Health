@@ -74,8 +74,6 @@ public class LocationJobService extends com.firebase.jobdispatcher.JobService {
                     setting.loglocationOffEvent = true;
                     appController.updateSetting(setting);
                 }
-                Crashlytics.log(Log.DEBUG, TAG, "flushLocations");
-                // PermissionsUtils.flushLocations();//force location dump if any collected
                 appController.requestLocationUpdates(appController.getUser().updateInterval);
                 appController.checkAndRequestPerms();
 

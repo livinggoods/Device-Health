@@ -24,7 +24,6 @@ public class DataBalance extends BaseModel {
     public Double balance;
     public String balanceMessage;
     public String message;
-    public String phone;
 
     @Transient
     public JSONObject infoObj;

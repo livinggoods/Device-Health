@@ -76,6 +76,7 @@ public class UserService extends BaseService {
 		String androidId = data.has("androidId") ? data.get("androidId").asText() : null;
 		String deviceTimeStr = data.has("deviceTime") ? data.get("deviceTime").asText() : null;
 		String country = data.has("country") ? data.get("country").asText() : null;
+		String token = data.has("token") ? data.get("token").asText() : null;
 
 		Date deviceTime = Utils.getDateFromTimeStampWithTimezone(deviceTimeStr,
 				TimeZone.getTimeZone(Utils.TIMEZONE_UTC));// at sync/toJSONObject time set this - we can use it to get
@@ -104,6 +105,9 @@ public class UserService extends BaseService {
 			users.setName(mu.getName());
 
 			// generate token
+			if (token == null) {
+				token = getJWT(users);
+			}
 
 		}
 
@@ -124,14 +128,13 @@ public class UserService extends BaseService {
 		users.setCreatedAt(new Date());
 		usersJpaController.create(users);
 
-		String token = getJWT(users);
-
 		ObjectNode o = (ObjectNode) data;
 		o.put("masterId", users.getId());
 		o.put("updateInterval", users.getUpdateInterval());// DEFAULT_UPDATE_INTERVAL);
 		o.put("phone", users.getPhone());
 		o.put("chvId", users.getChvId());
-		o.put("token", token);
+		if (token != null)
+			o.put("token", token);
 		if (clockDrift != null)
 			o.put("clockDrift", clockDrift);
 
@@ -298,7 +301,7 @@ public class UserService extends BaseService {
 		long expMillis = nowMillis + tokenLife;
 		Date expireDate = new Date(expMillis);
 
-		System.out.println(expireDate.toString());
+		logger.debug("token expirely  userid:expire  " + user.getId() + " : " + expireDate.toString());
 
 		return Jwts.builder().setSubject(user.getUsername()).setId(user.getId().toString())
 				.claim("roles", UserCategory.USER).claim("name", user.getName()).claim("chvId", user.getChvId())

@@ -19,6 +19,7 @@ import org.goods.living.tech.health.device.jpa.controllers.UsersJpaController;
 import org.goods.living.tech.health.device.jpa.dao.DataBalance;
 import org.goods.living.tech.health.device.jpa.dao.Users;
 import org.goods.living.tech.health.device.models.Result;
+import org.goods.living.tech.health.device.service.security.qualifier.Secured;
 import org.goods.living.tech.health.device.utility.Constants;
 import org.goods.living.tech.health.device.utility.JSonHelper;
 
@@ -47,6 +48,7 @@ public class DatabalanceService extends BaseService {
 	public DatabalanceService() {
 	}
 
+	@Secured
 	@POST
 	// @Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
@@ -75,7 +77,6 @@ public class DatabalanceService extends BaseService {
 			model.setBalance(j.has("balance") ? j.get("balance").asDouble() : null);
 			model.setBalanceMessage(j.has("balanceMessage") ? j.get("balanceMessage").asText() : null);
 			model.setMessage(j.has("message") ? j.get("message").asText() : null);
-			model.setPhone(j.has("phone") ? j.get("phone").asText() : null);
 			model.setInfo(j.has("info") ? j.get("info") : null);
 			if (j.has("recordedAt")) {
 				Date recordedAt = dateFormat.parse(j.get("recordedAt").asText());

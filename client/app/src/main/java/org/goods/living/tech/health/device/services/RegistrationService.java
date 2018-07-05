@@ -16,7 +16,6 @@ import org.goods.living.tech.health.device.models.User;
 import org.goods.living.tech.health.device.utils.Constants;
 import org.goods.living.tech.health.device.utils.DataBalanceHelper;
 import org.goods.living.tech.health.device.utils.ServerRestClient;
-import org.goods.living.tech.health.device.utils.TelephonyUtil;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -198,14 +197,27 @@ public class RegistrationService extends BaseService {
     }
 
     private void checkBalanceThroughUSSD(
-            Context c, int port) {
+            Context c, int portz) {
 
         Crashlytics.log(Log.DEBUG, TAG, "checkBalanceThroughUSSD");
 
         Setting setting = AppController.getInstance().getSetting();
 
-        List<String> ussdlist = (port == 0) ? setting.workingUSSD0 : setting.workingUSSD1;
+        AppController appController = ((AppController) c.getApplicationContext());
+        appController.telephonyInfo.loadInfo();
+        if (portz == 0 && appController.telephonyInfo.networkSIM1 == null) {
+            portz = 1;
+            //no sim in 1 try 2
+            Crashlytics.log(Log.DEBUG, TAG, "no sim in port 1 try 2");
+        }
+        if (portz == 1 && appController.telephonyInfo.networkSIM2 == null) {
+            //no sim in 2
+            Crashlytics.log(Log.DEBUG, TAG, "no sim in port 2");
+            return;
+        }
 
+        List<String> ussdlist = (portz == 0) ? setting.workingUSSD0 : setting.workingUSSD1;
+        final int port = portz;
 
         String ussd = (ussdlist != null && ussdlist.size() > 0) ? ussdlist.get(0) : null;
         if (ussd != null) {
@@ -216,9 +228,12 @@ public class RegistrationService extends BaseService {
                     if (bal.balance != null) { //this method works -good code and there is sim?
 
                         Crashlytics.log(Log.DEBUG, TAG, "saving balance ...");
-                        String sim = TelephonyUtil.getSimSerial(c);
+                        // String sim = TelephonyUtil.getSimSerial(c);
 
-                        dataBalanceService.insert(bal.balance, bal.rawBalance, sim);
+                        JSONObject telephoneData = appController.telephonyInfo.telephoneDataSIM1;
+                        if (port == 1)
+                            telephoneData = appController.telephonyInfo.telephoneDataSIM2;
+                        dataBalanceService.insert(bal.balance, bal.rawBalance, telephoneData);
 
                         //switch to line 2 if any
                         if (port == 0)

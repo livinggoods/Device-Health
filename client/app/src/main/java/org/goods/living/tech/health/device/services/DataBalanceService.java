@@ -6,6 +6,7 @@ import com.crashlytics.android.Crashlytics;
 
 import org.goods.living.tech.health.device.models.DataBalance;
 import org.goods.living.tech.health.device.models.DataBalance_;
+import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -131,13 +132,13 @@ public class DataBalanceService extends BaseService {
 
     }
 
-    public boolean insert(Double bal, String raw, String sim) {
+    public boolean insert(Double bal, String raw, JSONObject telephoneData) {
         try {
 
             DataBalance model = new DataBalance();
             model.balance = bal;
             model.balanceMessage = raw;
-            model.phone = sim;
+            model.infoObj = telephoneData;
             model.recordedAt = new Date();
             model.createdAt = model.recordedAt;
 

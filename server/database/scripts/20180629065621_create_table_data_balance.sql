@@ -26,7 +26,6 @@ CREATE TABLE events.data_balance
    user_id bigint NOT NULL,
    balance double precision ,
    balance_message character varying(256),
-   phone character varying(128),
    info jsonb,
    message character varying(256),
    recorded_at timestamp with time zone,

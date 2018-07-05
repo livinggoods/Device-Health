@@ -112,6 +112,7 @@ dependencies {
     implementation group: 'org.slf4j', name: 'slf4j-android', version: '1.7.25'
 
     implementation 'agency.tango.android:material-intro-screen:0.0.5'
+    implementation 'com.rvalerio:fgchecker:1.1.0'
 
 }
 

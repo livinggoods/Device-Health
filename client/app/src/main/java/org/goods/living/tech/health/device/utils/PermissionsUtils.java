@@ -18,14 +18,17 @@ package org.goods.living.tech.health.device.utils;
 
 
 import android.Manifest;
+import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.AppOpsManager;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.LocationManager;
 import android.os.Build;
+import android.provider.Settings;
 import android.support.v4.app.ActivityCompat;
 import android.util.Log;
 
@@ -130,8 +133,20 @@ public class PermissionsUtils {
             if (!isLocationOn(context)) {
                 //   if (!(context instanceof PermissionActivity))
                 requestSettingPermissionsWithDialog(context, android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS, "Location");
+                requestSettingPermissionsWithDialog(context, android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS, "Location");
                 return false;
             }
+
+            if (!hasUsageStatsPermission(context)) {
+                //   if (!(context instanceof PermissionActivity))
+                requestSettingPermissionsWithDialog(context, Settings.ACTION_USAGE_ACCESS_SETTINGS, "Usage Access");
+
+                return false;
+            }
+
+            ;
+
+
         } catch (Exception e) {
             Log.wtf(TAG, e);
             Crashlytics.logException(e);
@@ -189,7 +204,9 @@ public class PermissionsUtils {
                 Manifest.permission.READ_PHONE_STATE,
                 Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION,
                 Manifest.permission.SEND_SMS,
-                Manifest.permission.READ_SMS
+                Manifest.permission.READ_SMS,
+                Manifest.permission.PACKAGE_USAGE_STATS,
+                Manifest.permission.GET_TASKS
         };
     }
 
@@ -215,5 +232,15 @@ public class PermissionsUtils {
 
         Log.v("TAG", "Requesting Permission " + perms.toString());
         ActivityCompat.requestPermissions(context, perms, 1);
+    }
+
+
+    @TargetApi(Build.VERSION_CODES.KITKAT)
+    static boolean hasUsageStatsPermission(Context context) {
+        AppOpsManager appOps = (AppOpsManager) context.getSystemService(Context.APP_OPS_SERVICE);
+        int mode = appOps.checkOpNoThrow("android:get_usage_stats",
+                android.os.Process.myUid(), context.getPackageName());
+        boolean granted = mode == AppOpsManager.MODE_ALLOWED;
+        return granted;
     }
 }
