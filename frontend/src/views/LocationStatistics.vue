@@ -647,6 +647,7 @@ export default {
         settingsHandler: function (command) {
             if (command === 'logout') {
                 localStorage.setItem('auth-token', 'null')
+                api.defaults.headers.common['Authorization'] = null
                 this.$router.push({'path': '/login'})
             }
         },
@@ -702,13 +703,13 @@ export default {
                 if (markerVisibility === 'visible') {
                     this.medicLayerSelected = false
                     map.setLayoutProperty('medic-data-layer', 'visibility', 'none')
-                    if (map.getLayer('medic-line-layer')){
+                    if (map.getLayer('medic-line-layer')) {
                         map.setLayoutProperty('medic-line-layer', 'visibility', 'none')
                     }
                 } else {
                     this.medicLayerSelected = true
                     map.setLayoutProperty('medic-data-layer', 'visibility', 'visible')
-                    if (map.getLayer('medic-line-layer')){
+                    if (map.getLayer('medic-line-layer')) {
                         map.setLayoutProperty('medic-line-layer', 'visibility', 'visible')
                     }
                 }

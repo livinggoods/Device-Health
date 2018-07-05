@@ -66,6 +66,8 @@ export default {
                     api.post('/admin/login', this.user).then(function (response) {
                         if (response.data.status === '200') {
                             window.localStorage.setItem('auth-token', response.data.token)
+                            api.defaults.headers.common['Authorization'] = 'Bearer ' + response.data.token
+                            console.log(api.defaults.headers.common)
                             self.$router.push({ path: '/' })
                         } else {
                             toastr.error('Email/Password mismatch. Please try again')
