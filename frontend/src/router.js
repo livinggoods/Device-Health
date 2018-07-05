@@ -30,7 +30,8 @@ export default new Router({
         },
         {
             path: '/make/new/admin/account/now',
-            component: NewAcc
+            component: NewAcc,
+            meta: { requiresAuth: true }
         },
         {
             path: '/password/reset',

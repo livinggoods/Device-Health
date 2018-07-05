@@ -9,6 +9,7 @@ import org.apache.commons.mail.SimpleEmail;
 import org.codehaus.jackson.JsonNode;
 import org.goods.living.tech.health.device.jpa.controllers.AdminUsersJpaController;
 import org.goods.living.tech.health.device.jpa.dao.AdminUsers;
+import org.goods.living.tech.health.device.service.security.qualifier.Secured;
 import org.goods.living.tech.health.device.service.security.qualifier.UserCategory;
 import org.goods.living.tech.health.device.utility.Constants;
 import org.goods.living.tech.health.device.utility.JSonHelper;
@@ -95,7 +96,7 @@ public class AdminService extends BaseService {
 
     }
 
-    //Remove in production
+    @Secured(value = UserCategory.ADMIN)
     @POST
     @Consumes("application/json")
     @Produces("application/json")
