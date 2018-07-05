@@ -17,6 +17,8 @@ import org.mindrot.jbcrypt.BCrypt;
 
 import java.io.InputStream;
 import java.net.URLEncoder;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.UUID;
 
@@ -71,7 +73,7 @@ public class AdminService extends BaseService {
 
             if (user != null && BCrypt.checkpw(password, user.getPassword())) {
                 String token = getJWT(user.getId(), email);
-                
+
                 response.put("status", "200");
                 response.put("token", token);
                 response.put("Message", "Login Successful");
@@ -84,6 +86,41 @@ public class AdminService extends BaseService {
         } else {
             response.put("status", "404"); // Add meaningful application codes
             response.put("Message", "Login not Successful");
+
+        }
+        return response;
+
+    }
+
+    //Remove in production
+    @POST
+    @Consumes("application/json")
+    @Produces("application/json")
+    @Path(Constants.URL.NEWACC)
+    public JSONObject create(InputStream incomingData) throws Exception {
+
+        JsonNode data = JSonHelper.getJsonNode(incomingData);
+        String email = data.has("email") ? data.get("email").asText() : null;
+        String password = data.has("password") ? data.get("password").asText() : null;
+        String name = data.has("name") ? data.get("name").asText() : null;
+        JSONObject response = new JSONObject();
+        if (email != null && password != null && name != null) {
+            AdminUsers admin= new AdminUsers();
+            admin.setName(name);
+            admin.setPassword(BCrypt.hashpw(password, BCrypt.gensalt()));
+            Date date = new Date();
+            admin.setCreatedAt(date);
+            admin.setEmail(email);
+            boolean status = adminUsersJpaController.create(admin);
+
+            if(status==true){
+                response.put("status", "200");
+                response.put("Message", "Registration Successful");
+            }
+
+        } else {
+            response.put("status", "404"); // Add meaningful application codes
+            response.put("Message", "Registration not Successful");
 
         }
         return response;

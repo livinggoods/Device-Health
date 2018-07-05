@@ -102,4 +102,18 @@ public class AdminUsersJpaController implements Serializable {
         }
 
     }
+    public boolean create(AdminUsers user) {
+        EntityManager em = getEntityManager();
+        em.getTransaction().begin();
+        try{
+           em.persist(user);
+            em.getTransaction().commit();
+            return true;
+        }
+        catch (Exception e){
+            e.printStackTrace();
+            return false;
+        }
+
+    }
 }
