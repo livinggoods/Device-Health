@@ -16,19 +16,19 @@
                     </a>
                 </li>
                 <li>
-                    <a href="/#/error">
+                    <a href="/error">
                         <i class="pe-7s-graph1"></i>
                         <p>Data Usage Statistics</p>
                     </a>
                 </li>
                 <li>
-                    <a href="/#/error">
+                    <a href="/error">
                         <i class="pe-7s-battery"></i>
                         <p>Battery Statistics</p>
                     </a>
                 </li>
                 <li>
-                    <a href="/#/error">
+                    <a href="/error">
                         <i class="pe-7s-user"></i>
                         <p>User Profile</p>
                     </a>

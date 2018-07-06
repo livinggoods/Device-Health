@@ -162,30 +162,44 @@ public class UserService extends BaseService {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path(Constants.URL.UPDATE)
 	public Result<JsonNode> update(InputStream incomingData) throws Exception {
-		logger.debug("update");
-		JsonNode data = JSonHelper.getJsonNode(incomingData);
 
-		Users users = getCurrentUser();
+		Result<JsonNode> result = null;
+		try{
 
-		String deviceTimeStr = data.has("deviceTime") ? data.get("deviceTime").asText() : null;
+			logger.debug("update");
+			JsonNode data = JSonHelper.getJsonNode(incomingData);
 
-		Date deviceTime = Utils.getDateFromTimeStampWithTimezone(deviceTimeStr,
-				TimeZone.getTimeZone(Utils.TIMEZONE_UTC));// at sync/toJSONObject time set this - we can use it to get
-		users.setDeviceTime(deviceTime);
+			Users users = getCurrentUser();
 
-		usersJpaController.update(users);
+			String deviceTimeStr = data.has("deviceTime") ? data.get("deviceTime").asText() : null;
 
-		ObjectNode o = (ObjectNode) data;
-		o.put("masterId", users.getId());
-		o.put("updateInterval", users.getUpdateInterval());// DEFAULT_UPDATE_INTERVAL);
+			Date deviceTime = Utils.getDateFromTimeStampWithTimezone(deviceTimeStr,
+					TimeZone.getTimeZone(Utils.TIMEZONE_UTC));// at sync/toJSONObject time set this - we can use it to get
+			users.setDeviceTime(deviceTime);
 
-		// NodeBean toValue = mapper.convertValue(node, NodeBean.cla
+			usersJpaController.update(users);
 
-		boolean shouldforceupdate = true;// shouldForceUpdate(username, versionCode);
-		o.put("serverApi", applicationParameters.getServerApi());
-		o.put("forceUpdate", shouldforceupdate);
+			ObjectNode o = (ObjectNode) data;
+			o.put("masterId", users.getId());
+			o.put("updateInterval", users.getUpdateInterval());// DEFAULT_UPDATE_INTERVAL);
 
-		Result<JsonNode> result = new Result<JsonNode>(true, "", o);
+			// NodeBean toValue = mapper.convertValue(node, NodeBean.cla
+
+			boolean shouldforceupdate = true;// shouldForceUpdate(username, versionCode);
+			o.put("serverApi", applicationParameters.getServerApi());
+			o.put("forceUpdate", shouldforceupdate);
+
+			result = new Result<JsonNode>(true, "", o);
+
+
+		}catch(Exception ex){
+
+			System.out.println(ex.getMessage());
+
+		}finally {
+			System.out.println("Finally is being reached...you can get me exception from here");
+		}
+
 		return result;
 
 	}

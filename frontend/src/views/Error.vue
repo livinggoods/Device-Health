@@ -10,7 +10,7 @@
             </div>
             <div class="context sign-text-color">
                 Oops, the page you're<br>
-                looking for does not exist.
+                looking for is under construction.
             </div>
         </div>
     </div>
