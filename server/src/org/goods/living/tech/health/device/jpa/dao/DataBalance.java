@@ -15,7 +15,6 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
-import javax.persistence.Lob;
 import javax.persistence.ManyToOne;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
@@ -23,6 +22,11 @@ import javax.persistence.Table;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 import javax.xml.bind.annotation.XmlRootElement;
+
+import org.hibernate.annotations.Type;
+import org.hibernate.annotations.TypeDef;
+
+import com.vladmihalcea.hibernate.type.json.JsonNodeBinaryType;
 
 /**
  *
@@ -39,13 +43,12 @@ import javax.xml.bind.annotation.XmlRootElement;
 		@NamedQuery(name = "DataBalance.findByRecordedAt", query = "SELECT d FROM DataBalance d WHERE d.recordedAt = :recordedAt"),
 		@NamedQuery(name = "DataBalance.findByCreatedAt", query = "SELECT d FROM DataBalance d WHERE d.createdAt = :createdAt"),
 		@NamedQuery(name = "DataBalance.findByUpdatedAt", query = "SELECT d FROM DataBalance d WHERE d.updatedAt = :updatedAt") })
+@TypeDef(name = "jsonb-node", typeClass = JsonNodeBinaryType.class)
 public class DataBalance implements Serializable {
 
-	@Lob
-	@Column(name = "info")
-	private Object info;
-	@Column(name = "ussd_balance_code")
-	private String ussdBalanceCode;
+	@Type(type = "jsonb-node")
+	@Column(name = "info", columnDefinition = "jsonb")
+	private com.fasterxml.jackson.databind.JsonNode info;
 
 	private static final long serialVersionUID = 1L;
 	@Id
@@ -176,20 +179,12 @@ public class DataBalance implements Serializable {
 		return "org.goods.living.tech.health.device.jpa.dao.DataBalance[ id=" + id + " ]";
 	}
 
-	public Object getInfo() {
+	public com.fasterxml.jackson.databind.JsonNode getInfo() {
 		return info;
 	}
 
-	public void setInfo(Object info) {
+	public void setInfo(com.fasterxml.jackson.databind.JsonNode info) {
 		this.info = info;
-	}
-
-	public String getUssdBalanceCode() {
-		return ussdBalanceCode;
-	}
-
-	public void setUssdBalanceCode(String ussdBalanceCode) {
-		this.ussdBalanceCode = ussdBalanceCode;
 	}
 
 }

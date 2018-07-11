@@ -79,6 +79,9 @@ public class MedicJpaController implements Serializable {
 			// Query q = em.createQuery(cq);
 
 			return l;
+		} catch (Exception e) {
+			logger.error(e);
+			return null;
 		} finally {
 			em.close();
 		}
@@ -104,8 +107,10 @@ public class MedicJpaController implements Serializable {
 			mu.setPhone((String) o[4]);
 			// l.add(mu);
 			// }
-
 			return mu;
+		} catch (Exception e) {
+			logger.error(e);
+			return null;
 		} finally {
 			em.close();
 		}
@@ -162,6 +167,9 @@ public class MedicJpaController implements Serializable {
 			}
 			return activities;
 
+		} catch (Exception e) {
+			logger.error(e);
+			return null;
 		} finally {
 
 		}

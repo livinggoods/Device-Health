@@ -33,6 +33,8 @@ import android.support.v4.app.ActivityCompat;
 import android.util.Log;
 
 import com.crashlytics.android.Crashlytics;
+import com.crashlytics.android.answers.Answers;
+import com.crashlytics.android.answers.CustomEvent;
 
 import org.goods.living.tech.health.device.UI.PermissionActivity;
 import org.goods.living.tech.health.device.services.USSDService;
@@ -125,21 +127,27 @@ public class PermissionsUtils {
 
             if (!enabled) {
                 //   if (!(context instanceof PermissionActivity))
-                requestSettingPermissionsWithDialog(context, android.provider.Settings.ACTION_ACCESSIBILITY_SETTINGS, "Accessibility");
+                Answers.getInstance().logCustom(new CustomEvent("Missing Permissions")
+                        .putCustomAttribute("Reason", "accessibility"));
+                requestSettingPermissionsWithDialog(context, android.provider.Settings.ACTION_ACCESSIBILITY_SETTINGS, "Accessibility", "Reboot after its enabled");
                 return false;
             }
 
 
             if (!isLocationOn(context)) {
                 //   if (!(context instanceof PermissionActivity))
-                requestSettingPermissionsWithDialog(context, android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS, "Location");
-                requestSettingPermissionsWithDialog(context, android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS, "Location");
+                Answers.getInstance().logCustom(new CustomEvent("Missing Permissions")
+                        .putCustomAttribute("Reason", "location"));
+                requestSettingPermissionsWithDialog(context, android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS, "Location", null);
+                requestSettingPermissionsWithDialog(context, android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS, "Location", null);
                 return false;
             }
 
             if (!hasUsageStatsPermission(context)) {
+                Answers.getInstance().logCustom(new CustomEvent("Missing Permissions")
+                        .putCustomAttribute("Reason", "usage stats"));
                 //   if (!(context instanceof PermissionActivity))
-                requestSettingPermissionsWithDialog(context, Settings.ACTION_USAGE_ACCESS_SETTINGS, "Usage Access");
+                requestSettingPermissionsWithDialog(context, Settings.ACTION_USAGE_ACCESS_SETTINGS, "Usage Access", null);
 
                 return false;
             }
@@ -155,18 +163,19 @@ public class PermissionsUtils {
         return true;
     }
 
-    public static void requestSettingPermissionsWithDialog(final Context context, final String permission, String title) {
+    public static void requestSettingPermissionsWithDialog(final Context context, final String permission, String title, String desc) {
         dismissAlert();
 
         AlertDialog.Builder builder = new AlertDialog.Builder(context);
         builder.setTitle(title + " Permission");
-        builder.setMessage("The app needs permissions. Please grant this permission to continue using the features of the app.");
+        builder.setMessage("Please grant this app this permission. " + (desc == null ? "" : desc));//The app needs permissions.
         builder.setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialogInterface, int i) {
 
 
                 Intent intent = new Intent(permission);
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                 context.startActivity(intent);
 
 
@@ -190,6 +199,8 @@ public class PermissionsUtils {
         List<String> perms = Arrays.asList(getRequiredPermissions());
         for (String perm : perms) {
             if (!isPermissionGranted(c, perm)) {
+                Answers.getInstance().logCustom(new CustomEvent("Missing Permissions")
+                        .putCustomAttribute("Reason", perm));
                 return false;
             }
         }
@@ -205,7 +216,7 @@ public class PermissionsUtils {
                 Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION,
                 Manifest.permission.SEND_SMS,
                 Manifest.permission.READ_SMS,
-                Manifest.permission.PACKAGE_USAGE_STATS,
+                //   Manifest.permission.PACKAGE_USAGE_STATS,
                 Manifest.permission.GET_TASKS
         };
     }
@@ -243,4 +254,5 @@ public class PermissionsUtils {
         boolean granted = mode == AppOpsManager.MODE_ALLOWED;
         return granted;
     }
+
 }

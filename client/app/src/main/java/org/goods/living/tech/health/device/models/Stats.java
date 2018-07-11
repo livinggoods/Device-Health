@@ -31,6 +31,9 @@ public class Stats extends BaseModel {
     public Date createdAt;
     Date updatedAt;
 
+    public Integer batteryLevel;
+    public Double brightness;
+
 
     public Stats() {
 
@@ -52,6 +55,9 @@ public class Stats extends BaseModel {
                 String formattedDate = Utils.getStringTimeStampWithTimezoneFromDate(recordedAt, TimeZone.getTimeZone(Utils.TIMEZONE_UTC));
                 JSONObject.put("recordedAt", formattedDate);
             }
+
+            if (batteryLevel != null) JSONObject.put("batteryLevel", batteryLevel);
+            if (brightness != null) JSONObject.put("brightness", brightness);
 
 
             return JSONObject;

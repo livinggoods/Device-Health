@@ -55,6 +55,10 @@ public class Stats implements Serializable {
 	private Double longitude;
 	@Column(precision = 17, scale = 17)
 	private Double accuracy;
+	@Column(precision = 17, scale = 17)
+	private Double brightness;
+	@Column(name = "battery_level", precision = 17, scale = 17)
+	private Double batteryLevel;
 	@Column(length = 128)
 	private String provider;
 	@Column(name = "recorded_at")
@@ -121,6 +125,22 @@ public class Stats implements Serializable {
 
 	public void setProvider(String provider) {
 		this.provider = provider;
+	}
+
+	public Double getBrightness() {
+		return brightness;
+	}
+
+	public void setBrightness(Double brightness) {
+		this.brightness = brightness;
+	}
+
+	public Double getBatteryLevel() {
+		return batteryLevel;
+	}
+
+	public void setBatteryLevel(Double batteryLevel) {
+		this.batteryLevel = batteryLevel;
 	}
 
 	public Date getRecordedAt() {

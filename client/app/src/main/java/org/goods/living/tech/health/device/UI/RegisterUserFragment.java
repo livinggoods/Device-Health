@@ -38,6 +38,7 @@ import com.hbb20.CountryCodePicker;
 
 import org.goods.living.tech.health.device.AppController;
 import org.goods.living.tech.health.device.R;
+import org.goods.living.tech.health.device.models.DataBalance;
 import org.goods.living.tech.health.device.models.Setting;
 import org.goods.living.tech.health.device.models.User;
 import org.goods.living.tech.health.device.services.DataBalanceService;
@@ -48,6 +49,7 @@ import org.goods.living.tech.health.device.utils.SnackbarUtil;
 import org.goods.living.tech.health.device.utils.Utils;
 
 import java.util.Date;
+import java.util.List;
 
 import javax.annotation.Nullable;
 import javax.inject.Inject;
@@ -146,7 +148,14 @@ public class RegisterUserFragment extends SlideFragment {
     }
 
     void loadData() {
+        User user = userService.getRegisteredUser();
+        usernameText.setText(user.username);
+        ccp.setFullNumber(user.phone);
 
+        List<DataBalance> l = dataBalanceService.getLatestRecords(1l);
+        DataBalance dataBalance = l.size() > 0 ? l.get(0) : null;
+
+        balanceTextView.setText(getString(R.string.data_balance, dataBalance == null ? null : dataBalance.balance));
     }
 
     /**
@@ -179,11 +188,11 @@ public class RegisterUserFragment extends SlideFragment {
         String username = usernameText.getText().toString().trim();
         user.username = username.isEmpty() ? null : username;
 
+
         String phone = ccp.getFullNumberWithPlus().trim();
         //  PhoneNumberUtil pnu = PhoneNumberUtil.getInstance();
-
-        user.phone = phone.isEmpty() ? null : phone;
-        ccp.setFullNumber(user.phone);
+        String numOnly = phone.replace(ccp.getSelectedCountryCodeWithPlus(), "");
+        user.phone = numOnly.isEmpty() ? null : phone;
         user.country = ccp.getSelectedCountryNameCode();
 
         user.recordedAt = new Date();
@@ -192,7 +201,7 @@ public class RegisterUserFragment extends SlideFragment {
         SnackbarUtil.showSnack(this.getActivity(), "saving CHV information ... ");
 
 
-        Context c = this.getActivity();
+        Activity c = this.getActivity();
 
         Utils.showProgressDialog(c);
 
@@ -202,14 +211,14 @@ public class RegisterUserFragment extends SlideFragment {
 
                 User updatedUser = registrationService.register(c);
                 if (updatedUser.masterId != null) {
-                    //SnackbarUtil.showSnack(c, "CHV record saved");
+                    SnackbarUtil.showSnack(c, "CHV record saved. Checking for balance code...");
 
                     //step 2 get ussdcodes
                     registrationService.checkBalanceThroughUSSD(c);//will fetch ussdcodes
 
 
                 } else {
-                    //  SnackbarUtil.showSnack(c, "Could not save record. Try again");
+                    SnackbarUtil.showSnack(c, "Could not save record. Try again");
                 }
 
                 new Handler(Looper.getMainLooper()).post(new Runnable() {

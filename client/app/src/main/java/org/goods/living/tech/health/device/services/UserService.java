@@ -3,6 +3,7 @@ package org.goods.living.tech.health.device.services;
 import com.crashlytics.android.Crashlytics;
 
 import org.goods.living.tech.health.device.models.User;
+import org.goods.living.tech.health.device.models.User_;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -45,7 +46,7 @@ public class UserService extends BaseService {
 
             //if 1st run - no user record exists.
             //    Box<User> userBox = boxStore.boxFor(User.class);
-            User user = box.query().build().findFirst();//.orderDesc(User_.createdAt).build().findFirst();
+            User user = box.query().orderDesc(User_.createdAt).build().findFirst();
 
             return user;
         } catch (Exception e) {

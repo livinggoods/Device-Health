@@ -26,8 +26,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 
-
+@Singleton
 public class DataBalanceHelper {
     public String TAG = this.getClass().getSimpleName();
 
@@ -64,7 +65,7 @@ public class DataBalanceHelper {
 
     long dialTime;
 
-    public static final int USSD_LIMIT = 3;
+    public static final int USSD_LIMIT = 8;
     CountDownTimer timer;
 
     public static final String USSD_KE1 = "*100*6*6*2#";// "*100*6*4*2#"; "*100#,6,6,2";//"*100*1*1#";
@@ -74,14 +75,23 @@ public class DataBalanceHelper {
 
 
     public Double extractBalance(String rawText) {
-        Pattern p = Pattern.compile("-?\\d+\\s?MB");
-        Matcher m = p.matcher(rawText);
-        Double total = null;
-        while (m.find()) {
-            Double d = Double.parseDouble(m.group().replaceAll("[^0-9?!\\.]", ""));
-            total += d;
-            Crashlytics.log(Log.DEBUG, TAG, "MB: " + d.toString());
 
+        Double total = null;
+        try {
+            Pattern p = Pattern.compile(USSDService.bundlePattern);
+            Matcher m = p.matcher(rawText);
+
+            while (m.find()) {
+                String s = m.group();
+                s = s.replaceAll("[^\\d.]", "");
+                Double d = Double.parseDouble(s);
+                if (d != null)
+                    total = total == null ? d : (total + d);
+                Crashlytics.log(Log.DEBUG, TAG, "MB: " + d);
+
+            }
+        } catch (Exception e) {
+            Crashlytics.logException(e);
         }
         return total;
     }
@@ -128,11 +138,15 @@ public class DataBalanceHelper {
         USSDService.USSDListener listen = new USSDService.USSDListener() {
             @Override
             public void onUSSDReceived(String raw) {
-                USSDService.unbindListener();
+
 
                 bal.balance = extractBalance(raw);
                 bal.rawBalance = raw;
                 //  list.add(bal);
+                if (bal.balance != null) {
+                    setDialTimeComplete();
+                    USSDService.unbindListener();
+                }
 
             }
         };
@@ -151,6 +165,7 @@ public class DataBalanceHelper {
         //works only for API >= 21
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
             intent.putExtra("android.telecom.extra.PHONE_ACCOUNT_HANDLE", "");
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
 
         USSDService.bindListener(listen);
 
@@ -199,20 +214,15 @@ public class DataBalanceHelper {
         long passed = now - dialTime;
         long secondsPassed = passed / 1000;
 
-        return (secondsPassed <= USSD_LIMIT);
+        return (secondsPassed >= USSD_LIMIT);
 
     }
 
-    public boolean fullDialTimeComplete() {
-
-        Calendar c = Calendar.getInstance();
-        long now = c.getTimeInMillis();
-        long passed = now - dialTime;
-        long secondsPassed = passed / 1000;
-
-        return (secondsPassed <= (USSD_LIMIT * 2));
+    public void setDialTimeComplete() {
+        dialTime = dialTime - (USSD_LIMIT * 1000);
 
     }
+
 
 //    public static String getNextUSSDInput() {
 //

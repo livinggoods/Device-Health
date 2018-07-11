@@ -27,10 +27,12 @@ import android.app.ProgressDialog;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageInfo;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.location.Location;
+import android.os.BatteryManager;
 import android.os.Build;
 import android.os.Handler;
 import android.os.HandlerThread;
@@ -41,6 +43,8 @@ import android.support.annotation.NonNull;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.TaskStackBuilder;
 import android.util.Log;
+import android.view.Window;
+import android.view.WindowManager;
 
 import com.crashlytics.android.Crashlytics;
 
@@ -259,24 +263,6 @@ public class Utils {
         return packageName.contains(SMARTHEALTH);
     }
 
-    public static boolean isSmartHealthAppRunning(final Context context) {
-        return isAppRunning(context);
-    }
-
-    static boolean isAppRunning(final Context context) {
-        final ActivityManager activityManager = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
-        final List<ActivityManager.RunningAppProcessInfo> procInfos = activityManager.getRunningAppProcesses();
-        if (procInfos != null) {
-            Crashlytics.log(Log.DEBUG, TAG, "running apps:");
-            for (final ActivityManager.RunningAppProcessInfo processInfo : procInfos) {
-                Crashlytics.log(Log.DEBUG, TAG, processInfo.processName);
-                if (isSmartHealthApp(processInfo.processName)) { //contains not full match processInfo.processName.contains(packageName)
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
 
     public static boolean isForeground(Context ctx, String myPackage) {
 
@@ -295,4 +281,49 @@ public class Utils {
 
         return false;
     }
+
+    public static int getBatteryPercentage(Context context) {
+
+        IntentFilter iFilter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
+        Intent batteryStatus = context.registerReceiver(null, iFilter);
+
+        int level = batteryStatus != null ? batteryStatus.getIntExtra(BatteryManager.EXTRA_LEVEL, -1) : -1;
+        int scale = batteryStatus != null ? batteryStatus.getIntExtra(BatteryManager.EXTRA_SCALE, -1) : -1;
+
+        float batteryPct = level * 100 / (float) scale;
+
+        Crashlytics.log(Log.DEBUG, TAG, "batteryPct: " + batteryPct);
+
+        return (int) batteryPct;
+    }
+
+    public static Float getBrightness(Context context, Window window) {
+
+        try {
+
+
+            //    Settings.System.putInt(
+            //            context.getContentResolver(),
+            //            Settings.System.SCREEN_BRIGHTNESS_MODE,
+            //            Settings.System.SCREEN_BRIGHTNESS_MODE_MANUAL);
+            Integer brightness =
+                    Settings.System.getInt(
+                            context.getContentResolver(),
+                            Settings.System.SCREEN_BRIGHTNESS);
+
+            Float bright;
+            WindowManager.LayoutParams lp = window.getAttributes();
+            bright = lp.screenBrightness;
+            // window.setAttributes(lp);
+            Crashlytics.log(Log.DEBUG, TAG, "bright brightness:  " + bright + "" + brightness);
+
+            return brightness == null || brightness == -1 ? bright : brightness;
+        } catch (Exception e) {
+            Crashlytics.logException(e);
+            return null;
+        }
+
+    }
+
+
 }

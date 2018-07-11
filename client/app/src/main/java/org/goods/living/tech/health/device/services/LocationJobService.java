@@ -22,7 +22,7 @@ public class LocationJobService extends com.firebase.jobdispatcher.JobService {
 
     final String TAG = this.getClass().getSimpleName();
 
-    public static int runEverySeconds = (int) TimeUnit.MINUTES.toSeconds(2); // Every x hours periodicity expressed as seconds
+    public static int runEverySeconds = (int) TimeUnit.MINUTES.toSeconds(5); // Every x hours periodicity expressed as seconds
 
     String locOffError = "location is off";
 

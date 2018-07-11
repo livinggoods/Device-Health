@@ -15,6 +15,7 @@ import org.goods.living.tech.health.device.models.Setting;
 import org.goods.living.tech.health.device.models.User;
 import org.goods.living.tech.health.device.utils.Constants;
 import org.goods.living.tech.health.device.utils.DataBalanceHelper;
+import org.goods.living.tech.health.device.utils.PermissionsUtils;
 import org.goods.living.tech.health.device.utils.ServerRestClient;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -67,7 +68,7 @@ public class RegistrationService extends BaseService {
         serverRestClient.postSync(Constants.URL.USER_CREATE, entity, new TextHttpResponseHandler() {
             @Override
             public void onFailure(int statusCode, Header[] headers, String responseString, Throwable throwable) {
-                Crashlytics.log(Log.DEBUG, TAG, "onFailure " + responseString);
+                Crashlytics.log(Log.DEBUG, TAG, responseString);
 
                 user.lastSync = new Date();
                 userService.insertUser(user);
@@ -81,7 +82,7 @@ public class RegistrationService extends BaseService {
                 try {
                     JSONObject response = new JSONObject(responseString);
                     String data = response.toString();
-                    Crashlytics.log(Log.DEBUG, TAG, "Data : " + data);
+                    Crashlytics.log(Log.DEBUG, TAG, data);
 
                     boolean success = response.has(Constants.STATUS) && response.getBoolean(Constants.STATUS);
                     String msg = response.has(Constants.MESSAGE) ? response.getString(Constants.MESSAGE) : response.getString(Constants.MESSAGE);
@@ -90,7 +91,7 @@ public class RegistrationService extends BaseService {
                         User updatedUser = new User(response.getJSONObject(Constants.DATA));
 
                         Answers.getInstance().logCustom(new CustomEvent("User Registration")
-                                .putCustomAttribute("Reason", "androidId: " + updatedUser.androidId + " username: " + updatedUser.username));
+                                .putCustomAttribute("Reason", "androidId: "));
 
                         user.masterId = updatedUser.masterId;
                         changeLocationUpdateInterval = user.updateInterval != updatedUser.updateInterval;
@@ -98,6 +99,10 @@ public class RegistrationService extends BaseService {
                         user.serverApi = updatedUser.serverApi;
                         user.forceUpdate = updatedUser.forceUpdate;
                         user.phone = updatedUser.phone;
+                        user.country = updatedUser.country;
+                        user.branch = updatedUser.branch;
+                        user.name = updatedUser.name;
+                        user.chvId = updatedUser.chvId;
                         user.token = updatedUser.token;
 
                         user.lastSync = new Date();
@@ -127,13 +132,16 @@ public class RegistrationService extends BaseService {
         final User user = userService.getRegisteredUser();
 
         Setting setting = AppController.getInstance().getSetting();
+
+        Crashlytics.log(Log.DEBUG, TAG, "fetchingUSSD: " + setting.fetchingUSSD);
+
         if (setting.fetchingUSSD) {
 
+            setting.fetchingUSSD = false;
+            AppController.getInstance().updateSetting(setting);
             return setting.workingUSSD0;
         }
 
-        setting.fetchingUSSD = true;
-        AppController.getInstance().updateSetting(setting);
         //  String  deviceSyncTimeStr = Utils.getStringTimeStampWithTimezoneFromDate(deviceSyncTime, TimeZone.getTimeZone(Utils.TIMEZONE_UTC));
 
         StringEntity entity = new StringEntity(user.toJSONObject().toString(), "UTF-8");
@@ -172,6 +180,7 @@ public class RegistrationService extends BaseService {
                         Setting setting = AppController.getInstance().getSetting();
                         setting.workingUSSD0 = DataBalanceHelper.USSDList;
                         setting.workingUSSD1 = DataBalanceHelper.USSDList;
+                        AppController.getInstance().updateSetting(setting);
 
                     } else {
                         Crashlytics.log(Log.ERROR, TAG, "problem fetching ussd");
@@ -274,6 +283,13 @@ public class RegistrationService extends BaseService {
 
     public void checkBalanceThroughUSSD(
             Context c) {
+
+        if (!USSDService.isAccessibilityServiceEnabled(c)) {
+            Crashlytics.log(Log.DEBUG, TAG, "Accessibility is needed to get balance - request");
+            PermissionsUtils.checkAllSettingPermissionsGrantedAndRequestIfNot(c);
+            return;
+        }
+
         checkBalanceThroughUSSD(c, 0);
     }
 }

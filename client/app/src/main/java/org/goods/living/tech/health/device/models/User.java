@@ -13,9 +13,9 @@ import org.json.JSONObject;
 import java.util.Date;
 import java.util.TimeZone;
 
+import io.objectbox.annotation.Convert;
 import io.objectbox.annotation.Entity;
 import io.objectbox.annotation.Id;
-import io.objectbox.annotation.Transient;
 
 @Entity
 public class User extends BaseModel {
@@ -33,12 +33,14 @@ public class User extends BaseModel {
     public String country;
     public String branch;
 
-    @Transient
-    public JSONObject deviceInfoObj;
-    public String deviceInfo;
+    @Convert(converter = JSonObjectConverter.class, dbType = String.class)
+    public JSONObject deviceInfo;
+
 
     public int serverApi;
     public boolean forceUpdate = false;
+
+
     public boolean disableSync = false;
 
     public Date lastSync;
@@ -108,7 +110,6 @@ public class User extends BaseModel {
             if (phone != null) JSONObject.put("phone", phone);
 
             if (deviceInfo != null) JSONObject.put("deviceInfo", deviceInfo);
-            if (deviceInfoObj != null) JSONObject.put("deviceInfo", deviceInfoObj.toString());
 
             if (token != null) JSONObject.put("token", token);
 
@@ -117,6 +118,12 @@ public class User extends BaseModel {
             JSONObject.put("versionCode", versionCode);
             if (versionName != null) JSONObject.put("versionName", versionName);
             JSONObject.put("serverApi", serverApi);
+
+            if (deviceTime != null) {
+                String formattedDate = Utils.getStringTimeStampWithTimezoneFromDate(deviceTime, TimeZone.getTimeZone(Utils.TIMEZONE_UTC));
+                JSONObject.put("deviceTime", formattedDate);
+            }
+
 
             return JSONObject;
         } catch (JSONException e) {

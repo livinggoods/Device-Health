@@ -11,9 +11,9 @@ import org.json.JSONObject;
 import java.util.Date;
 import java.util.TimeZone;
 
+import io.objectbox.annotation.Convert;
 import io.objectbox.annotation.Entity;
 import io.objectbox.annotation.Id;
-import io.objectbox.annotation.Transient;
 
 @Entity
 public class DataBalance extends BaseModel {
@@ -25,9 +25,9 @@ public class DataBalance extends BaseModel {
     public String balanceMessage;
     public String message;
 
-    @Transient
-    public JSONObject infoObj;
-    public String info;
+    @Convert(converter = JSonObjectConverter.class, dbType = String.class)
+    public JSONObject info;
+
 
     public Date recordedAt;
 
@@ -48,7 +48,6 @@ public class DataBalance extends BaseModel {
             }
 
             if (info != null) JSONObject.put("info", info.toString());
-            if (infoObj != null) JSONObject.put("info", infoObj.toString());
 
             return JSONObject;
         } catch (JSONException e) {
@@ -57,4 +56,6 @@ public class DataBalance extends BaseModel {
             return null;
         }
     }
+
+
 }

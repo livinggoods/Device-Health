@@ -35,8 +35,10 @@ import com.crashlytics.android.answers.CustomEvent;
 import org.goods.living.tech.health.device.AppController;
 import org.goods.living.tech.health.device.BuildConfig;
 import org.goods.living.tech.health.device.R;
+import org.goods.living.tech.health.device.models.Setting;
 import org.goods.living.tech.health.device.models.User;
 import org.goods.living.tech.health.device.utils.PermissionsUtils;
+import org.goods.living.tech.health.device.utils.Utils;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -50,8 +52,6 @@ public class PermissionActivity extends FragmentActivity {
     private static final int REQUEST_PERMISSIONS_REQUEST_CODE = 34;
 
 
-    boolean checkPerms;
-
     /**
      * The max time before batched results are delivered by location services. Results may be
      * delivered sooner than this interval.
@@ -59,39 +59,49 @@ public class PermissionActivity extends FragmentActivity {
     // private static final long MAX_WAIT_TIME = UPDATE_INTERVAL * 5; // Every 5 minutes.
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+
+        setTheme(R.style.Theme_Transparent);
         super.onCreate(savedInstanceState);
 
         AppController.getInstance().getComponent().inject(this);
 
-        checkPerms = true;
-
     }
 
+    @Override
+    protected void onStart() {
+        super.onStart();
+
+        checkPerms();
+    }
+
+    void checkPerms() {
+
+        PermissionsUtils.dismissAlert();
+
+        Float bright = Utils.getBrightness(this, getWindow());
+
+        Setting setting = AppController.getInstance().getSetting();
+        setting.brightness = bright != null ? bright.doubleValue() : null;
+        AppController.getInstance().updateSetting(setting);
+        if (!PermissionsUtils.areAllPermissionsGranted(this)) {
+
+            //request permissions
+            PermissionsUtils.requestAllPermissions(this);
+        } else {
+            if (!PermissionsUtils.checkAllSettingPermissionsGrantedAndDialogRequestIfNot(this)) {
+
+            } else {
+
+                minimise();
+            }
+        }
+
+    }
 
     @Override
     protected void onResume() {
         super.onResume();
 
-        PermissionsUtils.dismissAlert();
-        if (checkPerms) {
-            // requestLocationPermissions();
-
-            if (!PermissionsUtils.areAllPermissionsGranted(this)) {
-                //request permissions
-                PermissionsUtils.requestAllPermissions(this);
-            } else {
-                if (!PermissionsUtils.checkAllSettingPermissionsGrantedAndDialogRequestIfNot(this)) {
-                    checkPerms = true;
-                } else {
-                    checkPerms = false;
-                    minimise();
-                }
-            }
-
-        } else {
-            checkPerms = false;
-            minimise();
-        }
     }
 
 //    private void requestLocationPermissions() {
@@ -210,15 +220,16 @@ public class PermissionActivity extends FragmentActivity {
                 }
             }
         }
-        minimise();
+        checkPerms();
     }
 
 
     public void minimise() {
 
-        Intent intent = new Intent(this, MainActivity.class);
-        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-        startActivity(intent);
-        //moveTaskToBack(true);
+        //  Intent intent = new Intent(this, MainActivity.class);
+        //  intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        //  startActivity(intent);
+        // moveTaskToBack(true);
+        finish();
     }
 }

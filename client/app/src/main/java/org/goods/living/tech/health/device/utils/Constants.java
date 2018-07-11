@@ -6,7 +6,7 @@ public final class Constants {
     public static final String MESSAGE = "message";
     public static final String DATA = "data";
 
-    public static final long SYNC_FREQUENCY = 60;//60 * 60; // 1 hour (seconds)
+    public static final long SYNC_FREQUENCY = 60 * 30;//60 * 60; // 1 hour (seconds)
     /**
      * The desired interval for location updates. Inexact. Updates may be more or less frequent.
      */
@@ -34,8 +34,8 @@ public final class Constants {
         //  public static final String STATS_DELETE = STATS + DELETE;
 
         public static final String DATABALANCE = "/databalance";
-        public static final String DATABALANCE_USSDCODES = "/ussdCodes";
-        public static final String USERS_REFRESH_TOKEN = "/refreshToken";
+        public static final String DATABALANCE_USSDCODES = DATABALANCE + "/ussdCodes";
+        public static final String USERS_REFRESH_TOKEN = USER + "/refreshToken";
 
 
     }

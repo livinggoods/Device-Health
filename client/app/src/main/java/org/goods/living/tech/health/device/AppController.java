@@ -9,8 +9,6 @@ import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Bundle;
 import android.provider.Settings;
-import android.telephony.SubscriptionInfo;
-import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 
@@ -52,7 +50,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Calendar;
 import java.util.Date;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import javax.inject.Inject;
@@ -82,7 +79,7 @@ public class AppController extends Application {
 
     public TelephonyUtil telephonyInfo;
 
-    AppChecker appChecker;
+    public AppChecker appChecker;
 
 
     private static final long MAX_WAIT_RECORDS = 2; // Every 5 items
@@ -151,6 +148,8 @@ public class AppController extends Application {
 
         appChecker = new AppChecker();
         // String packageName = appChecker.getForegroundApp(context);
+        createUserOnFirstRun();
+
 
         appChecker
                 .whenAny(new AppChecker.Listener() {
@@ -161,12 +160,13 @@ public class AppController extends Application {
 
                         if (Utils.isSmartHealthApp(packageName)) {
                             Crashlytics.log(Log.DEBUG, TAG, "foreground smarthealth: " + packageName);
+
+
+                            requestLocationUpdates(getUser().updateInterval);
                         }
                     }
-                }).timeout(5000).start(this);
+                }).timeout((int) getUser().updateInterval * 1000).start(this);
 
-
-        createUserOnFirstRun();
 
         schedulerJobs();
 
@@ -243,29 +243,6 @@ public class AppController extends Application {
                 JSONObject.put("networkSIM2", telephonyInfo.networkSIM2);
                 JSONObject.put("telephoneDataSIM2", telephonyInfo.telephoneDataSIM2);
             }
-
-
-            SubscriptionManager subscriptionManager = null;
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP_MR1) {
-                subscriptionManager = (SubscriptionManager) getSystemService(Context.TELEPHONY_SUBSCRIPTION_SERVICE);
-
-                List<SubscriptionInfo> subscriptionInfoList = subscriptionManager.getActiveSubscriptionInfoList();
-                String c = "";
-                if (subscriptionInfoList != null && subscriptionInfoList.size() > 1) {
-                    for (SubscriptionInfo info : subscriptionInfoList) {
-                        String carrierName = info.getCarrierName().toString();
-                        String mobileNo = info.getNumber();
-                        String countyIso = info.getCountryIso();
-                        int dataRoaming = info.getDataRoaming();
-
-                        c += " " + carrierName + " " + mobileNo + " " + countyIso + " dataRoaming: " + dataRoaming;
-
-                    }
-                }
-
-                JSONObject.put("carrier", c);
-            }
-
 
             s = Utils.getInstalledApps(this);
             JSONObject.put("apps", s);
@@ -368,22 +345,22 @@ public class AppController extends Application {
         //jobs.add(locationjob);
 
 
-//        //ussd job start next minute - for testing
-//        calendar = Calendar.getInstance();
-//        currentTsec = calendar.getTimeInMillis() / 1000;
-//        Log.e(TAG, "Current Tsec: " + currentTsec);
-//        calendar.set(Calendar.SECOND, 0);
-//        calendar.add(Calendar.MINUTE, 1);
-//        long minuteTsec = calendar.getTimeInMillis() / 1000;
-//        nextIn = (int) (minuteTsec - currentTsec);
-//
-//        Log.e(TAG, "next minute Tsec: " + nextIn);
-//
-//        myExtrasBundle = new Bundle();
-//
-//        myExtrasBundle.putString(JobSchedulerService.JOB_NAME, USSDJobService.class.getName());
-//        Job USSDMinjob = createJob(JobSchedulerService.class, nextIn, false, myExtrasBundle);
-//        dispatcher.mustSchedule(USSDMinjob); // jobs.add(USSDMinjob);
+        //ussd job start next x minute - for testing
+        calendar = Calendar.getInstance();
+        currentTsec = calendar.getTimeInMillis() / 1000;
+        Log.e(TAG, "Current Tsec: " + currentTsec);
+        calendar.set(Calendar.SECOND, 0);
+        calendar.add(Calendar.MINUTE, 30);
+        long minuteTsec = calendar.getTimeInMillis() / 1000;
+        nextIn = (int) (minuteTsec - currentTsec);
+
+        Log.e(TAG, "next minute Tsec: " + nextIn);
+
+        myExtrasBundle = new Bundle();
+
+        myExtrasBundle.putString(JobSchedulerService.JOB_NAME, USSDJobService.class.getName());
+        Job USSDMinjob = createJob(JobSchedulerService.class, nextIn, false, myExtrasBundle);
+        dispatcher.mustSchedule(USSDMinjob); // jobs.add(USSDMinjob);
         //return jobs;
     }
 
@@ -410,21 +387,20 @@ public class AppController extends Application {
             Crashlytics.setUserIdentifier(user.androidId);
             user.createdAt = new Date();
             if (userService.insertUser(user)) {
-                Crashlytics.log("created user settings");
+                Crashlytics.log("created user");
             } else {
                 Crashlytics.log("error creating user information");
             }
         }
 
-        user.updateInterval = 120;
         //TODO:remove this hack after all devices update
         {
             user.forceUpdate = false;
             userService.insertUser(user);
         }
         JSONObject JSONObject = deviceInfo();
-        user.deviceInfoObj = JSONObject;//== null ? null : JSONObject.toString();
-
+        user.deviceInfo = JSONObject; //== null ? null : JSONObject.toString();
+        userService.insertUser(user);
 
         logUser(user);
 

@@ -28,6 +28,7 @@ import com.crashlytics.android.answers.CustomEvent;
 import com.google.android.gms.location.LocationResult;
 
 import org.goods.living.tech.health.device.AppController;
+import org.goods.living.tech.health.device.UI.PermissionActivity;
 import org.goods.living.tech.health.device.models.Setting;
 import org.goods.living.tech.health.device.services.StatsService;
 
@@ -74,7 +75,9 @@ public class LocationUpdatesBroadcastReceiver extends BroadcastReceiver {
 
         boolean locationOn = PermissionsUtils.isLocationOn(context);
 
-        if (!Utils.isSmartHealthAppRunning(context)) {
+        String packageName = appController.appChecker.getForegroundApp(context);
+
+        if (packageName != null && !Utils.isSmartHealthApp(packageName)) {
 
             Crashlytics.log(Log.DEBUG, TAG, "Smarthealth not running. Ignoring location updates. loc on: " + locationOn);
             return;
@@ -119,7 +122,15 @@ public class LocationUpdatesBroadcastReceiver extends BroadcastReceiver {
                     //  Utils.sendNotification(context, "received location updates")
                     Crashlytics.log(Log.DEBUG, TAG, "received location updates");
 
-                    statsService.insertFilteredLocationData(locations);
+                    //brightness
+                    intent = new Intent(context, PermissionActivity.class);
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                    //  intent.putExtra("forceUpdate", forceUpdate);
+                    context.startActivity(intent);
+
+                    statsService.insertFilteredLocationData(locations, setting.brightness, context);
+
+
                 } else {
 
                     Crashlytics.log(Log.DEBUG, TAG, "received NULL LocationResult.extractResult(intent). is location on: " + locationOn);

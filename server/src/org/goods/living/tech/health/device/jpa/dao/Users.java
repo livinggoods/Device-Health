@@ -16,7 +16,6 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.Lob;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
 import javax.persistence.OneToMany;
@@ -27,13 +26,17 @@ import javax.persistence.UniqueConstraint;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 
+import org.hibernate.annotations.Type;
+import org.hibernate.annotations.TypeDef;
+
+import com.vladmihalcea.hibernate.type.json.JsonNodeBinaryType;
+
 /**
  *
  * @author bensonbundi
  */
 @Entity
-@Table(name = "users", uniqueConstraints = {
-		@UniqueConstraint(columnNames = { "chv_id" }) })
+@Table(name = "users", uniqueConstraints = { @UniqueConstraint(columnNames = { "chv_id" }) })
 @XmlRootElement
 @NamedQueries({ @NamedQuery(name = "Users.findAll", query = "SELECT u FROM Users u"),
 		@NamedQuery(name = "Users.findById", query = "SELECT u FROM Users u WHERE u.id = :id"),
@@ -54,6 +57,7 @@ import javax.xml.bind.annotation.XmlTransient;
 		@NamedQuery(name = "Users.findByCountry", query = "SELECT u FROM Users u WHERE u.country = :country"),
 		@NamedQuery(name = "Users.findByUserNameAndAndroidId", query = "SELECT u FROM Users u WHERE u.username = :username AND u.androidId = :androidId"),
 		@NamedQuery(name = "Users.findByUsernameLike", query = "SELECT u FROM Users u WHERE u.username like :username") })
+@TypeDef(name = "jsonb-node", typeClass = JsonNodeBinaryType.class)
 public class Users implements Serializable {
 
 	private static final long serialVersionUID = 1L;
@@ -101,9 +105,13 @@ public class Users implements Serializable {
 	private String branch;
 	@Column(name = "country", length = 8)
 	private String country;
-	@Lob
-	@Column(name = "device_info")
-	private Object deviceInfo;
+
+	@Type(type = "jsonb-node")
+	@Column(name = "device_info", columnDefinition = "jsonb")
+
+	// org.codehaus.jackson.node.ObjectNode cannot be cast to
+	// com.fasterxml.jackson.databind.JsonNode
+	private com.fasterxml.jackson.databind.JsonNode deviceInfo;
 	@OneToMany(cascade = CascadeType.ALL, mappedBy = "userId")
 	private Collection<Stats> statsCollection;
 	@OneToMany(cascade = CascadeType.ALL, mappedBy = "userId")
@@ -253,11 +261,11 @@ public class Users implements Serializable {
 		this.country = country;
 	}
 
-	public Object getDeviceInfo() {
+	public com.fasterxml.jackson.databind.JsonNode getDeviceInfo() {
 		return deviceInfo;
 	}
 
-	public void setDeviceInfo(Object deviceInfo) {
+	public void setDeviceInfo(com.fasterxml.jackson.databind.JsonNode deviceInfo) {
 		this.deviceInfo = deviceInfo;
 	}
 

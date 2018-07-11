@@ -19,6 +19,8 @@ public class Setting extends BaseModel {
 
     public boolean loglocationOffEvent;
 
+    public Double brightness;
+
 
     @Convert(converter = StringListConverter.class, dbType = String.class)
     public List<String> workingUSSD0;

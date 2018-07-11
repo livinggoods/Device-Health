@@ -11,6 +11,8 @@ import org.json.JSONObject;
 import java.util.Date;
 import java.util.TimeZone;
 
+import io.objectbox.converter.PropertyConverter;
+
 public class BaseModel {
 
     //String formattedDate = dateFormat.format(date);
@@ -44,6 +46,30 @@ public class BaseModel {
             Log.e("", "", e);
             Crashlytics.logException(e);
             return null;
+        }
+    }
+
+    public static class JSonObjectConverter implements PropertyConverter<JSONObject, String> {
+
+
+        @Override
+        public JSONObject convertToEntityProperty(String databaseValue) {
+
+            try {
+                if (databaseValue == null)
+                    return null;
+
+                return new JSONObject(databaseValue);
+            } catch (JSONException e) {
+                Log.e("", "", e);
+                Crashlytics.logException(e);
+                return null;
+            }
+        }
+
+        @Override
+        public String convertToDatabaseValue(JSONObject entityProperty) {
+            return entityProperty == null ? null : entityProperty.toString();
         }
     }
 }

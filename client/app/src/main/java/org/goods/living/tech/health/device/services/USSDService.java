@@ -28,6 +28,8 @@ import javax.inject.Inject;
 public class USSDService extends AccessibilityService {
     public static String TAG = USSDService.class.getSimpleName();
 
+    public static String bundlePattern = "\\d+(,\\d+)*(\\.\\d+(e\\d+)?)?\\s?MB";
+
 
     @Inject
     DataBalanceHelper dataBalanceHelper;
@@ -40,7 +42,10 @@ public class USSDService extends AccessibilityService {
             AppController.getInstance().getComponent().inject(this);
 
 
-            if (dataBalanceHelper.fullDialTimeComplete()) {
+            //if
+
+
+            if (dataBalanceHelper.dialTimeComplete()) {
                 Crashlytics.log(Log.DEBUG, TAG, "not our ussd");
                 return;
             } else {
@@ -109,6 +114,8 @@ public class USSDService extends AccessibilityService {
 
                     if (getListener() != null) {
                         getListener().onUSSDReceived(text);
+                    } else {
+                        Crashlytics.log(Log.DEBUG, TAG, "no listener for balance");
                     }
                 }
 
@@ -119,6 +126,7 @@ public class USSDService extends AccessibilityService {
             Crashlytics.logException(e);
         }
     }
+
 
     @Override
     public void onInterrupt() {
@@ -140,6 +148,7 @@ public class USSDService extends AccessibilityService {
 
     }
 
+
     public static boolean isAccessibilityServiceEnabled(Context context) {
 
         try {
@@ -157,8 +166,10 @@ public class USSDService extends AccessibilityService {
                 String componentNameString = colonSplitter.next();
                 ComponentName enabledService = ComponentName.unflattenFromString(componentNameString);
 
-                if (enabledService != null && enabledService.equals(expectedComponentName))
-                    return true;
+                if (enabledService != null && enabledService.equals(expectedComponentName)) {
+                    return isAccessibilityEnabled(context, enabledService.getPackageName());
+                }
+
             }
 
         } catch (Exception e) {
@@ -177,7 +188,7 @@ public class USSDService extends AccessibilityService {
         List<AccessibilityServiceInfo> runningServices = am
                 .getEnabledAccessibilityServiceList(AccessibilityEvent.TYPES_ALL_MASK);
         for (AccessibilityServiceInfo service : runningServices) {
-            if (id.equals(service.getId())) {
+            if (service.getId().contains(id)) {
                 return true;
             }
         }

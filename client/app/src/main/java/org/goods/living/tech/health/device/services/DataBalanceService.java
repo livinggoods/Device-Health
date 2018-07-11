@@ -138,7 +138,7 @@ public class DataBalanceService extends BaseService {
             DataBalance model = new DataBalance();
             model.balance = bal;
             model.balanceMessage = raw;
-            model.infoObj = telephoneData;
+            model.info = telephoneData;
             model.recordedAt = new Date();
             model.createdAt = model.recordedAt;
 

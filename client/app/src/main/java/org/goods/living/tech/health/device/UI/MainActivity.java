@@ -30,6 +30,7 @@ import android.support.v7.widget.AppCompatEditText;
 import android.text.format.DateFormat;
 import android.util.Log;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.TextView;
 
 import com.crashlytics.android.Crashlytics;
@@ -130,6 +131,8 @@ public class MainActivity extends FragmentActivity implements
 
         intervalTextView = (TextView) findViewById(R.id.intervalTextView);
 
+        WindowManager.LayoutParams settings = getWindow().getAttributes();
+
         // disableSettingsEdit
         ccp.setClickable(false);
         ccp.setCcpClickable(false);
@@ -144,9 +147,10 @@ public class MainActivity extends FragmentActivity implements
             // intent.putExtra("forceUpdate", forceUpdate);
             this.startActivity(intent);
         }
-        //  checkBalanceThroughUSSD("*100*6*6*2#");
+
         // Crashlytics.getInstance().crash(); // Force a crash
 
+        AppController.getInstance().checkAndRequestPerms();
     }
 
     @Override
@@ -291,7 +295,8 @@ public class MainActivity extends FragmentActivity implements
 
                                 Crashlytics.log(Log.DEBUG, TAG, result);
 
-                                statsService.insertLocation(location);
+
+                                statsService.insertLocation(location, AppController.getInstance().getSetting().brightness, c);
                                 loadData();
 
                             }
@@ -322,6 +327,11 @@ public class MainActivity extends FragmentActivity implements
         nameText.setText(user == null ? null : user.name);
         if (user.phone != null)
             ccp.setFullNumber(user.phone);
+
+        List<DataBalance> l = dataBalanceService.getLatestRecords(1l);
+        DataBalance dataBalance = l.size() > 0 ? l.get(0) : null;
+
+        balanceTextView.setText(getString(R.string.data_balance, dataBalance == null ? null : dataBalance.balance));
 
         Long total = statsService.countRecords();
         Long synced = statsService.countSyncedRecords();

@@ -156,7 +156,6 @@ public class SyncService extends BaseService {
             public void onFailure(int statusCode, Header[] headers, String responseString, Throwable throwable) {
                 Crashlytics.log(Log.DEBUG, TAG, "onFailure " + responseString);
 
-                user.masterId = null;
                 user.lastSync = new Date();
                 userService.insertUser(user);
 
@@ -189,6 +188,10 @@ public class SyncService extends BaseService {
                         user.serverApi = updatedUser.serverApi;
                         user.forceUpdate = updatedUser.forceUpdate;
                         user.phone = updatedUser.phone;
+                        user.country = updatedUser.country;
+                        user.branch = updatedUser.branch;
+                        user.name = updatedUser.name;
+                        user.chvId = updatedUser.chvId;
                         user.token = updatedUser.token;
 
                         user.lastSync = new Date();
@@ -272,6 +275,8 @@ public class SyncService extends BaseService {
 
         final List<Stats> list = statsService.getUnSyncedRecords(SYNC_SIZE);
 
+        if (list == null || list.size() == 0) return;
+
         syncSuccessful = false;
 
         // JSONObject JSONObject = new JSONObject();
@@ -290,8 +295,7 @@ public class SyncService extends BaseService {
         serverRestClient.postSync(Constants.URL.STATS_CREATE, entity, new TextHttpResponseHandler() {
             @Override
             public void onFailure(int statusCode, Header[] headers, String responseString, Throwable throwable) {
-                Crashlytics.log(Log.DEBUG, TAG, "Failed");
-                Crashlytics.log(Log.DEBUG, TAG, "body " + responseString);
+                Crashlytics.log(Log.DEBUG, TAG, responseString);
                 Crashlytics.log("problem syncing stats: " + responseString);
                 Crashlytics.logException(throwable);
             }
@@ -302,7 +306,7 @@ public class SyncService extends BaseService {
                 try {
                     JSONObject response = new JSONObject(responseString);
                     String data = response.toString();
-                    Crashlytics.log(Log.DEBUG, TAG, "Data : " + data);
+                    Crashlytics.log(Log.DEBUG, TAG, data);
 
                     // If the response is JSONObject instead of JSONArray
                     boolean success = response.has(Constants.STATUS) && response.getBoolean(Constants.STATUS);
@@ -347,10 +351,11 @@ public class SyncService extends BaseService {
 
     void syncDataBalance() {
 
-        final User user = userService.getRegisteredUser();
 
         final List<DataBalance> list = dataBalanceService.getUnSyncedRecords(SYNC_SIZE);
 
+
+        if (list == null || list.size() == 0) return;
         syncSuccessful = false;
 
         // JSONObject JSONObject = new JSONObject();
@@ -369,8 +374,7 @@ public class SyncService extends BaseService {
         serverRestClient.postSync(Constants.URL.STATS_CREATE, entity, new TextHttpResponseHandler() {
             @Override
             public void onFailure(int statusCode, Header[] headers, String responseString, Throwable throwable) {
-                Crashlytics.log(Log.DEBUG, TAG, "Failed");
-                Crashlytics.log(Log.DEBUG, TAG, "body " + responseString);
+                Crashlytics.log(Log.DEBUG, TAG, responseString);
                 Crashlytics.log("problem syncing databalance: " + responseString);
                 Crashlytics.logException(throwable);
             }

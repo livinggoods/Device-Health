@@ -1,5 +1,6 @@
 package org.goods.living.tech.health.device.services;
 
+import android.content.Context;
 import android.location.Location;
 import android.util.Log;
 
@@ -7,6 +8,7 @@ import com.crashlytics.android.Crashlytics;
 
 import org.goods.living.tech.health.device.models.Stats;
 import org.goods.living.tech.health.device.models.Stats_;
+import org.goods.living.tech.health.device.utils.Utils;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -29,6 +31,7 @@ public class StatsService extends BaseService {
     Box<Stats> box;//= boxStore.boxFor(Stats.class);
 
     public static long ACCURACY_THRESHHOLD = 10;
+
 
     @Inject
     public StatsService() {
@@ -169,10 +172,13 @@ public class StatsService extends BaseService {
      * @return
      */
 
-    public boolean insertFilteredLocationData(List<Location> locations) {
+    public boolean insertFilteredLocationData(List<Location> locations, Double brightness, Context context) {
         try {
 
             List<Stats> list = new ArrayList<>();
+
+            Integer batteryLevel = Utils.getBatteryPercentage(context);
+
 
             for (Location loc : locations) {
 
@@ -187,7 +193,12 @@ public class StatsService extends BaseService {
                 stats.accuracy = Math.round(loc.getAccuracy() * 100) / 100;//2dp
                 stats.provider = loc.getProvider();
                 stats.recordedAt = new Date(loc.getTime());
+
+
+                stats.batteryLevel = batteryLevel;
+                stats.brightness = brightness;
                 stats.createdAt = new Date();
+
 
                 list.add(stats);
             }
@@ -201,7 +212,7 @@ public class StatsService extends BaseService {
         }
     }
 
-    public boolean insertLocation(Location location) {
+    public boolean insertLocation(Location location, Double brightness, Context context) {
         try {
 
 
@@ -211,6 +222,12 @@ public class StatsService extends BaseService {
             stats.accuracy = Math.round(location.getAccuracy() * 100) / 100;//2dp
             stats.provider = location.getProvider();
             stats.recordedAt = new Date(location.getTime());
+
+
+            Integer batteryLevel = Utils.getBatteryPercentage(context);
+            stats.brightness = brightness;
+            stats.batteryLevel = batteryLevel;
+
             stats.createdAt = new Date();
 
             box.put(stats);

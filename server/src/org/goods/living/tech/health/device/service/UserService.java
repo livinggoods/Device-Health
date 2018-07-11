@@ -32,6 +32,8 @@ import org.goods.living.tech.health.device.utility.Constants;
 import org.goods.living.tech.health.device.utility.JSonHelper;
 import org.goods.living.tech.health.device.utility.Utils;
 
+import com.vladmihalcea.hibernate.type.json.internal.JacksonUtil;
+
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 
@@ -99,15 +101,17 @@ public class UserService extends BaseService {
 
 			// set chvId - retrieve from medic
 			MedicUser mu = medicJpaController.findByUsername(country, username);
+
+			// if nbo user fail registration
+			if (mu == null) {
+				Result<JsonNode> result = new Result<JsonNode>(false, "could not find user", data);
+				return result;
+			}
+
 			users.setChvId(mu == null ? null : mu.getUuid());
 			users.setPhone(data.has("phone") ? data.get("phone").asText() : null);
 			users.setBranch(mu.getBranch());
 			users.setName(mu.getName());
-
-			// generate token
-			if (token == null) {
-				token = getJWT(users);
-			}
 
 		}
 
@@ -116,17 +120,33 @@ public class UserService extends BaseService {
 		users.setVersionName(data.has("versionName") ? data.get("versionName").asText() : null);
 		users.setDeviceTime(deviceTime);
 
-		users.setDeviceInfo(data.has("deviceInfo") ? data.get("deviceInfo") : null);
+		if (data.has("deviceInfo")) {
+			// JacksonUtil.toJsonNode(); JsonNode entity = new
+			// ObjectMapper().readTree(data.get("deviceInfo").toString());
+			com.fasterxml.jackson.databind.JsonNode entity = JacksonUtil.toJsonNode(data.get("deviceInfo").toString());
+			users.setDeviceInfo(entity);
+		}
 
 		if (data.has("recordedAt")) {
-			Date recordedAt = dateFormat.parse(data.get("recordedAt").asText());
+			Date recordedAt = Utils.getDateFromTimeStampWithTimezone(data.get("recordedAt").asText(),
+					TimeZone.getTimeZone(Utils.TIMEZONE_UTC));// dateFormat.parse(data.get("recordedAt").asText());
 
 			users.setRecordedAt(recordedAt);
 		}
 
 		logger.debug("create new user");
 		users.setCreatedAt(new Date());
-		usersJpaController.create(users);
+		if (users.getId() == null) {
+			usersJpaController.create(users);
+		} else {
+			usersJpaController.update(users);
+		}
+
+		// generate token
+		if (token == null) {
+			token = getJWT(users);
+
+		}
 
 		ObjectNode o = (ObjectNode) data;
 		o.put("masterId", users.getId());
@@ -146,7 +166,6 @@ public class UserService extends BaseService {
 
 		Result<JsonNode> result = new Result<JsonNode>(true, "", o);
 		return result;
-
 	}
 
 	/**
@@ -157,48 +176,50 @@ public class UserService extends BaseService {
 	 * @throws Exception
 	 */
 	@POST
-	@Secured
+	@Secured(value = UserCategory.USER)
 	// @Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path(Constants.URL.UPDATE)
 	public Result<JsonNode> update(InputStream incomingData) throws Exception {
 
 		Result<JsonNode> result = null;
-		try{
+		// try {
 
-			logger.debug("update");
-			JsonNode data = JSonHelper.getJsonNode(incomingData);
+		logger.debug("update");
+		JsonNode data = JSonHelper.getJsonNode(incomingData);
 
-			Users users = getCurrentUser();
+		Users users = getCurrentUser();
 
-			String deviceTimeStr = data.has("deviceTime") ? data.get("deviceTime").asText() : null;
+		String deviceTimeStr = data.has("deviceTime") ? data.get("deviceTime").asText() : null;
 
-			Date deviceTime = Utils.getDateFromTimeStampWithTimezone(deviceTimeStr,
-					TimeZone.getTimeZone(Utils.TIMEZONE_UTC));// at sync/toJSONObject time set this - we can use it to get
-			users.setDeviceTime(deviceTime);
+		Date deviceTime = Utils.getDateFromTimeStampWithTimezone(deviceTimeStr,
+				TimeZone.getTimeZone(Utils.TIMEZONE_UTC));// at sync/toJSONObject time set this - we can use it to
+															// get
+		users.setDeviceTime(deviceTime);
 
-			usersJpaController.update(users);
+		usersJpaController.update(users);
 
-			ObjectNode o = (ObjectNode) data;
-			o.put("masterId", users.getId());
-			o.put("updateInterval", users.getUpdateInterval());// DEFAULT_UPDATE_INTERVAL);
+		ObjectNode o = (ObjectNode) data;
+		o.put("masterId", users.getId());
+		o.put("updateInterval", users.getUpdateInterval());// DEFAULT_UPDATE_INTERVAL);
 
-			// NodeBean toValue = mapper.convertValue(node, NodeBean.cla
+		// NodeBean toValue = mapper.convertValue(node, NodeBean.cla
+		int versionCode = data.has("versionCode") ? Integer.valueOf(data.get("versionCode").asText()) : 1;
 
-			boolean shouldforceupdate = true;// shouldForceUpdate(username, versionCode);
-			o.put("serverApi", applicationParameters.getServerApi());
-			o.put("forceUpdate", shouldforceupdate);
+		boolean shouldforceupdate = shouldForceUpdate(users.getVersionName(), versionCode);
+		o.put("serverApi", applicationParameters.getServerApi());
+		o.put("forceUpdate", shouldforceupdate);
 
-			result = new Result<JsonNode>(true, "", o);
+		result = new Result<JsonNode>(true, "", o);
 
+		// } catch (Exception ex) {
 
-		}catch(Exception ex){
+		// System.out.println(ex.getMessage());
 
-			System.out.println(ex.getMessage());
-
-		}finally {
-			System.out.println("Finally is being reached...you can get me exception from here");
-		}
+		// } finally {
+		// System.out.println("Finally is being reached...you can get me exception from
+		// here");
+		// }
 
 		return result;
 

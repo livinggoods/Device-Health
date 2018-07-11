@@ -122,7 +122,8 @@
                         android:layout_height="wrap_content"
                         app:ccp_autoDetectCountry="true"
                         app:ccp_rememberLastSelection="true"
-                        app:ccp_countryPreference="UG,KE,US" />
+                        app:ccp_countryPreference="UG,KE,US"
+                        app:ccp_contentColor="@color/colorPrimary" />/>
 
                     <android.support.v7.widget.AppCompatEditText
                         android:id="@+id/phone_number_edt"

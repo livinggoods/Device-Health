@@ -29,6 +29,7 @@ import com.crashlytics.android.answers.Answers;
 import com.crashlytics.android.answers.CustomEvent;
 
 import org.goods.living.tech.health.device.AppController;
+import org.goods.living.tech.health.device.R;
 import org.goods.living.tech.health.device.models.User;
 
 
@@ -47,6 +48,7 @@ public class UpgradeActivity extends FragmentActivity {
     // private static final long MAX_WAIT_TIME = UPDATE_INTERVAL * 5; // Every 5 minutes.
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        setTheme(R.style.Theme_Transparent);
         super.onCreate(savedInstanceState);
 
         //  AppController.getInstance().getComponent().inject(this);

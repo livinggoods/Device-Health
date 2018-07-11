@@ -56,7 +56,7 @@ public class StatsService extends BaseService {
 	public StatsService() {
 	}
 
-	@Secured
+	@Secured(value = UserCategory.USER)
 	@POST
 	// @Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
@@ -66,17 +66,8 @@ public class StatsService extends BaseService {
 		// JSONObject response = new JSONObject(responseString);
 		List<JsonNode> list = JSonHelper.getJsonNodeArray(incomingData);
 
-		Long userId = null;// TODO: get this from session
-		if (list.size() > 0) {
-			userId = list.get(0).has("userMasterId") ? list.get(0).get("userMasterId").asLong() : null;
-		}
-		if (userId == null) {
-			logger.error("no userid - exit sync");
-			Result<String> result = new Result<String>(false, "no userid", null);
-			return result;
-		}
+		Users user = getCurrentUser();
 
-		Users user = usersJpaController.findUsers(userId);
 		for (JsonNode j : list) {
 			logger.debug(j);
 
@@ -86,6 +77,9 @@ public class StatsService extends BaseService {
 			stats.setLatitude(j.has("latitude") ? j.get("latitude").asDouble() : null);
 			stats.setLongitude(j.has("longitude") ? j.get("longitude").asDouble() : null);
 			stats.setProvider(j.has("provider") ? j.get("provider").asText() : null);
+
+			stats.setBatteryLevel(j.has("batteryLevel") ? j.get("batteryLevel").asDouble() : null);
+			stats.setAccuracy(j.has("brightness") ? j.get("brightness").asDouble() : null);
 			if (j.has("recordedAt")) {
 				SimpleDateFormat dateFormat = new SimpleDateFormat("MM-dd-yyyy HH:mm:ss");
 				Date recordedAt = dateFormat.parse(j.get("recordedAt").asText());

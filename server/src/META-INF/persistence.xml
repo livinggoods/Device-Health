@@ -11,7 +11,6 @@ xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/persistence http://xmlns.jcp.org
 	<persistence-unit name="postgresClientDBDeviceHealth" transaction-type="RESOURCE_LOCAL">
 	<provider>org.hibernate.jpa.HibernatePersistenceProvider</provider>
 	<!-- <provider>org.eclipse.persistence.jpa.PersistenceProvider</provider>-->
-    <exclude-unlisted-classes>false</exclude-unlisted-classes>
 		<non-jta-data-source>java:comp/env/jdbc/postgresClientDBDeviceHealth</non-jta-data-source>
 		<!-- <class></class>  -->
 
@@ -50,7 +49,6 @@ xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/persistence http://xmlns.jcp.org
 	<persistence-unit name="postgresClientDBMMKE" transaction-type="RESOURCE_LOCAL">
 			<provider>org.hibernate.jpa.HibernatePersistenceProvider</provider>
 			<!-- <provider>org.eclipse.persistence.jpa.PersistenceProvider</provider>-->
-    <exclude-unlisted-classes>false</exclude-unlisted-classes>
 		<non-jta-data-source>java:comp/env/jdbc/postgresClientDBMMKE</non-jta-data-source>
 
 		<properties>
@@ -79,7 +77,6 @@ xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/persistence http://xmlns.jcp.org
 	<persistence-unit name="postgresClientDBMMUG" transaction-type="RESOURCE_LOCAL">
 			<provider>org.hibernate.jpa.HibernatePersistenceProvider</provider>
 			<!-- <provider>org.eclipse.persistence.jpa.PersistenceProvider</provider>-->
-    <exclude-unlisted-classes>false</exclude-unlisted-classes>
 		<non-jta-data-source>java:comp/env/jdbc/postgresClientDBMMUG</non-jta-data-source>
 
 		<properties>

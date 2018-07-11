@@ -1,7 +1,6 @@
 package org.goods.living.tech.health.device.service;
 
 import java.io.InputStream;
-import java.text.ParseException;
 import java.util.Date;
 import java.util.List;
 
@@ -20,8 +19,11 @@ import org.goods.living.tech.health.device.jpa.dao.DataBalance;
 import org.goods.living.tech.health.device.jpa.dao.Users;
 import org.goods.living.tech.health.device.models.Result;
 import org.goods.living.tech.health.device.service.security.qualifier.Secured;
+import org.goods.living.tech.health.device.service.security.qualifier.UserCategory;
 import org.goods.living.tech.health.device.utility.Constants;
 import org.goods.living.tech.health.device.utility.JSonHelper;
+
+import com.vladmihalcea.hibernate.type.json.internal.JacksonUtil;
 
 //https://dzone.com/articles/lets-compare-jax-rs-vs-spring-for-rest-endpoints
 
@@ -48,27 +50,18 @@ public class DatabalanceService extends BaseService {
 	public DatabalanceService() {
 	}
 
-	@Secured
+	@Secured(value = UserCategory.USER)
 	@POST
 	// @Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path(Constants.URL.CREATE)
-	public Result<String> create(InputStream incomingData) throws ParseException {
+	public Result<String> create(InputStream incomingData) throws Exception {
 		logger.debug("create");
 		// JSONObject response = new JSONObject(responseString);
 		List<JsonNode> list = JSonHelper.getJsonNodeArray(incomingData);
 
-		Long userId = null;// TODO: get this from session
-		if (list.size() > 0) {
-			userId = list.get(0).has("userMasterId") ? list.get(0).get("userMasterId").asLong() : null;
-		}
-		if (userId == null) {
-			logger.error("no userid - exit sync");
-			Result<String> result = new Result<String>(false, "no userid", null);
-			return result;
-		}
+		Users user = getCurrentUser();
 
-		Users user = usersJpaController.findUsers(userId);
 		for (JsonNode j : list) {
 			logger.debug(j);
 
@@ -77,7 +70,13 @@ public class DatabalanceService extends BaseService {
 			model.setBalance(j.has("balance") ? j.get("balance").asDouble() : null);
 			model.setBalanceMessage(j.has("balanceMessage") ? j.get("balanceMessage").asText() : null);
 			model.setMessage(j.has("message") ? j.get("message").asText() : null);
-			model.setInfo(j.has("info") ? j.get("info") : null);
+
+			if (j.has("info")) {
+				// JacksonUtil.toJsonNode();
+				com.fasterxml.jackson.databind.JsonNode entity = JacksonUtil.toJsonNode(j.get("info").toString());
+				model.setInfo(entity);
+			}
+
 			if (j.has("recordedAt")) {
 				Date recordedAt = dateFormat.parse(j.get("recordedAt").asText());
 

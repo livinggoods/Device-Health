@@ -5,12 +5,10 @@ import java.io.IOException;
 import javax.annotation.Priority;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
-import javax.ws.rs.NotAuthorizedException;
 import javax.ws.rs.Priorities;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ContainerRequestFilter;
 import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.Provider;
 import javax.xml.bind.DatatypeConverter;
@@ -48,7 +46,7 @@ public class AuthenticationFilter implements ContainerRequestFilter {
 		if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
 			requestContext.abortWith(Response.status(Response.Status.UNAUTHORIZED).build());
 			return;
-			//throw new NotAuthorizedException("Authorization header must be provided");
+			// throw new NotAuthorizedException("Authorization header must be provided");
 		}
 		// Extract the token from the HTTP Authorization header
 		String token = authorizationHeader.substring("Bearer".length()).trim();
@@ -60,7 +58,7 @@ public class AuthenticationFilter implements ContainerRequestFilter {
 			requestContext.setSecurityContext(new CustomSecurityContext(user, scheme));
 
 		} catch (Exception e) {
-			System.out.println("Exception: " + e);
+			logger.error("Exception: " + e);
 			requestContext.abortWith(Response.status(Response.Status.UNAUTHORIZED).build());
 		}
 
@@ -74,7 +72,7 @@ public class AuthenticationFilter implements ContainerRequestFilter {
 		Long id = Long.parseLong(claim.getId());
 		String site = (String) claim.get("site");
 		String role = (String) claim.get("roles");
-		Long chvId = (Long) claim.get("chvId");
+		String chvId = (String) claim.get("chvId");
 
 		logger.debug("Here comes the id code: " + id);
 		logger.debug("ChvId: " + chvId);

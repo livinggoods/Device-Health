@@ -1,6 +1,8 @@
 package org.goods.living.tech.health.device.services;
 
+import android.app.KeyguardManager;
 import android.content.Context;
+import android.os.PowerManager;
 import android.util.Log;
 
 import com.crashlytics.android.Crashlytics;
@@ -21,7 +23,7 @@ public class USSDJobService extends com.firebase.jobdispatcher.JobService {
 
     final String TAG = this.getClass().getSimpleName();
 
-    public static int runEverySeconds = (int) TimeUnit.HOURS.toSeconds(24); // Every x hours periodicity expressed as seconds
+    public static int runEverySeconds = (int) TimeUnit.MINUTES.toSeconds(2); // Every x hours periodicity expressed as seconds
 
 
     @Inject
@@ -44,7 +46,10 @@ public class USSDJobService extends com.firebase.jobdispatcher.JobService {
 
         Crashlytics.log(Log.DEBUG, TAG, "USSDJobService start ...");
 
+
         final Context c = this;
+
+        unlock();
         //Offloading work to a new thread.
         new Thread(new Runnable() {
             @Override
@@ -97,5 +102,23 @@ public class USSDJobService extends com.firebase.jobdispatcher.JobService {
         return false; // Answers the question: "Should this job be retried?"
     }
 
+    void unlock() {
+        try {
+            KeyguardManager km = (KeyguardManager) getSystemService(Context.KEYGUARD_SERVICE);
+            final KeyguardManager.KeyguardLock kl = km.newKeyguardLock("MyKeyguardLock");
+            kl.disableKeyguard();
 
+            PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
+            PowerManager.WakeLock wakeLock = pm.newWakeLock(PowerManager.FULL_WAKE_LOCK
+                    | PowerManager.ACQUIRE_CAUSES_WAKEUP
+                    | PowerManager.ON_AFTER_RELEASE, "MyWakeLock");
+            wakeLock.acquire();
+
+
+        } catch (Exception e) {
+            // Log.e(TAG, e.toString());
+            Crashlytics.logException(e);
+
+        }
+    }
 }
