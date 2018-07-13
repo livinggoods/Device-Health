@@ -37,7 +37,6 @@ import com.crashlytics.android.answers.Answers;
 import com.crashlytics.android.answers.CustomEvent;
 
 import org.goods.living.tech.health.device.UI.PermissionActivity;
-import org.goods.living.tech.health.device.services.USSDService;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -98,9 +97,9 @@ public class PermissionsUtils {
     }
 
     public static boolean areAllSettingPermissionsGranted(Context context) {
-        boolean enabled = USSDService.isAccessibilityServiceEnabled(context);
+        //boolean enabled = USSDService.isAccessibilityServiceEnabled(context);
 
-        enabled = enabled && isLocationOn(context);
+        boolean enabled = isLocationOn(context);
 
         return enabled;
     }
@@ -122,16 +121,17 @@ public class PermissionsUtils {
     public static boolean checkAllSettingPermissionsGrantedAndDialogRequestIfNot(final Context context) {
 
         try {
-            boolean enabled = USSDService.isAccessibilityServiceEnabled(context);
-            Crashlytics.log(Log.DEBUG, TAG, "isAccessibilityServiceEnabled " + enabled);
-
-            if (!enabled) {
-                //   if (!(context instanceof PermissionActivity))
-                Answers.getInstance().logCustom(new CustomEvent("Missing Permissions")
-                        .putCustomAttribute("Reason", "accessibility"));
-                requestSettingPermissionsWithDialog(context, android.provider.Settings.ACTION_ACCESSIBILITY_SETTINGS, "Accessibility", "Reboot after its enabled");
-                return false;
-            }
+            //TODO: temp disable
+//            boolean enabled = USSDService.isAccessibilityServiceEnabled(context);
+//            Crashlytics.log(Log.DEBUG, TAG, "isAccessibilityServiceEnabled " + enabled);
+//
+//            if (!enabled) {
+//                //   if (!(context instanceof PermissionActivity))
+//                Answers.getInstance().logCustom(new CustomEvent("Missing Permissions")
+//                        .putCustomAttribute("Reason", "accessibility"));
+//                requestSettingPermissionsWithDialog(context, android.provider.Settings.ACTION_ACCESSIBILITY_SETTINGS, "Accessibility", "Reboot after its enabled");
+//                return false;
+//            }
 
 
             if (!isLocationOn(context)) {
@@ -216,6 +216,7 @@ public class PermissionsUtils {
                 Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION,
                 Manifest.permission.SEND_SMS,
                 Manifest.permission.READ_SMS,
+                Manifest.permission.RECEIVE_SMS,
                 //   Manifest.permission.PACKAGE_USAGE_STATS,
                 Manifest.permission.GET_TASKS
         };

@@ -15,7 +15,6 @@ import org.goods.living.tech.health.device.models.Setting;
 import org.goods.living.tech.health.device.models.User;
 import org.goods.living.tech.health.device.utils.Constants;
 import org.goods.living.tech.health.device.utils.DataBalanceHelper;
-import org.goods.living.tech.health.device.utils.PermissionsUtils;
 import org.goods.living.tech.health.device.utils.ServerRestClient;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -281,15 +280,84 @@ public class RegistrationService extends BaseService {
 
     }
 
-    public void checkBalanceThroughUSSD(
-            Context c) {
 
-        if (!USSDService.isAccessibilityServiceEnabled(c)) {
-            Crashlytics.log(Log.DEBUG, TAG, "Accessibility is needed to get balance - request");
-            PermissionsUtils.checkAllSettingPermissionsGrantedAndRequestIfNot(c);
+    public void checkBalanceThroughSMS(
+            Context c, int portz) {
+
+        Crashlytics.log(Log.DEBUG, TAG, "checkBalanceThroughSMS");
+
+        Setting setting = AppController.getInstance().getSetting();
+
+        AppController appController = ((AppController) c.getApplicationContext());
+        appController.telephonyInfo.loadInfo();
+        if (portz == 0 && appController.telephonyInfo.networkSIM1 == null) {
+            portz = 1;
+            //no sim in 1 try 2
+            Crashlytics.log(Log.DEBUG, TAG, "no sim in port 1 try 2");
+        }
+        if (portz == 1 && appController.telephonyInfo.networkSIM2 == null) {
+            //no sim in 2
+            Crashlytics.log(Log.DEBUG, TAG, "no sim in port 2");
             return;
         }
 
-        checkBalanceThroughUSSD(c, 0);
+        List<String> ussdlist = (portz == 0) ? setting.workingUSSD0 : setting.workingUSSD1;
+        final int port = portz;
+
+        String ussd = (ussdlist != null && ussdlist.size() > 0) ? ussdlist.get(0) : null;
+        if (ussd != null) {
+
+
+            dataBalanceHelper.USSDtoSMSNumber(c, ussd, port, new DataBalanceHelper.USSDResult() {
+                @Override
+                public void onResult(@NonNull DataBalanceHelper.Balance bal) {
+
+                    if (bal.balance != null) { //this method works -good code and there is sim?
+
+                        Crashlytics.log(Log.DEBUG, TAG, "saving balance ...");
+                        // String sim = TelephonyUtil.getSimSerial(c);
+
+                        JSONObject telephoneData = appController.telephonyInfo.telephoneDataSIM1;
+                        if (port == 1)
+                            telephoneData = appController.telephonyInfo.telephoneDataSIM2;
+                        dataBalanceService.insert(bal.balance, bal.rawBalance, telephoneData);
+
+                        //switch to line 2 if any
+                        if (port == 0)
+                            checkBalanceThroughSMS(c, 1);
+                        else //we r done
+                            return;
+
+                    } else {
+
+                        ussdlist.remove(ussd);
+                        AppController.getInstance().updateSetting(setting);
+
+                        if (ussdlist.size() > 0) { //try again
+                            Crashlytics.log(Log.DEBUG, TAG, "trying again balance check ...");
+
+                            checkBalanceThroughSMS(c, port);
+                        } else {
+                            //switch to line 2 if any
+                            if (port == 0)
+                                checkBalanceThroughSMS(c, 1);
+                            else //we r done
+                                return;
+                        }
+
+
+                    }
+
+
+                }
+            });
+
+
+        } else { //refetch list from server
+            getUSSDCodes();
+        }
+
     }
+
+
 }

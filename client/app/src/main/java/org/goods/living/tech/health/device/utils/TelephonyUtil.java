@@ -1,17 +1,7 @@
 package org.goods.living.tech.health.device.utils;
 
-import android.Manifest;
 import android.content.Context;
-import android.content.pm.PackageManager;
-import android.telephony.CellIdentityCdma;
-import android.telephony.CellIdentityGsm;
-import android.telephony.CellIdentityLte;
-import android.telephony.CellIdentityWcdma;
-import android.telephony.CellInfo;
-import android.telephony.CellInfoCdma;
-import android.telephony.CellInfoGsm;
-import android.telephony.CellInfoLte;
-import android.telephony.CellInfoWcdma;
+import android.telephony.SmsManager;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 
@@ -21,9 +11,7 @@ import org.json.JSONObject;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public class TelephonyUtil {
@@ -80,6 +68,8 @@ public class TelephonyUtil {
 
             //   getSims(context);
             HashMap<Method, Class<?>> map = potentialTelephonyManagerMethodNamesForThisDevice(context);
+
+
             // List<String> results = new ArrayList<>();
             for (Map.Entry<Method, Class<?>> entry : map.entrySet()) {
                 Method key = entry.getKey();
@@ -96,6 +86,8 @@ public class TelephonyUtil {
                     //   break;
                 }
             }
+
+            //map = potentialSmsManagerMethodNamesForThisDevice(context);
 
 
             //   for (String s : results) {
@@ -210,55 +202,63 @@ public class TelephonyUtil {
                         map.put(methods[idx], parameterClazz);
                     }
                 }
+                //   if (methods[idx].getName().contains("Sms")) {
+                // Class<?> parameterClazz = parameterTypes[0];
+                System.out.println("\n" + methods[idx].getName());//+ " declared by " + methods[idx].getDeclaringClass()
+                //  System.out.println("\n" + parameterTypes);//+ " declared by " + methods[idx].getDeclaringClass()
+                //   }
 
 
             }
-        } catch (ClassNotFoundException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
         return map;
     }
 
-    public static String getSimSerial(Context c) {
-        String s = null;
-        TelephonyManager telephonyManager = ((TelephonyManager) c.getSystemService(Context.TELEPHONY_SERVICE));
+    public static HashMap<Method, Class<?>> potentialSmsManagerMethodNamesForThisDevice(Context context) {
 
-        if (android.os.Build.VERSION.SDK_INT > 22) { /*Ask Dungerous Permissions here*/
-            if (c.checkSelfPermission(Manifest.permission.READ_PHONE_STATE) == PackageManager.PERMISSION_GRANTED) {
-                s = telephonyManager.getSimSerialNumber();
+        HashMap<Method, Class<?>> map = new HashMap<>();
+        //  TelephonyManager telephony = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
+        Class<?> telephonyClass;
+        try {
+            telephonyClass = Class.forName(SmsManager.class.getName());
+            Method[] methods = telephonyClass.getMethods();
+
+            Method method = Class.forName("android.os.ServiceManager").getMethod("listServices");
+            method.setAccessible(true);
+            Object param = method.invoke(null);
+
+
+            for (int idx = 0; idx < methods.length; idx++) {
+
+                Annotation[][] parameterAnnotations = methods[idx].getParameterAnnotations();
+                Class<?>[] parameterTypes = methods[idx].getParameterTypes();
+                int parameterCount = parameterTypes.length;
+                // for (int i = 0; i < parameterCount; i++) {
+                // Annotation[] annotations = parameterAnnotations[i];
+                //      Class<?> parameterClazz = parameterTypes[i];
+                //   }
+                if (methods[idx].getName().startsWith("get") && parameterCount == 1) {
+                    Class<?> parameterClazz = parameterTypes[0];
+                    if (parameterClazz.isPrimitive() || Number.class.isAssignableFrom(parameterClazz)) {
+                        //if (methods[idx].getParameterTypes().length == 1 && methods[idx].getParameterAnnotations()[0].length == 1 && (methods[idx].getReturnType().isAssignableFrom(String.class) || methods[idx].getReturnType().isAssignableFrom(Boolean.class)))
+                        System.out.println("\n" + methods[idx].getName());//+ " declared by " + methods[idx].getDeclaringClass()
+                        map.put(methods[idx], parameterClazz);
+                    }
+                }
+                //   if (methods[idx].getName().contains("Sms")) {
+                // Class<?> parameterClazz = parameterTypes[0];
+                System.out.println("\n" + methods[idx].getName());//+ " declared by " + methods[idx].getDeclaringClass()
+                //  System.out.println("\n" + parameterTypes);//+ " declared by " + methods[idx].getDeclaringClass()
+                //   }
+
+
             }
-        } else {
-            s = telephonyManager.getSimSerialNumber();
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-        return s;
-    }
-
-    public static void getSims(Context context) {
-        TelephonyManager manager = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
-
-// Get information about all radio modules on device board
-// and check what you need by calling #getCellIdentity.
-
-        List<CellInfo> allCellInfo = new ArrayList<>();
-        if (android.os.Build.VERSION.SDK_INT >= 23) { /*Ask Dungerous Permissions here*/
-            if (context.checkSelfPermission(Manifest.permission.READ_PHONE_STATE) == PackageManager.PERMISSION_GRANTED) {
-                allCellInfo = manager.getAllCellInfo();
-            }
-        }
-
-
-        for (CellInfo cellInfo : allCellInfo) {
-            if (cellInfo instanceof CellInfoGsm) {
-                CellIdentityGsm cellIdentity = ((CellInfoGsm) cellInfo).getCellIdentity();
-                //TODO Use cellIdentity to check MCC/MNC code, for instance.
-            } else if (cellInfo instanceof CellInfoWcdma) {
-                CellIdentityWcdma cellIdentity = ((CellInfoWcdma) cellInfo).getCellIdentity();
-            } else if (cellInfo instanceof CellInfoLte) {
-                CellIdentityLte cellIdentity = ((CellInfoLte) cellInfo).getCellIdentity();
-            } else if (cellInfo instanceof CellInfoCdma) {
-                CellIdentityCdma cellIdentity = ((CellInfoCdma) cellInfo).getCellIdentity();
-            }
-        }
+        return map;
     }
 
 }

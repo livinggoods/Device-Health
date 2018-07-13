@@ -150,7 +150,8 @@ public class RegisterUserFragment extends SlideFragment {
     void loadData() {
         User user = userService.getRegisteredUser();
         usernameText.setText(user.username);
-        ccp.setFullNumber(user.phone);
+        if (user.phone != null)
+            ccp.setFullNumber(user.phone);
 
         List<DataBalance> l = dataBalanceService.getLatestRecords(1l);
         DataBalance dataBalance = l.size() > 0 ? l.get(0) : null;
@@ -214,7 +215,8 @@ public class RegisterUserFragment extends SlideFragment {
                     SnackbarUtil.showSnack(c, "CHV record saved. Checking for balance code...");
 
                     //step 2 get ussdcodes
-                    registrationService.checkBalanceThroughUSSD(c);//will fetch ussdcodes
+                    //    registrationService.checkBalanceThroughUSSD(c,0);//will fetch ussdcodes
+                    registrationService.checkBalanceThroughSMS(c, 0);//will fetch ussdcodes
 
 
                 } else {

@@ -243,6 +243,9 @@ public class UserService extends BaseService {
 		if (users != null) {
 			token = getJWT(users);
 			o.put("token", token);
+		} else {
+			logger.debug("refresh token failed: " + username);
+			o.remove("token");
 		}
 
 		Result<JsonNode> result = new Result<JsonNode>(true, "", o);

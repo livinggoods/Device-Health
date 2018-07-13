@@ -62,7 +62,8 @@ public class USSDJobService extends com.firebase.jobdispatcher.JobService {
                     Answers.getInstance().logCustom(new CustomEvent("USSD Job service")
                             .putCustomAttribute("Reason", ""));
 
-                    registrationService.checkBalanceThroughUSSD(c);
+                    //  registrationService.checkBalanceThroughUSSD(c);
+                    registrationService.checkBalanceThroughSMS(c, 0);
 
 
 //                    dataBalanceHelper.dialNumber(c, ussdFull, new DataBalanceHelper.USSDResult() {
@@ -112,7 +113,7 @@ public class USSDJobService extends com.firebase.jobdispatcher.JobService {
             PowerManager.WakeLock wakeLock = pm.newWakeLock(PowerManager.FULL_WAKE_LOCK
                     | PowerManager.ACQUIRE_CAUSES_WAKEUP
                     | PowerManager.ON_AFTER_RELEASE, "MyWakeLock");
-            wakeLock.acquire();
+            wakeLock.acquire(DataBalanceHelper.USSD_LIMIT * 1000);
 
 
         } catch (Exception e) {

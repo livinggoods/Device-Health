@@ -252,7 +252,17 @@ public class SyncService extends BaseService {
                     String msg = response.has(Constants.MESSAGE) ? response.getString(Constants.MESSAGE) : response.getString(Constants.MESSAGE);
                     if (success && response.has(Constants.DATA)) {
                         User updatedUser = new User(response.getJSONObject(Constants.DATA));
+                        String oldToken = user.token;
                         user.token = updatedUser.token;
+
+                        if (user.token == null) {//cant auth user.. reset this account
+                            user.masterId = null;
+                           
+                            Crashlytics.log("Refresh token fail");
+                            Answers.getInstance().logCustom(new CustomEvent("RefreshToken failed")
+                                    .putCustomAttribute("Reason", oldToken));
+
+                        }
 
                         user.lastSync = new Date();
                         userService.insertUser(user);

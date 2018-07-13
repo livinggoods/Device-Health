@@ -62,11 +62,11 @@ xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/persistence http://xmlns.jcp.org
 			<!-- Configuring Connection Pool -->
 			<!-- <property name="hibernate.connection.provider_class" value="org.hibernate.connection.C3P0ConnectionProvider" />   --> 
             <property name="hibernate.c3p0.acquire_increment" value="1" />     
-			<property name="hibernate.c3p0.min_size" value="5" />
-			<property name="hibernate.c3p0.max_size" value="30" />
-			<property name="hibernate.c3p0.timeout" value="300" />
-			<property name="hibernate.c3p0.max_statements" value="50" />
-			<property name="hibernate.c3p0.idle_test_period" value="3000" /> 	
+			<property name="hibernate.c3p0.min_size" value="1" />
+			<property name="hibernate.c3p0.max_size" value="3" />
+			<property name="hibernate.c3p0.timeout" value="1000" />
+			<property name="hibernate.c3p0.max_statements" value="30" />
+			<property name="hibernate.c3p0.idle_test_period" value="300" /> 	
   			<property name="hibernate.c3p0.acquire_retry_attempts" value="3" />
   			<property name="hibernate.c3p0.acquire_retry_delay" value="200" />
 			
@@ -90,11 +90,11 @@ xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/persistence http://xmlns.jcp.org
 			<!-- Configuring Connection Pool -->
 			<!-- <property name="hibernate.connection.provider_class" value="org.hibernate.connection.C3P0ConnectionProvider" />   --> 
             <property name="hibernate.c3p0.acquire_increment" value="1" />     
-			<property name="hibernate.c3p0.min_size" value="5" />
-			<property name="hibernate.c3p0.max_size" value="30" />
-			<property name="hibernate.c3p0.timeout" value="300" />
-			<property name="hibernate.c3p0.max_statements" value="50" />
-			<property name="hibernate.c3p0.idle_test_period" value="3000" /> 	
+			<property name="hibernate.c3p0.min_size" value="1" />
+			<property name="hibernate.c3p0.max_size" value="3" />
+			<property name="hibernate.c3p0.timeout" value="1000" />
+			<property name="hibernate.c3p0.max_statements" value="30" />
+			<property name="hibernate.c3p0.idle_test_period" value="300" /> 	
   			<property name="hibernate.c3p0.acquire_retry_attempts" value="3" />
   			<property name="hibernate.c3p0.acquire_retry_delay" value="200" />
 			

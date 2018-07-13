@@ -51,7 +51,14 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
         Log.e("inPerformSync", "syncing");
         // sync data or perform your action
 
-        syncService.sync(mContext);
+        Utils.getHandlerThread().post(new Runnable() {
+            @Override
+            public void run() {
+                syncService.sync(mContext);
+
+            }
+        });
+
 
     }
 

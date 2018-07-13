@@ -139,15 +139,6 @@ public class MainActivity extends FragmentActivity implements
         edtPhoneNumber.setEnabled(false);
         edtPhoneNumber.setClickable(false);
 
-        User user = userService.getRegisteredUser();
-        if (user.masterId == null) {
-            // enableSettingsEdit();
-            Intent intent = new Intent(this, RegisterActivity.class);
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-            // intent.putExtra("forceUpdate", forceUpdate);
-            this.startActivity(intent);
-        }
-
         // Crashlytics.getInstance().crash(); // Force a crash
 
         AppController.getInstance().checkAndRequestPerms();
@@ -203,11 +194,15 @@ public class MainActivity extends FragmentActivity implements
         Crashlytics.log(Log.DEBUG, TAG, "triggerSync ");
 
         SnackbarUtil.showSnack(this, "Performing sync");
+
+        Utils.showProgressDialog(this);
+
         SyncAdapter.performSync();
 
         Handler handler = new Handler(Looper.getMainLooper());
         final Runnable r = new Runnable() {
             public void run() {
+                Utils.dismissProgressDialog();
                 loadData();
             }
         };
@@ -227,7 +222,8 @@ public class MainActivity extends FragmentActivity implements
             @Override
             public void run() {
 
-                registrationService.checkBalanceThroughUSSD(c);
+                //    registrationService.checkBalanceThroughUSSD(c,0);
+                registrationService.checkBalanceThroughSMS(c, 0);
 
                 new Handler(Looper.getMainLooper()).post(new Runnable() {
                     @Override
@@ -321,7 +317,16 @@ public class MainActivity extends FragmentActivity implements
 
     void loadData() {
 
+
         User user = userService.getRegisteredUser();
+        if (user.masterId == null) {
+            // enableSettingsEdit();
+            Intent intent = new Intent(this, RegisterActivity.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            // intent.putExtra("forceUpdate", forceUpdate);
+            this.startActivity(intent);
+        }
+
         //if(user ==null){
         usernameText.setText(user == null ? null : user.username);
         nameText.setText(user == null ? null : user.name);

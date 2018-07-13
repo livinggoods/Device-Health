@@ -229,8 +229,6 @@ public class AppController extends Application {
             s = telephonyManager.getNetworkOperatorName();
             JSONObject.put("Operator", s);
 
-            String sim = TelephonyUtil.getSimSerial(this);
-            JSONObject.put("serial", sim);
 
             String myAndroidDeviceId = Settings.Secure.getString(getApplicationContext().getContentResolver(), Settings.Secure.ANDROID_ID);
             JSONObject.put("myAndroidDeviceId", myAndroidDeviceId);

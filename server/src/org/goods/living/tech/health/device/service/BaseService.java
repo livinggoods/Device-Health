@@ -51,6 +51,13 @@ public class BaseService {
 		return (ValidUser) securityContext.getUserPrincipal();
 	}
 
+	@Context
+	public void setSecurityContext(SecurityContext context) {
+		logger.debug("security context set here");
+		this.securityContext = context;
+
+	}
+
 	public Users getCurrentUser() {// Response
 		logger.debug("getCurrentUser");
 		ValidUser ValidUser = getValidUser();

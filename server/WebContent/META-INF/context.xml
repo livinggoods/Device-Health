@@ -6,20 +6,20 @@
 	 <Resource name="jdbc/postgresClientDBDeviceHealth" auth="Container" type="javax.sql.DataSource"
 		driverClassName="org.postgresql.Driver"
 		url="jdbc:postgresql://localhost:5432/device_health_development"
-		username="device_health_user" password="user" maxActive="20"
+		username="device_health_user" password="user" 
 		validationQuery="SELECT 1;" testOnBorrow="true"/> 
 		<!--  factory="org.apache.commons.dbcp2.BasicDataSource" --> 
 		
 		<Resource name="jdbc/postgresClientDBMMUG" auth="Container" type="javax.sql.DataSource"
 		driverClassName="org.postgresql.Driver"
 		url="jdbc:postgresql://localhost:5433/livinggoods-ug"
-		username="victor" password="%upp0rt721" maxActive="20"
+		username="boniface" password="uexhUsA6" 
 		validationQuery="SELECT 1;" testOnBorrow="true"/> <!--  ssh -L 5433:127.0.0.1:5433 user@server -->
 
 	<Resource name="jdbc/postgresClientDBMMKE" auth="Container" type="javax.sql.DataSource"
 		driverClassName="org.postgresql.Driver"
 		url="jdbc:postgresql://localhost:5433/livinggoods-ke"
-		username="victor" password="%upp0rt721" maxActive="20"
+		username="boniface" password="uexhUsA6" 
 		validationQuery="SELECT 1;" testOnBorrow="true"/>
 
 
@@ -40,8 +40,8 @@
 		value="10108" />
 	<Parameter name="org.goods.living.tech.health.device.locationUpdateInterval"
 		value="300" />
-	<Parameter name="org.goods.living.tech.health.device.ussdBalanceCodes"
-		value="*150*1*4*1#,*100*6*6*2#,*100*6*4*2#" />
+		<Parameter name="org.goods.living.tech.health.device.ussdBalanceCodes"
+		value="*150*1*4*1#,*450#" /><!-- "*150*1*4*1#,*100*6*6*2#,*100*6*4*2#"  -->
 	<!--<Parameter name="org.goods.living.tech.health.url"-->
 			   <!--value="https://device-health.lg-apps.com" />-->
 	<Parameter name="org.goods.living.tech.health.url"

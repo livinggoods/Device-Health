@@ -10,11 +10,14 @@ import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ContainerRequestFilter;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.ext.Provider;
 import javax.xml.bind.DatatypeConverter;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.goods.living.tech.health.device.jpa.controllers.UsersJpaController;
+import org.goods.living.tech.health.device.jpa.dao.Users;
 import org.goods.living.tech.health.device.service.security.CustomSecurityContext;
 import org.goods.living.tech.health.device.service.security.ValidUser;
 import org.goods.living.tech.health.device.service.security.qualifier.Secured;
@@ -31,6 +34,9 @@ public class AuthenticationFilter implements ContainerRequestFilter {
 
 	@Inject
 	private ApplicationParameters applicationParameters;
+
+	@Inject
+	UsersJpaController usersJpaController;
 
 	Logger logger = LogManager.getLogger();
 
@@ -55,6 +61,7 @@ public class AuthenticationFilter implements ContainerRequestFilter {
 			// Set the custom security context
 			final ValidUser user = validateToken(token);
 			String scheme = "Token-Based-Auth-Scheme";
+			final SecurityContext currentSecurityContext = requestContext.getSecurityContext();
 			requestContext.setSecurityContext(new CustomSecurityContext(user, scheme));
 
 		} catch (Exception e) {
@@ -85,6 +92,12 @@ public class AuthenticationFilter implements ContainerRequestFilter {
 		user.setJwtToken(token);
 		// user.setApiToken();
 		user.setRole(role);
+
+		Users users = usersJpaController.findUsers(id);
+		if (users == null) {
+			logger.debug("Token is valid but no user " + id);
+			throw new Exception("Token is valid but no user " + id);
+		}
 
 		return user;
 	}
