@@ -79,7 +79,9 @@ public class LocationUpdatesBroadcastReceiver extends BroadcastReceiver {
 
         if (packageName != null && !Utils.isSmartHealthApp(packageName)) {
 
-            Crashlytics.log(Log.DEBUG, TAG, "Smarthealth not running. Ignoring location updates. loc on: " + locationOn);
+            String log = "Smarthealth not running. Ignoring location updates. loc on: " + locationOn;
+            Crashlytics.log(Log.DEBUG, TAG, log);
+            WriteToLogUtil.getInstance().log(log);
             return;
         }
 
@@ -88,7 +90,9 @@ public class LocationUpdatesBroadcastReceiver extends BroadcastReceiver {
 
 
             if (intent.getAction().contains("PROVIDERS_CHANGED")) {
-                Crashlytics.log(Log.DEBUG, TAG, "Location Providers changed");
+                String log = "Location Providers changed loc:" + locationOn;
+                Crashlytics.log(Log.DEBUG, TAG, log);
+                WriteToLogUtil.getInstance().log(log);
 
                 if (!locationOn) {
                     appController.checkAndRequestPerms();
@@ -120,7 +124,9 @@ public class LocationUpdatesBroadcastReceiver extends BroadcastReceiver {
                     List<Location> locations = result.getLocations();
 
                     //  Utils.sendNotification(context, "received location updates")
-                    Crashlytics.log(Log.DEBUG, TAG, "received location updates");
+                    String log = "received location updates";
+                    Crashlytics.log(Log.DEBUG, TAG, log);
+                    WriteToLogUtil.getInstance().log(log);
 
                     //brightness
                     intent = new Intent(context, PermissionActivity.class);

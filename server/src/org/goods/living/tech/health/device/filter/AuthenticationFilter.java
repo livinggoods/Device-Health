@@ -16,11 +16,14 @@ import javax.xml.bind.DatatypeConverter;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.goods.living.tech.health.device.jpa.controllers.AdminUsersJpaController;
 import org.goods.living.tech.health.device.jpa.controllers.UsersJpaController;
+import org.goods.living.tech.health.device.jpa.dao.AdminUsers;
 import org.goods.living.tech.health.device.jpa.dao.Users;
 import org.goods.living.tech.health.device.service.security.CustomSecurityContext;
 import org.goods.living.tech.health.device.service.security.ValidUser;
 import org.goods.living.tech.health.device.service.security.qualifier.Secured;
+import org.goods.living.tech.health.device.service.security.qualifier.UserCategory;
 import org.goods.living.tech.health.device.utility.ApplicationParameters;
 
 import io.jsonwebtoken.Claims;
@@ -38,6 +41,9 @@ public class AuthenticationFilter implements ContainerRequestFilter {
 	@Inject
 	UsersJpaController usersJpaController;
 
+	@Inject
+	AdminUsersJpaController adminUsersJpaController;
+
 	Logger logger = LogManager.getLogger();
 
 	@Override
@@ -50,7 +56,9 @@ public class AuthenticationFilter implements ContainerRequestFilter {
 
 		// Check if the HTTP Authorization header is present and formatted correctly
 		if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
-			requestContext.abortWith(Response.status(Response.Status.UNAUTHORIZED).build());
+
+			// TODO: enable this after devices sync
+			// requestContext.abortWith(Response.status(Response.Status.UNAUTHORIZED).build());
 			return;
 			// throw new NotAuthorizedException("Authorization header must be provided");
 		}
@@ -73,7 +81,8 @@ public class AuthenticationFilter implements ContainerRequestFilter {
 
 	public ValidUser validateToken(String token) throws Exception {
 
-		Claims claim = Jwts.parser().setSigningKey(DatatypeConverter.parseBase64Binary("itShouldNotBeSecret"))
+		Claims claim = Jwts.parser()
+				.setSigningKey(DatatypeConverter.parseBase64Binary(applicationParameters.getHashKey()))
 				.parseClaimsJws(token).getBody();
 		String username = (String) claim.getSubject();
 		Long id = Long.parseLong(claim.getId());
@@ -93,10 +102,19 @@ public class AuthenticationFilter implements ContainerRequestFilter {
 		// user.setApiToken();
 		user.setRole(role);
 
-		Users users = usersJpaController.findUsers(id);
-		if (users == null) {
-			logger.debug("Token is valid but no user " + id);
-			throw new Exception("Token is valid but no user " + id);
+		if (role.contains(UserCategory.USER.toString())) {
+			Users users = usersJpaController.findUsers(id);
+			if (users == null) {
+				logger.debug("Token is valid but no user " + id);
+				throw new Exception("Token is valid but no user " + id);
+			}
+		}
+		if (role.contains(UserCategory.ADMIN.toString())) {
+			AdminUsers users = adminUsersJpaController.find(username);
+			if (users == null) {
+				logger.debug("Token is valid but no user " + id);
+				throw new Exception("Token is valid but no user " + id);
+			}
 		}
 
 		return user;

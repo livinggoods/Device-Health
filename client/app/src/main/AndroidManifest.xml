@@ -35,8 +35,7 @@
         tools:ignore="ProtectedPermissions" />
 
     <uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
-
-
+    
     <!--  <uses-permission
           android:name="android.permission.PACKAGE_USAGE_STATS"
           tools:ignore="ProtectedPermissions" />

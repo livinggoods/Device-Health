@@ -23,13 +23,24 @@ public class WriteToLogUtil {
 
     public String logName;
     String text;
-    File root = new File(Environment.getExternalStorageDirectory(), "LG/USSDAPP");
+    File root = new File(Environment.getExternalStorageDirectory(), "LG/DEVICEHEALTH");
 
-    public WriteToLogUtil() {
+    static WriteToLogUtil writeToLogUtil;
+
+    private WriteToLogUtil() {
         super();
         this.logName = "ussd_app_log.txt";
 
-        // TODO Auto-generated constructor stub
+
+    }
+
+    public static WriteToLogUtil getInstance() {
+
+        if (writeToLogUtil == null) {
+            writeToLogUtil = new WriteToLogUtil();
+        }
+
+        return writeToLogUtil;
     }
 
     public void clearLog() throws IOException {

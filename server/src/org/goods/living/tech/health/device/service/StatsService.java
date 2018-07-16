@@ -67,6 +67,12 @@ public class StatsService extends BaseService {
 		List<JsonNode> list = JSonHelper.getJsonNodeArray(incomingData);
 
 		Users user = getCurrentUser();
+		// TODO: temp fix for old versions remove by august 15?
+		if (user == null) {
+			JsonNode JsonNode = list.size() > 0 ? list.get(0) : null;
+			Long userId = JsonNode.has("userId") ? JsonNode.get("userId").asLong() : null;
+			user = usersJpaController.findUsers(userId);
+		}
 
 		for (JsonNode j : list) {
 			logger.debug(j);

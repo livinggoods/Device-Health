@@ -208,6 +208,20 @@
 			<artifactId>log4j-web</artifactId>
 			<version>2.11.0</version>
 		</dependency>
+		
+		<dependency>
+      <groupId>org.apache.maven</groupId>
+      <artifactId>maven-model</artifactId>
+      <version>2.2.0</version>
+    </dependency>
+    
+    <dependency>
+      <groupId>org.codehaus.groovy</groupId>
+      <artifactId>groovy-all</artifactId>
+      <!-- any version of Groovy \>= 1.5.0 should work here -->
+      <version>2.5.0</version>
+      <type>pom</type>
+    </dependency>
 
 	</dependencies>
 
@@ -233,6 +247,26 @@
         <configuration>
           <warSourceDirectory>${basedir}/WebContent</warSourceDirectory>
           <failOnMissingWebXml>false</failOnMissingWebXml>
+          
+          <filters>
+            <filter>config.properties</filter>
+          </filters>
+          
+           <webResources>
+            <resource>
+              <directory>resources</directory>
+              <!-- override the destination directory for this resource -->
+               <!-- <targetPath>WEB-INF</targetPath>  -->
+              <!-- enable filtering -->
+              <filtering>true</filtering>
+              <excludes>
+                <exclude>**/*.properties</exclude>
+              </excludes>
+            </resource>
+            
+          </webResources>
+          
+          
         </configuration>
       </plugin>
       <plugin>
@@ -243,6 +277,41 @@
           <target>1.8</target>
         </configuration>
       </plugin>
+      
+      <plugin>
+  <groupId>org.codehaus.gmaven</groupId>
+  <artifactId>groovy-maven-plugin</artifactId>
+  <dependencies>
+    <dependency>
+      <groupId>org.codehaus.groovy</groupId>
+      <artifactId>groovy-all</artifactId>
+      <version>2.0.6</version>
+    </dependency>
+  </dependencies>
+  
+  <executions>
+        
+        
+          <execution>
+            <id>groovy-magic</id>
+            <phase>prepare-package</phase>
+            <goals>
+              <goal>execute</goal>
+            </goals>
+            <configuration>
+              <source>
+                def hello ="hello maven build"
+                
+                print hello
+                
+              </source>
+            </configuration>
+          </execution>
+        </executions>
+        
+</plugin>
+
+      
     </plugins>
   </build>
 </project>

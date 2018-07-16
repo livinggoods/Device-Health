@@ -40,6 +40,7 @@ public class ApplicationParameters {
 	public String getTokenLife() {
 		return servletContext.getInitParameter("org.goods.living.tech.health.device.jwt.token.life");
 	}
+
 	public String getUrl() {
 		return servletContext.getInitParameter("org.goods.living.tech.health.url");
 	}
@@ -59,7 +60,6 @@ public class ApplicationParameters {
 		return temp;
 	}
 
-
 	public int getLocationUpdateInterval() {
 		int temp = 1;
 		try {
@@ -76,6 +76,32 @@ public class ApplicationParameters {
 
 		try {
 			String s = servletContext.getInitParameter("org.goods.living.tech.health.device.ussdBalanceCodes");
+			logger.debug(s);
+			return s;
+		} catch (Exception e) {
+			logger.error(e);
+			return null;
+		}
+
+	}
+
+	public String getEmail() {
+
+		try {
+			String s = servletContext.getInitParameter("org.goods.living.tech.health.device.email.username");
+			logger.debug(s);
+			return s;
+		} catch (Exception e) {
+			logger.error(e);
+			return null;
+		}
+
+	}
+
+	public String getEmailPassword() {
+
+		try {
+			String s = servletContext.getInitParameter("org.goods.living.tech.health.device.email.password");
 			logger.debug(s);
 			return s;
 		} catch (Exception e) {

@@ -18,8 +18,6 @@ import org.goods.living.tech.health.device.jpa.controllers.UsersJpaController;
 import org.goods.living.tech.health.device.jpa.dao.DataBalance;
 import org.goods.living.tech.health.device.jpa.dao.Users;
 import org.goods.living.tech.health.device.models.Result;
-import org.goods.living.tech.health.device.service.security.qualifier.Secured;
-import org.goods.living.tech.health.device.service.security.qualifier.UserCategory;
 import org.goods.living.tech.health.device.utility.Constants;
 import org.goods.living.tech.health.device.utility.JSonHelper;
 
@@ -50,7 +48,7 @@ public class DatabalanceService extends BaseService {
 	public DatabalanceService() {
 	}
 
-	@Secured(value = UserCategory.USER)
+	// @Secured(value = UserCategory.USER)
 	@POST
 	// @Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
@@ -61,6 +59,13 @@ public class DatabalanceService extends BaseService {
 		List<JsonNode> list = JSonHelper.getJsonNodeArray(incomingData);
 
 		Users user = getCurrentUser();
+
+		// TODO: temp fix for old versions remove by august 15?
+		if (user == null) {
+			JsonNode JsonNode = list.size() > 0 ? list.get(0) : null;
+			Long userId = JsonNode.has("userId") ? JsonNode.get("userId").asLong() : null;
+			user = usersJpaController.findUsers(userId);
+		}
 
 		for (JsonNode j : list) {
 			logger.debug(j);

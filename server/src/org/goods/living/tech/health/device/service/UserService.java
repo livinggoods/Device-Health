@@ -189,6 +189,13 @@ public class UserService extends BaseService {
 		JsonNode data = JSonHelper.getJsonNode(incomingData);
 
 		Users users = getCurrentUser();
+		// TODO: temp fix for old versions remove by august 15?
+		if (users == null) {
+			String username = data.has("username") ? data.get("username").asText() : null;
+			String androidId = data.has("androidId") ? data.get("androidId").asText() : null;
+			users = usersJpaController.findByUserNameAndAndroidId(username, androidId);
+
+		}
 
 		String deviceTimeStr = data.has("deviceTime") ? data.get("deviceTime").asText() : null;
 
