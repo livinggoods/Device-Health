@@ -1,6 +1,7 @@
 package org.goods.living.tech.health.device.service;
 
 import java.io.InputStream;
+import java.io.StringWriter;
 import java.net.URLEncoder;
 import java.sql.Timestamp;
 import java.util.Date;
@@ -19,6 +20,10 @@ import javax.ws.rs.QueryParam;
 import org.apache.commons.mail.DefaultAuthenticator;
 import org.apache.commons.mail.Email;
 import org.apache.commons.mail.HtmlEmail;
+import org.apache.velocity.VelocityContext;
+import org.apache.velocity.app.VelocityEngine;
+import org.apache.velocity.runtime.RuntimeConstants;
+import org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader;
 import org.codehaus.jackson.JsonNode;
 import org.goods.living.tech.health.device.jpa.controllers.AdminUsersJpaController;
 import org.goods.living.tech.health.device.jpa.dao.AdminUsers;
@@ -149,34 +154,48 @@ public class AdminService extends BaseService {
 				// Send Email
 
 				if (status == true) {
+
+					// VelocityEngine ve = new VelocityEngine();
+					// ve.setApplicationAttribute("resource.loader", "class");
+					// ve.setApplicationAttribute("class.resource.loader.class",
+					// org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader.class);
+					// // ve.setApplicationAttribute("class.resource.loader.path", "templates/");
+					// ve.setApplicationAttribute("resource.loader", "webapp");
+					// ve.setApplicationAttribute("webapp.resource.loader.class",
+					// org.apache.velocity.runtime.resource.loader.ebapp.class);
+					// ve.setApplicationAttribute("velocimacro.library.autoreload", true);
+					// ve.setApplicationAttribute("file.resource.loader.path",
+					// "/WEB-INF/classes/templates");
+					// ve.setApplicationAttribute("velocimacro.permissions.allow.inline.to.replace.global",
+					// true);
+					// ve.init();
+
+					VelocityEngine ve = new VelocityEngine();
+					ve.setProperty(RuntimeConstants.RESOURCE_LOADER, "classpath");
+					ve.setProperty("classpath.resource.loader.class", ClasspathResourceLoader.class.getName());
+					ve.init();
+
+					org.apache.velocity.Template t = ve.getTemplate("templates/resetEmail.vm");
+
+					// Set parameters for my template.
+					VelocityContext context = new VelocityContext();
+					context.put("token", URLEncoder.encode(user.getForgotToken(), "UTF-8"));
+					context.put("user", user.getName());
+					context.put("url", applicationParameters.getUrl());
+
+					StringWriter writer = new StringWriter();
+					t.merge(context, writer);
+					String output = writer.toString().trim();
+
 					Email passworResetEmail = new HtmlEmail();
 					passworResetEmail.setHostName("smtp.office365.com");
 					passworResetEmail.setSmtpPort(587);
 					passworResetEmail.setAuthenticator(new DefaultAuthenticator(applicationParameters.getEmail(),
 							applicationParameters.getEmailPassword()));
 					passworResetEmail.setStartTLSEnabled(true);
-					passworResetEmail.setFrom("itsupport@livinggoods.org");
+					passworResetEmail.setFrom(applicationParameters.getEmail());
 					passworResetEmail.setSubject("Device Health Admin Password Reset");
-					((HtmlEmail) passworResetEmail).setHtmlMsg("<body style=\"background: #FFFFFF;\">   "
-							+ " <div class=\"mj-container\" style=\"background-color:#FFFFFF;\"><!--[if mso | IE]>     "
-							+ " <table role=\"presentation\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\" width=\"600\" "
-							+ "align=\"center\" style=\"width:600px;\">        <tr>          <td style=\"line-height:0px;"
-							+ "font-size:0px;mso-line-height-rule:exactly;\">      <![endif]--><div style=\"margin:0px auto;"
-							+ "max-width:600px;\"><table role=\"presentation\" cellpadding=\"0\" cellspacing=\"0\" "
-							+ "style=\"font-size:0px;width:100%;\" align=\"center\" border=\"0\"><tbody><tr><td "
-							+ "style=\"text-align:center;vertical-align:top;direction:ltr;font-size:0px;padding:9px 0px 9px 0px;\"><!--[if mso | IE]>   "
-							+ "   <table role=\"presentation\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\">        "
-							+ "<tr>          <td style=\"vertical-align:top;width:600px;\">     "
-							+ " <![endif]--><div class=\"mj-column-per-100 outlook-group-fix\" "
-							+ "style=\"vertical-align:top;display:inline-block;direction:ltr;font-size:13px;text-align:left;width:100%;\">"
-							+ "<table role=\"presentation\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\" border=\"0\">"
-							+ "<tbody><tr><td style=\"word-wrap:break-word;font-size:0px;padding:0px 20px 0px 20px;\" align=\"center\">"
-							+ "<div style=\"cursor:auto;color:#000000;font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:11px;line-height:22px;text-align:center;\"><h1 style=\"font-family: &apos;Cabin&apos;, sans-serif; line-height: 100%;\">Device Health - Living Goods</h1></div></td></tr><tr><td style=\"word-wrap:break-word;font-size:0px;padding:0px 20px 0px 20px;\" align=\"left\"><div style=\"cursor:auto;color:#000000;font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:11px;line-height:22px;text-align:left;\"><p><span style=\"font-size:14px;\">Dear "
-							+ user.getName()
-							+ ",</span></p><p><span style=\"font-size:14px;\">We have received a password reset request from you. Please click on the button below to reset your password</span></p></div></td></tr><tr><td style=\"word-wrap:break-word;font-size:0px;padding:10px 25px 10px 25px;padding-top:10px;padding-left:25px;\" align=\"center\"><table role=\"presentation\" cellpadding=\"0\" cellspacing=\"0\" style=\"border-collapse:separate;\" align=\"center\" border=\"0\"><tbody><tr><td style=\"border:none;border-radius:24px;color:#fff;cursor:auto;padding:10px 25px;\" align=\"center\" valign=\"middle\" bgcolor=\"#005084\">"
-							+ "<a href=\"" + applicationParameters.getUrl() + "/password/reset/verify?token="
-							+ URLEncoder.encode(user.getForgotToken(), "UTF-8") + "\""
-							+ " style=\"text-decoration:none;background:#005084;color:#fff;font-family:Ubuntu, Helvetica, Arial, sans-serif, Helvetica, Arial, sans-serif;font-size:13px;font-weight:normal;line-height:120%;text-transform:none;margin:0px;\" target=\"_blank\">Reset Password</a></td></tr></tbody></table></td></tr></tbody></table></div><!--[if mso | IE]>      </td></tr></table>      <![endif]--></td></tr></tbody></table></div><!--[if mso | IE]>      </td></tr></table>      <![endif]--></div></body>");
+					((HtmlEmail) passworResetEmail).setHtmlMsg(output);
 					passworResetEmail.addTo(user.getEmail());
 					passworResetEmail.send();
 					response.put("status", "200");

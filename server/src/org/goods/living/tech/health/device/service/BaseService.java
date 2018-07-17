@@ -39,9 +39,9 @@ public class BaseService {
 	@GET
 	@Produces("application/json")
 	public Result<String> index() {// Response
-		logger.debug("index page of " + serviceMessage + " hash: " + applicationParameters.getHashKey());
+		logger.debug("index page of " + serviceMessage + " api: " + applicationParameters.getServerApi());
 
-		Result<String> result = new Result(true, "", serviceMessage + " hash: " + applicationParameters.getHashKey());
+		Result<String> result = new Result(true, "", serviceMessage + " api: " + applicationParameters.getServerApi());
 		return result;// Response.status(200).entity(result).build();
 	}
 

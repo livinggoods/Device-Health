@@ -47,9 +47,9 @@
 	<Parameter name="org.goods.living.tech.health.url"
 			   value="http://localhost:8080" />
 			   
-			   <Parameter name="org.goods.living.tech.health.device.email.username"
+	<Parameter name="org.goods.living.tech.health.device.email.username"
 		value="${email.username}" />
-		<Parameter name="org.goods.living.tech.health.device.email.password"
+	<Parameter name="org.goods.living.tech.health.device.email.password"
 		value="${email.password}" />
 
 </Context>
