@@ -63,7 +63,7 @@ public class USSDJobService extends com.firebase.jobdispatcher.JobService {
                             .putCustomAttribute("Reason", ""));
 
                     //  registrationService.checkBalanceThroughUSSD(c);
-                    registrationService.checkBalanceThroughSMS(c, 0);
+                    registrationService.checkBalanceThroughSMS(c, 0, null);
 
 
 //                    dataBalanceHelper.dialNumber(c, ussdFull, new DataBalanceHelper.USSDResult() {

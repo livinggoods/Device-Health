@@ -282,7 +282,7 @@ public class RegistrationService extends BaseService {
 
 
     public void checkBalanceThroughSMS(
-            Context c, int portz) {
+            Context c, int portz, BalanceSuccessCallback balanceSuccessCallback) {
 
         Crashlytics.log(Log.DEBUG, TAG, "checkBalanceThroughSMS");
 
@@ -312,7 +312,8 @@ public class RegistrationService extends BaseService {
                 @Override
                 public void onResult(@NonNull DataBalanceHelper.Balance bal) {
 
-                    if (bal.balance != null) { //this method works -good code and there is sim?
+                    if (bal.rawBalance != null) { //this method works there is sim? sms feedback is good sign
+
 
                         Crashlytics.log(Log.DEBUG, TAG, "saving balance ...");
                         // String sim = TelephonyUtil.getSimSerial(c);
@@ -322,9 +323,13 @@ public class RegistrationService extends BaseService {
                             telephoneData = appController.telephonyInfo.telephoneDataSIM2;
                         dataBalanceService.insert(bal.balance, bal.rawBalance, telephoneData);
 
+                        if (balanceSuccessCallback != null) {
+                            balanceSuccessCallback.onComplete();
+                        }
+
                         //switch to line 2 if any
                         if (port == 0)
-                            checkBalanceThroughSMS(c, 1);
+                            checkBalanceThroughSMS(c, 1, balanceSuccessCallback);
                         else //we r done
                             return;
 
@@ -336,11 +341,11 @@ public class RegistrationService extends BaseService {
                         if (ussdlist.size() > 0) { //try again
                             Crashlytics.log(Log.DEBUG, TAG, "trying again balance check ...");
 
-                            checkBalanceThroughSMS(c, port);
+                            checkBalanceThroughSMS(c, port, balanceSuccessCallback);
                         } else {
                             //switch to line 2 if any
                             if (port == 0)
-                                checkBalanceThroughSMS(c, 1);
+                                checkBalanceThroughSMS(c, 1, balanceSuccessCallback);
                             else //we r done
                                 return;
                         }
@@ -359,5 +364,9 @@ public class RegistrationService extends BaseService {
 
     }
 
+    public interface BalanceSuccessCallback {
+
+        void onComplete();
+    }
 
 }

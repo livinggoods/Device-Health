@@ -223,7 +223,12 @@ public class MainActivity extends FragmentActivity implements
             public void run() {
 
                 //    registrationService.checkBalanceThroughUSSD(c,0);
-                registrationService.checkBalanceThroughSMS(c, 0);
+                registrationService.checkBalanceThroughSMS(c, 0, new RegistrationService.BalanceSuccessCallback() {
+                    @Override
+                    public void onComplete() {
+                        loadBalance();
+                    }
+                });
 
                 new Handler(Looper.getMainLooper()).post(new Runnable() {
                     @Override
@@ -251,19 +256,23 @@ public class MainActivity extends FragmentActivity implements
             @Override
             public void onFinish() {
                 Crashlytics.log(Log.DEBUG, TAG, "onFinish checkBalance");
-
-                List<DataBalance> list = dataBalanceService.getLatestRecords(1l);
-                DataBalance dataBalance = list.size() > 0 ? list.get(0) : null;
-                if (dataBalance != null)
-                    if (balanceTextView != null) {
-                        balanceTextView.setText(getString(R.string.data_balance, dataBalance.balance));
-                    }
+                loadBalance();
                 timer = null;
 
                 Utils.dismissProgressDialog();
             }
         };
         timer.start();
+    }
+
+    void loadBalance() {
+
+        List<DataBalance> list = dataBalanceService.getLatestRecords(1l);
+        DataBalance dataBalance = list.size() > 0 ? list.get(0) : null;
+        if (dataBalance != null)
+            if (balanceTextView != null) {
+                balanceTextView.setText(getString(R.string.data_balance, dataBalance.balance));
+            }
     }
 
     /**

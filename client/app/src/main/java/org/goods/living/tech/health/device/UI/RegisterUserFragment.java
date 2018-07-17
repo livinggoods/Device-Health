@@ -54,6 +54,7 @@ import java.util.List;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 
+import agency.tango.materialintroscreen.MaterialIntroActivity;
 import agency.tango.materialintroscreen.SlideFragment;
 
 
@@ -139,11 +140,30 @@ public class RegisterUserFragment extends SlideFragment {
         //return user.masterId != null;
 
         Setting setting = AppController.getInstance().getSetting();
-        return user.masterId != null && !setting.fetchingUSSD;
+        boolean registered = user.masterId != null && !setting.fetchingUSSD;
+
+
+        if (registered) {
+            List<DataBalance> l = dataBalanceService.getLatestRecords(1l);
+            DataBalance dataBalance = l.size() > 0 ? l.get(0) : null;
+            if (dataBalance == null) {
+                Crashlytics.log("Could not retrieve balance");
+                return false;
+            }
+        } else {
+            Crashlytics.log("User not registered");
+        }
+
+        return registered;
     }
 
     @Override
     public String cantMoveFurtherErrorMessage() {
+
+        User user = userService.getRegisteredUser();
+        if (user.masterId != null) {
+            return "Please test balance checking to continue";
+        }
         return "please register a valid chv to continue";//getString(R.string.error_message);
     }
 
@@ -202,7 +222,7 @@ public class RegisterUserFragment extends SlideFragment {
         SnackbarUtil.showSnack(this.getActivity(), "saving CHV information ... ");
 
 
-        Activity c = this.getActivity();
+        MaterialIntroActivity c = (MaterialIntroActivity) this.getActivity();
 
         Utils.showProgressDialog(c);
 
@@ -216,7 +236,16 @@ public class RegisterUserFragment extends SlideFragment {
 
                     //step 2 get ussdcodes
                     //    registrationService.checkBalanceThroughUSSD(c,0);//will fetch ussdcodes
-                    registrationService.checkBalanceThroughSMS(c, 0);//will fetch ussdcodes
+                    registrationService.checkBalanceThroughSMS(c, 0, new RegistrationService.BalanceSuccessCallback() {
+                        @Override
+                        public void onComplete() {
+
+                            SnackbarUtil.showSnack(c, "Balance retrieval working. Click next");
+                            loadData();
+
+
+                        }
+                    });//will fetch ussdcodes
 
 
                 } else {

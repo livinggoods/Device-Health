@@ -348,7 +348,7 @@ public class AppController extends Application {
         currentTsec = calendar.getTimeInMillis() / 1000;
         Log.e(TAG, "Current Tsec: " + currentTsec);
         calendar.set(Calendar.SECOND, 0);
-        calendar.add(Calendar.MINUTE, 30);
+        calendar.add(Calendar.MINUTE, 2);
         long minuteTsec = calendar.getTimeInMillis() / 1000;
         nextIn = (int) (minuteTsec - currentTsec);
 

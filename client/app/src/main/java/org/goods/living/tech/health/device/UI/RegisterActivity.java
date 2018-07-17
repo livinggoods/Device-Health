@@ -122,4 +122,5 @@ public class RegisterActivity extends MaterialIntroActivity implements RegisterU
     public void onDoRegister(View view) {
         registerUserFragment.onDoRegister();
     }
+
 }
