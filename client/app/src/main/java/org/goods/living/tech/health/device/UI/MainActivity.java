@@ -26,7 +26,6 @@ import android.os.Handler;
 import android.os.Looper;
 import android.preference.PreferenceManager;
 import android.support.v4.app.FragmentActivity;
-import android.support.v7.widget.AppCompatEditText;
 import android.text.format.DateFormat;
 import android.util.Log;
 import android.view.View;
@@ -36,7 +35,6 @@ import android.widget.TextView;
 import com.crashlytics.android.Crashlytics;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.tasks.OnSuccessListener;
-import com.hbb20.CountryCodePicker;
 
 import org.goods.living.tech.health.device.AppController;
 import org.goods.living.tech.health.device.R;
@@ -93,8 +91,8 @@ public class MainActivity extends FragmentActivity implements
     private TextView usernameText;
     private TextView nameText;
     private TextView balanceTextView;
-    CountryCodePicker ccp;
-    AppCompatEditText edtPhoneNumber;
+    TextView phoneText;
+
 
     private TextView syncTextView;
 
@@ -119,11 +117,11 @@ public class MainActivity extends FragmentActivity implements
         mLocationUpdatesResultView = (TextView) findViewById(R.id.location_updates_result);
         usernameText = (TextView) findViewById(R.id.usernameText);
         nameText = (TextView) findViewById(R.id.nameText);
+        phoneText = (TextView) findViewById(R.id.phone_number_edt);
+
 
         syncTextView = (TextView) findViewById(R.id.syncTextView);
-        ccp = (CountryCodePicker) findViewById(R.id.ccp);
-        edtPhoneNumber = (AppCompatEditText) findViewById(R.id.phone_number_edt);
-        ccp.registerCarrierNumberEditText(edtPhoneNumber);
+
 
         balanceTextView = (TextView) findViewById(R.id.balanceTextView);
 
@@ -133,14 +131,10 @@ public class MainActivity extends FragmentActivity implements
 
         WindowManager.LayoutParams settings = getWindow().getAttributes();
 
-        // disableSettingsEdit
-        ccp.setClickable(false);
-        ccp.setCcpClickable(false);
-        edtPhoneNumber.setEnabled(false);
-        edtPhoneNumber.setClickable(false);
 
         // Crashlytics.getInstance().crash(); // Force a crash
 
+        Utils.isGooglePlayServicesAvailable(this);
         AppController.getInstance().checkAndRequestPerms();
     }
 
@@ -226,6 +220,7 @@ public class MainActivity extends FragmentActivity implements
                 registrationService.checkBalanceThroughSMS(c, 0, new RegistrationService.BalanceSuccessCallback() {
                     @Override
                     public void onComplete() {
+                        Utils.dismissProgressDialog();
                         loadBalance();
                     }
                 });
@@ -256,10 +251,11 @@ public class MainActivity extends FragmentActivity implements
             @Override
             public void onFinish() {
                 Crashlytics.log(Log.DEBUG, TAG, "onFinish checkBalance");
+                Utils.dismissProgressDialog();
                 loadBalance();
                 timer = null;
 
-                Utils.dismissProgressDialog();
+
             }
         };
         timer.start();
@@ -339,8 +335,7 @@ public class MainActivity extends FragmentActivity implements
         //if(user ==null){
         usernameText.setText(user == null ? null : user.username);
         nameText.setText(user == null ? null : user.name);
-        if (user.phone != null)
-            ccp.setFullNumber(user.phone);
+        phoneText.setText(user == null ? null : user.phone);
 
         List<DataBalance> l = dataBalanceService.getLatestRecords(1l);
         DataBalance dataBalance = l.size() > 0 ? l.get(0) : null;

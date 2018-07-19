@@ -47,8 +47,6 @@ public class TelephonyUtil {
     private TelephonyUtil(Context context) {
 
         this.context = context;
-        telephoneDataSIM1 = new JSONObject();
-        telephoneDataSIM2 = new JSONObject();
         loadInfo();
 
     }
@@ -62,10 +60,11 @@ public class TelephonyUtil {
         return telephonyInfo;
     }
 
-    public void loadInfo() {
+    public synchronized void loadInfo() {
         try {
 
-
+            telephoneDataSIM1 = new JSONObject();
+            telephoneDataSIM2 = new JSONObject();
             //   getSims(context);
             HashMap<Method, Class<?>> map = potentialTelephonyManagerMethodNamesForThisDevice(context);
 
@@ -79,13 +78,33 @@ public class TelephonyUtil {
                 String sim2 = getDeviceIdBySlot(key, 1);
 
                 if (sim1 != null) {
+
                     // results.add(key.getName() + " " + sim);
                     telephoneDataSIM1.put(key.getName(), sim1);
-                    telephoneDataSIM2.put(key.getName(), sim2);
                     Crashlytics.log(Log.DEBUG, TAG, key.getName() + " " + sim1);
+
+//                    if (key.getName().toLowerCase().contains("operator") && !sim1.trim().isEmpty()) {
+//                        telephoneDataSIM1.put("simPresent", true);
+//                    }
                     //   break;
                 }
+                if (sim2 != null) {
+
+                    telephoneDataSIM2.put(key.getName(), sim2);
+                    Crashlytics.log(Log.DEBUG, TAG, key.getName() + " " + sim2);
+
+//                    if (key.getName().toLowerCase().contains("operator") && !sim1.trim().isEmpty()) {
+//                        telephoneDataSIM1.put("simPresent", true);
+//                    }
+
+                }
             }
+
+//
+//            if (!telephoneDataSIM1.has("simPresent"))
+//                telephoneDataSIM1 = null;
+//            if (!telephoneDataSIM2.has("simPresent"))
+//                telephoneDataSIM2 = null;
 
             //map = potentialSmsManagerMethodNamesForThisDevice(context);
 
@@ -196,7 +215,8 @@ public class TelephonyUtil {
                 //   }
                 if (methods[idx].getName().startsWith("get") && parameterCount == 1) {
                     Class<?> parameterClazz = parameterTypes[0];
-                    if (parameterClazz.isPrimitive() || Number.class.isAssignableFrom(parameterClazz)) {
+
+                    if (parameterClazz.isPrimitive()) {//Number.class.isAssignableFrom(parameterClazz.getDeclaringClass())) {//parameterClazz.isPrimitive() ||
                         //if (methods[idx].getParameterTypes().length == 1 && methods[idx].getParameterAnnotations()[0].length == 1 && (methods[idx].getReturnType().isAssignableFrom(String.class) || methods[idx].getReturnType().isAssignableFrom(Boolean.class)))
                         System.out.println("\n" + methods[idx].getName());//+ " declared by " + methods[idx].getDeclaringClass()
                         map.put(methods[idx], parameterClazz);
@@ -241,7 +261,7 @@ public class TelephonyUtil {
                 //   }
                 if (methods[idx].getName().startsWith("get") && parameterCount == 1) {
                     Class<?> parameterClazz = parameterTypes[0];
-                    if (parameterClazz.isPrimitive() || Number.class.isAssignableFrom(parameterClazz)) {
+                    if (parameterClazz.isPrimitive()) {//parameterClazz.isPrimitive() ||
                         //if (methods[idx].getParameterTypes().length == 1 && methods[idx].getParameterAnnotations()[0].length == 1 && (methods[idx].getReturnType().isAssignableFrom(String.class) || methods[idx].getReturnType().isAssignableFrom(Boolean.class)))
                         System.out.println("\n" + methods[idx].getName());//+ " declared by " + methods[idx].getDeclaringClass()
                         map.put(methods[idx], parameterClazz);

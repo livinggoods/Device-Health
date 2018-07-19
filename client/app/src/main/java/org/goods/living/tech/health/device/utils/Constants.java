@@ -34,6 +34,7 @@ public final class Constants {
         //  public static final String STATS_DELETE = STATS + DELETE;
 
         public static final String DATABALANCE = "/databalance";
+        public static final String DATABALANCE_CREATE = DATABALANCE + CREATE;
         public static final String DATABALANCE_USSDCODES = DATABALANCE + "/ussdCodes";
         public static final String USERS_REFRESH_TOKEN = USER + "/refreshToken";
 

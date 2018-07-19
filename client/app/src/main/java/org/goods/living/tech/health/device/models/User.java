@@ -68,8 +68,8 @@ public class User extends BaseModel {
         if (JSONObject.has("phone")) phone = JSONObject.getString("phone");
 
         if (JSONObject.has("name")) name = JSONObject.getString("name");
-        if (JSONObject.has("branch")) name = JSONObject.getString("branch");
-        if (JSONObject.has("country")) name = JSONObject.getString("country");
+        if (JSONObject.has("branch")) branch = JSONObject.getString("branch");
+        if (JSONObject.has("country")) country = JSONObject.getString("country");
 
 
         if (JSONObject.has("updateInterval"))

@@ -35,9 +35,9 @@
 	<Parameter name="org.goods.living.tech.health.device.jwt.token.hash.key"
 		value="${hash.key}" />
 	<Parameter name="org.goods.living.tech.health.device.jwt.token.life"
-		value="123400" />
+		value="31536000" /> <!-- 1 year -->
 	<Parameter name="org.goods.living.tech.health.device.api"
-		value="10108" />
+		value="10110" />
 	<Parameter name="org.goods.living.tech.health.device.locationUpdateInterval"
 		value="300" />
 		<Parameter name="org.goods.living.tech.health.device.ussdBalanceCodes"

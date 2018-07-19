@@ -101,7 +101,7 @@ public class SmsBroadcastReceiver extends BroadcastReceiver {
                 }
 
                 //      if (smsSender.equals(serviceProviderNumber) && smsBody.startsWith(serviceProviderSmsCondition)) {
-                //          this.abortBroadcast();//avoid an incoming sms msg if its our balance check
+                this.abortBroadcast();//avoid an incoming sms msg if its our balance check
                 Crashlytics.log(Log.DEBUG, TAG, smsBody);
                 if (listener != null) {
                     listener.onTextReceived(smsBody);

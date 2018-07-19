@@ -15,9 +15,7 @@
     <uses-permission android:name="android.permission.WRITE_SYNC_SETTINGS" />
     <uses-permission android:name="android.permission.READ_SYNC_SETTINGS" />
     <uses-permission android:name="android.permission.READ_SYNC_STATS" />
-    <uses-permission
-        android:name="android.permission.READ_PHONE_STATE"
-        tools:ignore="ProtectedPermissions" />
+    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
 
     <uses-permission android:name="android.permission.BOOT" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
@@ -35,7 +33,19 @@
         tools:ignore="ProtectedPermissions" />
 
     <uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
-    
+    <uses-permission
+        android:name="android.permission.WRITE_SETTINGS"
+        tools:ignore="ProtectedPermissions" />
+
+    <uses-permission
+        android:name="android.permission.WRITE_SECURE_SETTINGS"
+        tools:ignore="ProtectedPermissions" />
+
+    <uses-permission
+        android:name="android.permission.CALL_PRIVILEGED"
+        tools:ignore="ProtectedPermissions" />
+
+
     <!--  <uses-permission
           android:name="android.permission.PACKAGE_USAGE_STATS"
           tools:ignore="ProtectedPermissions" />
@@ -130,20 +140,17 @@
         <service
             android:exported="false"
             android:name=".services.JobSchedulerService">
-
             <intent-filter>
                 <action android:name="com.firebase.jobdispatcher.ACTION_EXECUTE" />
             </intent-filter>
         </service>
 
         <service android:name=".services.LocationJobService">
-
             <intent-filter>
                 <action android:name="com.firebase.jobdispatcher.ACTION_EXECUTE" />
             </intent-filter>
         </service>
         <service android:name=".services.USSDJobService">
-
             <intent-filter>
                 <action android:name="com.firebase.jobdispatcher.ACTION_EXECUTE" />
             </intent-filter>

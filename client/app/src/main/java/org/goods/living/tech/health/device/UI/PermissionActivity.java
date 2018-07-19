@@ -145,82 +145,87 @@ public class PermissionActivity extends FragmentActivity {
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
                                            @NonNull int[] grantResults) {
-        Crashlytics.log(Log.DEBUG, TAG, "onRequestPermissionResult");
 
 
-        //     if (requestCode == REQUEST_PERMISSIONS_REQUEST_CODE) {
-        if (grantResults.length <= 0) {
-            // If user interaction was interrupted, the permission request is cancelled and you
-            // receive empty arrays.
-            Crashlytics.log(Log.DEBUG, TAG, "User interaction was cancelled.");
+        try {
+            //     if (requestCode == REQUEST_PERMISSIONS_REQUEST_CODE) {
+            if (grantResults.length <= 0) {
+                // If user interaction was interrupted, the permission request is cancelled and you
+                // receive empty arrays.
+                Crashlytics.log(Log.DEBUG, TAG, "User interaction was cancelled.");
 
-        } else {
+            } else {
 
-            for (int i = 0; i < grantResults.length; i++) {
-                if (grantResults[i] != PackageManager.PERMISSION_GRANTED) {
-                    //  Crashlytics.log(Log.DEBUG, TAG, "Permission denied " + permissions[i]);
+                for (int i = 0; i < grantResults.length; i++) {
+                    if (grantResults[i] != PackageManager.PERMISSION_GRANTED) {
+                        //  Crashlytics.log(Log.DEBUG, TAG, "Permission denied " + permissions[i]);
 
-                    Crashlytics.log("Permission denied " + permissions[i]);
-                    Answers.getInstance().logCustom(new CustomEvent("Permission denied")
-                            .putCustomAttribute("Reason", permissions[i]));
-                    // Permission denied.
+                        Crashlytics.log("Permission denied " + permissions[i]);
+                        Answers.getInstance().logCustom(new CustomEvent("Permission denied")
+                                .putCustomAttribute("Reason", permissions[i]));
+                        // Permission denied.
 
-                    // Notify the user via a SnackBar that they have rejected a core permission for the
-                    // app, which makes the Activity useless. In a real app, core permissions would
-                    // typically be best requested during a welcome-screen flow.
+                        // Notify the user via a SnackBar that they have rejected a core permission for the
+                        // app, which makes the Activity useless. In a real app, core permissions would
+                        // typically be best requested during a welcome-screen flow.
 
-                    // Additionally, it is important to remember that a permission might have been
-                    // rejected without asking the user for permission (device policy or "Never ask
-                    // again" prompts). Therefore, a user interface affordance is typically implemented
-                    // when permissions are denied. Otherwise, your app could appear unresponsive to
-                    // touches or interactions which have required permissions.
+                        // Additionally, it is important to remember that a permission might have been
+                        // rejected without asking the user for permission (device policy or "Never ask
+                        // again" prompts). Therefore, a user interface affordance is typically implemented
+                        // when permissions are denied. Otherwise, your app could appear unresponsive to
+                        // touches or interactions which have required permissions.
 
-                    //  Pattern p = Pattern.compile("^.+(\\d+).+");
-                    Pattern p = Pattern.compile("[^\\.]*$");
-                    Matcher m = p.matcher(permissions[i]);
+                        //  Pattern p = Pattern.compile("^.+(\\d+).+");
+                        Pattern p = Pattern.compile("[^\\.]*$");
+                        Matcher m = p.matcher(permissions[i]);
 
-                    String name = permissions[i];
-                    if (m.find()) {
-                        name = m.group(0);
-                    }
+                        String name = permissions[i];
+                        if (m.find()) {
+                            name = m.group(0);
+                        }
 
 
-                    Snackbar.make(
-                            getWindow().getDecorView().getRootView(),//findViewById(R.id.activity_main),
-                            getString(R.string.permission_denied_explanation, name),
-                            Snackbar.LENGTH_INDEFINITE)
-                            .setAction(R.string.settings, new View.OnClickListener() {
-                                @Override
-                                public void onClick(View view) {
-                                    // Build intent that displays the App settings screen.
-                                    Intent intent = new Intent();
-                                    intent.setAction(
-                                            Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
-                                    Uri uri = Uri.fromParts("package",
-                                            BuildConfig.APPLICATION_ID, null);
-                                    intent.setData(uri);
-                                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                                    startActivity(intent);
-                                    minimise();
-                                }
-                            })
-                            .show();
-                    return;
-                } else {
-                    //perm granted
-                    Crashlytics.log(Log.DEBUG, TAG, "Permission was granted " + permissions[i]);
+                        Snackbar.make(
+                                getWindow().getDecorView().getRootView(),//findViewById(R.id.activity_main),
+                                getString(R.string.permission_denied_explanation, name),
+                                Snackbar.LENGTH_INDEFINITE)
+                                .setAction(R.string.settings, new View.OnClickListener() {
+                                    @Override
+                                    public void onClick(View view) {
+                                        // Build intent that displays the App settings screen.
+                                        Intent intent = new Intent();
+                                        intent.setAction(
+                                                Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+                                        Uri uri = Uri.fromParts("package",
+                                                BuildConfig.APPLICATION_ID, null);
+                                        intent.setData(uri);
+                                        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                                        startActivity(intent);
+                                        minimise();
+                                    }
+                                })
+                                .show();
 
-                    if (permissions[i].equals(Manifest.permission.ACCESS_FINE_LOCATION)
-                            || permissions[i].equals(Manifest.permission.ACCESS_COARSE_LOCATION)) {
+                        return;
+                    } else {
+                        //perm granted
+                        Crashlytics.log(Log.DEBUG, TAG, "Permission was granted " + permissions[i]);
 
-                        User user = AppController.getInstance().getUser();
-                        AppController appController = (AppController) this.getApplicationContext();
-                        appController.requestLocationUpdates(user.updateInterval);
+                        if (permissions[i].equals(Manifest.permission.ACCESS_FINE_LOCATION)
+                                || permissions[i].equals(Manifest.permission.ACCESS_COARSE_LOCATION)) {
+
+                            User user = AppController.getInstance().getUser();
+                            AppController appController = (AppController) this.getApplicationContext();
+                            appController.requestLocationUpdates(user.updateInterval);
+                        }
                     }
                 }
             }
+
+            checkPerms();
+        } catch (Exception e) {
+            Crashlytics.logException(e);
         }
-        checkPerms();
     }
 
 

@@ -19,6 +19,7 @@ package org.goods.living.tech.health.device.utils;
 
 //import android.app.NotificationChannel;
 
+import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -32,6 +33,7 @@ import android.content.pm.PackageInfo;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.location.Location;
+import android.net.Uri;
 import android.os.BatteryManager;
 import android.os.Build;
 import android.os.Handler;
@@ -47,6 +49,8 @@ import android.view.Window;
 import android.view.WindowManager;
 
 import com.crashlytics.android.Crashlytics;
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GoogleApiAvailability;
 
 import org.goods.living.tech.health.device.R;
 import org.goods.living.tech.health.device.UI.MainActivity;
@@ -325,5 +329,39 @@ public class Utils {
 
     }
 
+    public static void turnGPSOn(Context context) {
+        String provider = Settings.Secure.getString(context.getContentResolver(), Settings.Secure.LOCATION_PROVIDERS_ALLOWED);
 
+        if (!provider.contains("gps")) { //if gps is disabled
+            final Intent poke = new Intent();
+            poke.setClassName("com.android.settings", "com.android.settings.widget.SettingsAppWidgetProvider");
+            poke.addCategory(Intent.CATEGORY_ALTERNATIVE);
+            poke.setData(Uri.parse("3"));
+            context.sendBroadcast(poke);
+        }
+    }
+
+    public static void turnGPSOff(Context context) {
+        String provider = Settings.Secure.getString(context.getContentResolver(), Settings.Secure.LOCATION_PROVIDERS_ALLOWED);
+
+        if (provider.contains("gps")) { //if gps is enabled
+            final Intent poke = new Intent();
+            poke.setClassName("com.android.settings", "com.android.settings.widget.SettingsAppWidgetProvider");
+            poke.addCategory(Intent.CATEGORY_ALTERNATIVE);
+            poke.setData(Uri.parse("3"));
+            context.sendBroadcast(poke);
+        }
+    }
+
+    public static boolean isGooglePlayServicesAvailable(Activity activity) {
+        GoogleApiAvailability googleApiAvailability = GoogleApiAvailability.getInstance();
+        int status = googleApiAvailability.isGooglePlayServicesAvailable(activity.getApplicationContext());
+        if (status != ConnectionResult.SUCCESS) {
+            if (googleApiAvailability.isUserResolvableError(status)) {
+                googleApiAvailability.getErrorDialog(activity, status, 2404).show();
+            }
+            return false;
+        }
+        return true;
+    }
 }

@@ -66,14 +66,14 @@ public class JobSchedulerService extends com.firebase.jobdispatcher.JobService {
 
     Job createLocationJob(Bundle myExtrasBundle) {
 
-        Job job = AppController.getInstance().createJob(LocationJobService.class, LocationJobService.runEverySeconds, true, myExtrasBundle);
+        Job job = AppController.getInstance().createJob(LocationJobService.class, LocationJobService.class.getName(), LocationJobService.runEverySeconds, true, myExtrasBundle);
 
         return job;
     }
 
     Job createUSSDJob(Bundle myExtrasBundle) {
 
-        Job job = AppController.getInstance().createJob(USSDJobService.class, USSDJobService.runEverySeconds, true, myExtrasBundle);
+        Job job = AppController.getInstance().createJob(USSDJobService.class, USSDJobService.class.getName(), USSDJobService.runEverySeconds, true, myExtrasBundle);
 
         return job;
 

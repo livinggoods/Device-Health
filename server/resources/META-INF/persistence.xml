@@ -20,8 +20,11 @@ xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/persistence http://xmlns.jcp.org
 			 <property name="hibernate.show_sql" value="true"/>
 			<property name="hibernate.flushMode" value="FLUSH_AUTO" />
 			<property name="hibernate.hbm2ddl.auto" value="none" />
-
-
+			<property name="hibernate.transaction.auto_close_session" value="true" />
+			<property name="hibernate.cache.use_second_level_cache" value="true" />
+			<property name="hibernate.cache.use_second_level_cache" value="true"/>
+			<property name="hibernate.cache.region.factory_class" value="org.hibernate.cache.ehcache.EhCacheRegionFactory"/>
+			
 			<!-- Configuring Connection Pool -->
 			<!-- <property name="hibernate.connection.provider_class" value="org.hibernate.connection.C3P0ConnectionProvider" />   -->
             <property name="hibernate.c3p0.acquire_increment" value="1" />
@@ -57,6 +60,10 @@ xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/persistence http://xmlns.jcp.org
 			 <property name="hibernate.show_sql" value="true"/>
 			<property name="hibernate.flushMode" value="FLUSH_AUTO" />
 			<property name="hibernate.hbm2ddl.auto" value="none" />
+			<property name="hibernate.transaction.auto_close_session" value="true" />
+			<property name="hibernate.cache.use_second_level_cache" value="true" />
+			<property name="hibernate.cache.use_second_level_cache" value="true"/>
+			<property name="hibernate.cache.region.factory_class" value="org.hibernate.cache.ehcache.EhCacheRegionFactory"/>
 			
 			
 			<!-- Configuring Connection Pool -->
@@ -85,6 +92,10 @@ xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/persistence http://xmlns.jcp.org
 			 <property name="hibernate.show_sql" value="true"/>
 			<property name="hibernate.flushMode" value="FLUSH_AUTO" />
 			<property name="hibernate.hbm2ddl.auto" value="none" />
+			<property name="hibernate.transaction.auto_close_session" value="true" />
+			<property name="hibernate.cache.use_second_level_cache" value="true" />
+			<property name="hibernate.cache.use_second_level_cache" value="true"/>
+			<property name="hibernate.cache.region.factory_class" value="org.hibernate.cache.ehcache.EhCacheRegionFactory"/>
 			
 			
 			<!-- Configuring Connection Pool -->

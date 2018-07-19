@@ -47,7 +47,7 @@ public class DataBalance extends BaseModel {
                 JSONObject.put("recordedAt", formattedDate);
             }
 
-            if (info != null) JSONObject.put("info", info.toString());
+            if (info != null) JSONObject.put("info", info);
 
             return JSONObject;
         } catch (JSONException e) {

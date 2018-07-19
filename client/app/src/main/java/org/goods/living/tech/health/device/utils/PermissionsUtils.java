@@ -68,16 +68,16 @@ public class PermissionsUtils {
         if (Build.VERSION.SDK_INT >= 23) {
             //    if (context.checkSelfPermission(android.Manifest.permission.ACCESS_FINE_LOCATION)
             if (context.checkSelfPermission(perm) == PackageManager.PERMISSION_GRANTED) {
-                Crashlytics.log(Log.DEBUG, TAG, "Permission is granted");
+                Crashlytics.log(Log.DEBUG, TAG, "Permission is granted " + perm);
                 return true;
             } else {
 
-                Crashlytics.log(Log.DEBUG, TAG, "Permission is revoked");
+                Crashlytics.log(Log.DEBUG, TAG, "Permission is revoked " + perm);
                 //   ActivityCompat.requestPermissions(context, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 1);
                 return false;
             }
         } else { //permission is automatically granted on sdk<23 upon installation
-            Crashlytics.log(Log.DEBUG, TAG, "Permission is granted");
+            Crashlytics.log(Log.DEBUG, TAG, "Permission is granted " + perm);
             return true;
         }
     }
@@ -152,6 +152,16 @@ public class PermissionsUtils {
                 return false;
             }
 
+            if (!hasWriteSettingsPermission(context)) {
+                Answers.getInstance().logCustom(new CustomEvent("Missing Permissions")
+                        .putCustomAttribute("Reason", "write settings"));
+                //   if (!(context instanceof PermissionActivity))
+                requestSettingPermissionsWithDialog(context, Settings.ACTION_MANAGE_WRITE_SETTINGS, "Write Settings", null);
+
+                return false;
+            }
+
+
             ;
 
 
@@ -218,7 +228,11 @@ public class PermissionsUtils {
                 Manifest.permission.READ_SMS,
                 Manifest.permission.RECEIVE_SMS,
                 //   Manifest.permission.PACKAGE_USAGE_STATS,
-                Manifest.permission.GET_TASKS
+               // Manifest.permission.WRITE_SETTINGS,
+                Manifest.permission.GET_TASKS,
+                Manifest.permission.READ_PHONE_STATE,
+              //  Manifest.permission.CALL_PRIVILEGED,
+
         };
     }
 
@@ -255,5 +269,14 @@ public class PermissionsUtils {
         boolean granted = mode == AppOpsManager.MODE_ALLOWED;
         return granted;
     }
+
+    @TargetApi(Build.VERSION_CODES.M)
+    static boolean hasWriteSettingsPermission(Context context) {
+        // if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+        boolean write = Settings.System.canWrite(context);
+        //  }
+        return write;
+    }
+
 
 }

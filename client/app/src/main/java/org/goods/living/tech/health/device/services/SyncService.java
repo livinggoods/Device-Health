@@ -257,7 +257,7 @@ public class SyncService extends BaseService {
 
                         if (user.token == null) {//cant auth user.. reset this account
                             user.masterId = null;
-                           
+
                             Crashlytics.log("Refresh token fail");
                             Answers.getInstance().logCustom(new CustomEvent("RefreshToken failed")
                                     .putCustomAttribute("Reason", oldToken));
@@ -381,7 +381,7 @@ public class SyncService extends BaseService {
         //params.setUseJsonStreamer(true);
 
 
-        serverRestClient.postSync(Constants.URL.STATS_CREATE, entity, new TextHttpResponseHandler() {
+        serverRestClient.postSync(Constants.URL.DATABALANCE_CREATE, entity, new TextHttpResponseHandler() {
             @Override
             public void onFailure(int statusCode, Header[] headers, String responseString, Throwable throwable) {
                 Crashlytics.log(Log.DEBUG, TAG, responseString);

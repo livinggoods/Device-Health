@@ -109,7 +109,7 @@ public class RegistrationService extends BaseService {
 
 
                     } else {
-                        Crashlytics.log(Log.ERROR, TAG, "problem registering user");
+                        Crashlytics.log(Log.ERROR, TAG, "problem registering user " + user.name);
                     }
 
                     if (changeLocationUpdateInterval) {

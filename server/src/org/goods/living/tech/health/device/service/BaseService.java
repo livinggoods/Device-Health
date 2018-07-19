@@ -18,7 +18,7 @@ import org.goods.living.tech.health.device.utility.ApplicationParameters;
 
 public class BaseService {
 
-	Logger logger = LogManager.getLogger();
+	Logger logger = LogManager.getLogger(this);
 
 	String serviceMessage = getClass().getSimpleName();
 

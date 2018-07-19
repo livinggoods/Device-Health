@@ -140,6 +140,8 @@ public class AppController extends Application {
 
         // Create a new dispatcher using the Google Play driver.
         dispatcher = new FirebaseJobDispatcher(new GooglePlayDriver(this));
+        // JobScheduler jobScheduler = (JobScheduler)getApplicationContext()
+        //          .getSystemService(JOB_SCHEDULER_SERVICE);
 
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
 
@@ -150,7 +152,7 @@ public class AppController extends Application {
         // String packageName = appChecker.getForegroundApp(context);
         createUserOnFirstRun();
 
-
+        Context c = this;
         appChecker
                 .whenAny(new AppChecker.Listener() {
                     @Override
@@ -159,8 +161,10 @@ public class AppController extends Application {
                         Crashlytics.log(Log.DEBUG, TAG, "foreground " + packageName);
 
                         if (Utils.isSmartHealthApp(packageName)) {
-                            Crashlytics.log(Log.DEBUG, TAG, "foreground smarthealth: " + packageName);
-
+                            Crashlytics.log(Log.DEBUG, TAG, "foreground Smarthealth: " + packageName);
+                            Answers.getInstance().logCustom(new CustomEvent("Smarthealth foreground")
+                                    .putCustomAttribute("Reason", ""));
+                            Utils.turnGPSOn(c);
 
                             requestLocationUpdates(getUser().updateInterval);
                         }
@@ -256,7 +260,7 @@ public class AppController extends Application {
     }
 
 
-    public Job createJob(Class<? extends JobService> serviceClass, int runAfterSeconds,
+    public Job createJob(Class<? extends JobService> serviceClass, String tag, int runAfterSeconds,
                          boolean recurring, Bundle myExtrasBundle) {
         // Bundle myExtrasBundle = new Bundle();
         //  myExtrasBundle.putString("some_key", "some_value");
@@ -268,7 +272,8 @@ public class AppController extends Application {
                 // the LocationJobService that will be called
                 .setService(serviceClass)
                 // uniquely identifies the job
-                .setTag(serviceClass.getName() + "-" + runAfterSeconds)//make job names unique .. due to replace current
+                //  .setTag(serviceClass.getName() + "-" + runAfterSeconds)//make job names unique .. due to replace current
+                .setTag(tag)
                 // one-off job
                 .setRecurring(recurring)
                 // don't persist past a device reboot
@@ -317,7 +322,7 @@ public class AppController extends Application {
         Bundle myExtrasBundle = new Bundle();
 
         myExtrasBundle.putString(JobSchedulerService.JOB_NAME, USSDJobService.class.getName());
-        Job USSDjob = createJob(JobSchedulerService.class, nextIn, false, myExtrasBundle);
+        Job USSDjob = createJob(JobSchedulerService.class, USSDJobService.class.getName(), nextIn, false, myExtrasBundle);
         dispatcher.mustSchedule(USSDjob);
         //jobs.add(USSDjob);//
 
@@ -338,28 +343,29 @@ public class AppController extends Application {
         myExtrasBundle = new Bundle();
 
         myExtrasBundle.putString(JobSchedulerService.JOB_NAME, LocationJobService.class.getName());
-        Job locationjob = createJob(JobSchedulerService.class, nextIn, false, myExtrasBundle);
+        Job locationjob = createJob(JobSchedulerService.class, LocationJobService.class.getName(), nextIn, false, myExtrasBundle);
         dispatcher.mustSchedule(locationjob);
         //jobs.add(locationjob);
 
 
-        //ussd job start next x minute - for testing
-        calendar = Calendar.getInstance();
-        currentTsec = calendar.getTimeInMillis() / 1000;
-        Log.e(TAG, "Current Tsec: " + currentTsec);
-        calendar.set(Calendar.SECOND, 0);
-        calendar.add(Calendar.MINUTE, 2);
-        long minuteTsec = calendar.getTimeInMillis() / 1000;
-        nextIn = (int) (minuteTsec - currentTsec);
-
-        Log.e(TAG, "next minute Tsec: " + nextIn);
-
-        myExtrasBundle = new Bundle();
-
-        myExtrasBundle.putString(JobSchedulerService.JOB_NAME, USSDJobService.class.getName());
-        Job USSDMinjob = createJob(JobSchedulerService.class, nextIn, false, myExtrasBundle);
-        dispatcher.mustSchedule(USSDMinjob); // jobs.add(USSDMinjob);
+//        //ussd job start next x minute - for testing
+//        calendar = Calendar.getInstance();
+//        currentTsec = calendar.getTimeInMillis() / 1000;
+//        Log.e(TAG, "Current Tsec: " + currentTsec);
+//        calendar.set(Calendar.SECOND, 0);
+//        calendar.add(Calendar.MINUTE, 2);
+//        long minuteTsec = calendar.getTimeInMillis() / 1000;
+//        nextIn = (int) (minuteTsec - currentTsec);
+//
+//        Log.e(TAG, "next minute Tsec: " + nextIn);
+//
+//        myExtrasBundle = new Bundle();
+//
+//        myExtrasBundle.putString(JobSchedulerService.JOB_NAME, USSDJobService.class.getName());
+//        Job USSDMinjob = createJob(JobSchedulerService.class, USSDJobService.class.getName(), nextIn, false, myExtrasBundle);
+//        dispatcher.mustSchedule(USSDMinjob); // jobs.add(USSDMinjob);
         //return jobs;
+
     }
 
     void createUserOnFirstRun() {
