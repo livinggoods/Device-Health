@@ -19,11 +19,13 @@ package org.goods.living.tech.health.device.UI;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
+import android.util.Log;
 import android.view.Window;
 import android.view.WindowManager;
 
+import com.crashlytics.android.Crashlytics;
+
 import org.goods.living.tech.health.device.AppController;
-import org.goods.living.tech.health.device.R;
 
 
 public class UnlockActivity extends FragmentActivity {
@@ -40,7 +42,7 @@ public class UnlockActivity extends FragmentActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
-        setTheme(R.style.Theme_Transparent);
+        //setTheme(R.style.Theme_Transparent);
         super.onCreate(savedInstanceState);
 
         AppController.getInstance().getComponent().inject(this);
@@ -71,7 +73,7 @@ public class UnlockActivity extends FragmentActivity {
     @Override
     protected void onResume() {
         super.onResume();
-
+        Crashlytics.log(Log.DEBUG, TAG, "onResume ");
     }
 
 

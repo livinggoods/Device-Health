@@ -84,7 +84,7 @@ public class LocationJobService extends com.firebase.jobdispatcher.JobService {
 
         //Tell the framework that the job has completed and doesnot needs to be reschedule
         //   jobFinished(parameters, true);
-        return false; // Answers the question: "Is there still work going on?"
+        return true; // Answers the question: "Is there still work going on?"
     }
 
     @Override

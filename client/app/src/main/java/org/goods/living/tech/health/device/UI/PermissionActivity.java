@@ -60,7 +60,7 @@ public class PermissionActivity extends FragmentActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
-        setTheme(R.style.Theme_Transparent);
+        //  setTheme(R.style.Theme_Transparent);
         super.onCreate(savedInstanceState);
 
         AppController.getInstance().getComponent().inject(this);
@@ -101,7 +101,7 @@ public class PermissionActivity extends FragmentActivity {
     @Override
     protected void onResume() {
         super.onResume();
-
+        Crashlytics.log(Log.DEBUG, TAG, "onResume ");
     }
 
 //    private void requestLocationPermissions() {
@@ -235,6 +235,7 @@ public class PermissionActivity extends FragmentActivity {
         //  intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         //  startActivity(intent);
         // moveTaskToBack(true);
+        PermissionsUtils.dismissAlert();
         finish();
     }
 }

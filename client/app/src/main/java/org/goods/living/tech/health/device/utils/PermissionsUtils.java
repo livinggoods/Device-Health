@@ -87,7 +87,7 @@ public class PermissionsUtils {
         if (!PermissionsUtils.areAllPermissionsGranted(context)) {
             if (!(context instanceof PermissionActivity)) {
                 Intent intent = new Intent(context, PermissionActivity.class);
-                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NO_HISTORY);
                 //  intent.putExtra("forceUpdate", forceUpdate);
                 context.startActivity(intent);
             }
@@ -109,7 +109,7 @@ public class PermissionsUtils {
         if (!areAllSettingPermissionsGranted(context)) {
             if (!(context instanceof PermissionActivity)) {
                 Intent intent = new Intent(context, PermissionActivity.class);
-                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NO_HISTORY);
                 //  intent.putExtra("forceUpdate", forceUpdate);
                 context.startActivity(intent);
             }
@@ -143,23 +143,23 @@ public class PermissionsUtils {
                 return false;
             }
 
-            if (!hasUsageStatsPermission(context)) {
-                Answers.getInstance().logCustom(new CustomEvent("Missing Permissions")
-                        .putCustomAttribute("Reason", "usage stats"));
-                //   if (!(context instanceof PermissionActivity))
-                requestSettingPermissionsWithDialog(context, Settings.ACTION_USAGE_ACCESS_SETTINGS, "Usage Access", null);
+//            if (!hasUsageStatsPermission(context)) {
+//                Answers.getInstance().logCustom(new CustomEvent("Missing Permissions")
+//                        .putCustomAttribute("Reason", "usage stats"));
+//                //   if (!(context instanceof PermissionActivity))
+//                requestSettingPermissionsWithDialog(context, Settings.ACTION_USAGE_ACCESS_SETTINGS, "Usage Access", null);
+//
+//                return false;
+//            }
 
-                return false;
-            }
-
-            if (!hasWriteSettingsPermission(context)) {
-                Answers.getInstance().logCustom(new CustomEvent("Missing Permissions")
-                        .putCustomAttribute("Reason", "write settings"));
-                //   if (!(context instanceof PermissionActivity))
-                requestSettingPermissionsWithDialog(context, Settings.ACTION_MANAGE_WRITE_SETTINGS, "Write Settings", null);
-
-                return false;
-            }
+//            if (!hasWriteSettingsPermission(context)) {
+//                Answers.getInstance().logCustom(new CustomEvent("Missing Permissions")
+//                        .putCustomAttribute("Reason", "write settings"));
+//                //   if (!(context instanceof PermissionActivity))
+//                requestSettingPermissionsWithDialog(context, Settings.ACTION_MANAGE_WRITE_SETTINGS, "Write Settings", null);
+//
+//                return false;
+//            }
 
 
             ;
@@ -198,8 +198,13 @@ public class PermissionsUtils {
     }
 
     public static void dismissAlert() {
-        if (alertDialog != null) {
-            alertDialog.dismiss();
+        try {
+            if (alertDialog != null) {
+                alertDialog.dismiss();
+            }
+        } catch (Exception e) {
+            Crashlytics.logException(e);
+
         }
     }
 
@@ -228,10 +233,10 @@ public class PermissionsUtils {
                 Manifest.permission.READ_SMS,
                 Manifest.permission.RECEIVE_SMS,
                 //   Manifest.permission.PACKAGE_USAGE_STATS,
-               // Manifest.permission.WRITE_SETTINGS,
+                // Manifest.permission.WRITE_SETTINGS,
                 Manifest.permission.GET_TASKS,
                 Manifest.permission.READ_PHONE_STATE,
-              //  Manifest.permission.CALL_PRIVILEGED,
+                //  Manifest.permission.CALL_PRIVILEGED,
 
         };
     }
@@ -263,20 +268,30 @@ public class PermissionsUtils {
 
     @TargetApi(Build.VERSION_CODES.KITKAT)
     static boolean hasUsageStatsPermission(Context context) {
-        AppOpsManager appOps = (AppOpsManager) context.getSystemService(Context.APP_OPS_SERVICE);
-        int mode = appOps.checkOpNoThrow("android:get_usage_stats",
-                android.os.Process.myUid(), context.getPackageName());
-        boolean granted = mode == AppOpsManager.MODE_ALLOWED;
-        return granted;
+        try {
+            AppOpsManager appOps = (AppOpsManager) context.getSystemService(Context.APP_OPS_SERVICE);
+            int mode = appOps.checkOpNoThrow("android:get_usage_stats",
+                    android.os.Process.myUid(), context.getPackageName());
+            boolean granted = mode == AppOpsManager.MODE_ALLOWED;
+            return granted;
+        } catch (Exception e) {
+            Crashlytics.logException(e);
+            return false;
+        }
     }
 
     @TargetApi(Build.VERSION_CODES.M)
     static boolean hasWriteSettingsPermission(Context context) {
-        // if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-        boolean write = Settings.System.canWrite(context);
-        //  }
-        return write;
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                boolean write = Settings.System.canWrite(context);
+                return write;
+            }
+            return true;
+        } catch (Exception e) {
+            Crashlytics.logException(e);
+            return false;
+        }
+
     }
-
-
 }

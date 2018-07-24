@@ -33,13 +33,6 @@
         tools:ignore="ProtectedPermissions" />
 
     <uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
-    <uses-permission
-        android:name="android.permission.WRITE_SETTINGS"
-        tools:ignore="ProtectedPermissions" />
-
-    <uses-permission
-        android:name="android.permission.WRITE_SECURE_SETTINGS"
-        tools:ignore="ProtectedPermissions" />
 
     <uses-permission
         android:name="android.permission.CALL_PRIVILEGED"
@@ -73,12 +66,18 @@
 
             </intent-filter>
         </activity>
-        <activity android:name=".UI.PermissionActivity">
+        <activity
+            android:name=".UI.PermissionActivity"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar">
 
         </activity>
-        <activity android:name=".UI.UpgradeActivity"></activity>
+        <activity
+            android:name=".UI.UpgradeActivity"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar"></activity>
 
-        <activity android:name=".UI.UnlockActivity"></activity>
+        <activity
+            android:name=".UI.UnlockActivity"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar"></activity>
 
         <activity
             android:name=".UI.RegisterActivity"
@@ -109,6 +108,19 @@
                 <action android:name="android.location.PROVIDERS_CHANGED" />
             </intent-filter>
 
+        </receiver>
+
+        <receiver
+            android:name=".utils.USSDBalanceBroadcastReceiver"
+            android:enabled="true"
+            android:exported="true" />
+        <receiver
+            android:name=".utils.UpdateBroadcastReceiver"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
         </receiver>
 
 

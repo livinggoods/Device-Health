@@ -9,7 +9,6 @@ import javax.ws.rs.Priorities;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ContainerRequestFilter;
 import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.ext.Provider;
 import javax.xml.bind.DatatypeConverter;
@@ -59,7 +58,9 @@ public class AuthenticationFilter implements ContainerRequestFilter {
 
 			// TODO: enable this after devices sync
 			// requestContext.abortWith(Response.status(Response.Status.UNAUTHORIZED).build());
+			logger.debug("Skipping auth filter. TODO remove this soon");
 			return;
+
 			// throw new NotAuthorizedException("Authorization header must be provided");
 		}
 		// Extract the token from the HTTP Authorization header
@@ -74,7 +75,10 @@ public class AuthenticationFilter implements ContainerRequestFilter {
 
 		} catch (Exception e) {
 			logger.error("Exception: " + e);
-			requestContext.abortWith(Response.status(Response.Status.UNAUTHORIZED).build());
+			logger.debug("Skipping auth filter. TODO remove this soon");
+			return;
+			// logger.debug("Forbidden");
+			// requestContext.abortWith(Response.status(Response.Status.UNAUTHORIZED).build());
 		}
 
 	}

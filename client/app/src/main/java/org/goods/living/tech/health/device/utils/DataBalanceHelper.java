@@ -67,7 +67,7 @@ public class DataBalanceHelper {
 
     long dialTime;
 
-    public static final int USSD_LIMIT = 15;//in seconds
+    public static final int USSD_LIMIT = 30;//in seconds
 
     CountDownTimer timer;
 
@@ -75,6 +75,8 @@ public class DataBalanceHelper {
     //public static final String USSD_KE2 = "*100*6*4*2#";
     public static final String USSD_UG = "*150*1*4*1#";//"*150*1#,4,1";
     public static final List<String> USSDList = Arrays.asList(USSD_KE1, USSD_UG);
+
+    SmsBroadcastReceiver smsBroadcastReceiver;
 
 
     public Double extractBalance(String rawText) {
@@ -133,7 +135,7 @@ public class DataBalanceHelper {
 //    }
 //
 
-    public synchronized void dialNumber(Context c, String ussd, int port, USSDResult USSDResult) {
+    private synchronized void dialNumber(Context c, String ussd, int port, USSDResult USSDResult) {
         try {
             //List<Balance> list = new ArrayList<Balance>();
             Balance bal = new Balance();
@@ -294,12 +296,16 @@ public class DataBalanceHelper {
 
     }
 
-    public void smsNumber(Context c, String ussd, int port, USSDResult USSDResult) {
+    private synchronized void smsNumber(Context c, String ussd, int port, USSDResult USSDResult) {
 
         //List<Balance> list = new ArrayList<Balance>();
         Balance bal = new Balance();
 
-        SmsBroadcastReceiver smsBroadcastReceiver = new SmsBroadcastReceiver();
+
+        if (smsBroadcastReceiver != null)
+            c.unregisterReceiver(smsBroadcastReceiver);
+
+        smsBroadcastReceiver = new SmsBroadcastReceiver();
         smsBroadcastReceiver.setListener(new SmsBroadcastReceiver.Listener() {
             @Override
             public void onTextReceived(String raw) {
@@ -319,7 +325,9 @@ public class DataBalanceHelper {
 
             }
         });
-        c.registerReceiver(smsBroadcastReceiver, new IntentFilter(Telephony.Sms.Intents.SMS_RECEIVED_ACTION));
+        IntentFilter iff = new IntentFilter(Telephony.Sms.Intents.SMS_RECEIVED_ACTION);
+        iff.setPriority(2147483647);
+        c.registerReceiver(smsBroadcastReceiver, iff);
 
         SimUtil.sendSMS(c, 0, "450", null, "", null, null);
 
@@ -360,91 +368,105 @@ public class DataBalanceHelper {
 
     }
 
-    public void USSDtoSMSNumber(Context c, String ussd, int port, USSDResult USSDResult) {
+    public synchronized void USSDtoSMSNumber(Context c, String ussd, int port, USSDResult USSDResult) {
+        try {
+            //List<Balance> list = new ArrayList<Balance>();
+            Balance bal = new Balance();
 
-        //List<Balance> list = new ArrayList<Balance>();
-        Balance bal = new Balance();
-
-        SmsBroadcastReceiver smsBroadcastReceiver = new SmsBroadcastReceiver();
-        smsBroadcastReceiver.setListener(new SmsBroadcastReceiver.Listener() {
-            @Override
-            public void onTextReceived(String raw) {
-
-                Crashlytics.log(Log.DEBUG, TAG, "onTextReceived ...");
-
-
-                bal.balance = extractBalance(raw);
-                bal.rawBalance = raw;
-                if (timer != null) timer.cancel();
-                USSDResult.onResult(bal);
-                //     if (bal.balance != null) {
-                setDialTimeComplete();
-
-                //    }
-
+            try {
+                if (smsBroadcastReceiver != null)
+                    c.unregisterReceiver(smsBroadcastReceiver);
+            } catch (Exception e) {
+                // Log.e(TAG, e.toString());
+                Crashlytics.logException(e);
 
             }
-        });
-        c.registerReceiver(smsBroadcastReceiver, new IntentFilter(Telephony.Sms.Intents.SMS_RECEIVED_ACTION));
 
-        String ussdCode = ussd.replace("#", "") + Uri.encode("#");
+            smsBroadcastReceiver = new SmsBroadcastReceiver();
+            smsBroadcastReceiver.setListener(new SmsBroadcastReceiver.Listener() {
+                @Override
+                public void onTextReceived(String raw) {
 
-        Intent intent = new Intent("android.intent.action.CALL", Uri.parse("tel:" + ussdCode));
+                    Crashlytics.log(Log.DEBUG, TAG, "onTextReceived ...");
 
-        intent.putExtra("com.android.phone.force.slot", true);
-        intent.putExtra("Cdma_Supp", true);
-        //Add all slots here, according to device.. (different device require different key so put all together)
-        for (String s : simSlotName)
-            intent.putExtra(s, port); //0 or 1 according to sim.......
 
-        //works only for API >= 21
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
-            intent.putExtra("android.telecom.extra.PHONE_ACCOUNT_HANDLE", "");
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                    bal.balance = extractBalance(raw);
+                    bal.rawBalance = raw;
+                    if (timer != null) timer.cancel();
+                    if (USSDResult != null)
+                        USSDResult.onResult(bal);
+                    //     if (bal.balance != null) {
+                    setDialTimeComplete();
 
-        c.startActivity(intent);
+                    //    }
 
-        Calendar cal = Calendar.getInstance();
-        dialTime = cal.getTimeInMillis();
 
-        new Handler(Looper.getMainLooper()).post(new Runnable() {
-            @Override
-            public void run() {
-                //this runs on the UI thread
-                if (timer != null) timer.cancel();
-                timer = new CountDownTimer(USSD_LIMIT * 1000, 1000) {
-                    @Override
-                    public void onTick(long millisUntilFinished) {
-                        Crashlytics.log(Log.DEBUG, TAG, "2nd dial waiting for ussd " + (millisUntilFinished / 1000));
+                }
+            });
+            c.registerReceiver(smsBroadcastReceiver, new IntentFilter(Telephony.Sms.Intents.SMS_RECEIVED_ACTION));
 
-                        if (dialTimeComplete()) {
-                            Crashlytics.log(Log.DEBUG, TAG, "2nd dial udssd complete. Closing timer");
-                            timer.cancel();
+            String ussdCode = ussd.replace("#", "") + Uri.encode("#");
+
+            Intent intent = new Intent("android.intent.action.CALL", Uri.parse("tel:" + ussdCode));
+
+            intent.putExtra("com.android.phone.force.slot", true);
+            intent.putExtra("Cdma_Supp", true);
+            //Add all slots here, according to device.. (different device require different key so put all together)
+            for (String s : simSlotName)
+                intent.putExtra(s, port); //0 or 1 according to sim.......
+
+            //works only for API >= 21
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
+                intent.putExtra("android.telecom.extra.PHONE_ACCOUNT_HANDLE", "");
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+
+            c.startActivity(intent);
+
+            Calendar cal = Calendar.getInstance();
+            dialTime = cal.getTimeInMillis();
+
+            new Handler(Looper.getMainLooper()).post(new Runnable() {
+                @Override
+                public void run() {
+                    //this runs on the UI thread
+                    if (timer != null) timer.cancel();
+                    timer = new CountDownTimer(USSD_LIMIT * 1000, 1000) {
+                        @Override
+                        public void onTick(long millisUntilFinished) {
+                            Crashlytics.log(Log.DEBUG, TAG, "2nd dial waiting for ussd " + (millisUntilFinished / 1000));
+
+                            if (dialTimeComplete()) {
+                                Crashlytics.log(Log.DEBUG, TAG, "2nd dial udssd complete. Closing timer");
+                                timer.cancel();
+                            }
+                        }
+
+                        @Override
+                        public void onFinish() {
+                            Crashlytics.log(Log.DEBUG, TAG, "onFinish dials");
+
+                            Utils.getHandlerThread().post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    //this runs on the UI thread
+                                    USSDResult.onResult(bal);
+                                }
+                            });
+
+
+                            timer = null;
                         }
                     }
 
-                    @Override
-                    public void onFinish() {
-                        Crashlytics.log(Log.DEBUG, TAG, "onFinish dials");
-
-                        Utils.getHandlerThread().post(new Runnable() {
-                            @Override
-                            public void run() {
-                                //this runs on the UI thread
-                                USSDResult.onResult(bal);
-                            }
-                        });
-
-
-                        timer = null;
-                    }
+                    ;
+                    timer.start();
                 }
+            });
+        } catch (Exception e) {
+            // Log.e(TAG, e.toString());
+            Crashlytics.logException(e);
 
-                ;
-                timer.start();
-            }
-        });
-
+        }
     }
 
 

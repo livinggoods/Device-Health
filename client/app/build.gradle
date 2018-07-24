@@ -23,7 +23,7 @@ ext.isSnapshot = true
 ext.minimumSdkVersion = 19
 
 android {
-    compileSdkVersion 27
+    compileSdkVersion 28
     // buildToolsVersion "26.0.0"
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
@@ -43,7 +43,7 @@ android {
 
     defaultConfig {
         applicationId "org.goods.living.tech.health.device"
-        targetSdkVersion 24
+        targetSdkVersion 28
         minSdkVersion project.ext.minimumSdkVersion
         versionCode generateVersionCode() // 15// 0010203
         versionName generateVersionName() // 1.2.3-SNAPSHOT

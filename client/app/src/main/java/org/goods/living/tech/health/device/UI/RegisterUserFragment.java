@@ -139,6 +139,7 @@ public class RegisterUserFragment extends SlideFragment {
         User user = userService.getRegisteredUser();
         //return user.masterId != null;
 
+
         Setting setting = AppController.getInstance().getSetting();
         boolean registered = user.masterId != null && !setting.fetchingUSSD;
 

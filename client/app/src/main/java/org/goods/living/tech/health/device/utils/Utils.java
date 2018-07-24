@@ -238,9 +238,13 @@ public class Utils {
     }
 
     public static void dismissProgressDialog() {
-        if (progressDialog != null)
-            progressDialog.dismiss();
-
+        try {
+            if (progressDialog != null)
+                progressDialog.dismiss();
+        } catch (Exception e) {
+            Crashlytics.logException(e);
+          
+        }
     }
 
     public static String getInstalledApps(Context c) {
@@ -364,4 +368,6 @@ public class Utils {
         }
         return true;
     }
+
+
 }

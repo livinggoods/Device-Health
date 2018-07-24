@@ -14,6 +14,8 @@ import org.goods.living.tech.health.device.utils.DataBalanceHelper;
 import org.goods.living.tech.health.device.utils.LocationUpdatesBroadcastReceiver;
 import org.goods.living.tech.health.device.utils.SmsBroadcastReceiver;
 import org.goods.living.tech.health.device.utils.SyncAdapter;
+import org.goods.living.tech.health.device.utils.USSDBalanceBroadcastReceiver;
+import org.goods.living.tech.health.device.utils.UpdateBroadcastReceiver;
 
 import javax.inject.Singleton;
 
@@ -58,5 +60,8 @@ public interface AppcontrollerComponent extends AndroidInjector<AppController> {
 
     void inject(SmsBroadcastReceiver target);
 
+    void inject(USSDBalanceBroadcastReceiver target);
+
+    void inject(UpdateBroadcastReceiver target);
 
 }

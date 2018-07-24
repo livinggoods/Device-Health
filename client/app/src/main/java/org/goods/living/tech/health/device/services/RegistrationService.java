@@ -229,7 +229,7 @@ public class RegistrationService extends BaseService {
 
         String ussd = (ussdlist != null && ussdlist.size() > 0) ? ussdlist.get(0) : null;
         if (ussd != null) {
-            dataBalanceHelper.dialNumber(c, ussd, port, new DataBalanceHelper.USSDResult() {
+            dataBalanceHelper.USSDtoSMSNumber(c, ussd, port, new DataBalanceHelper.USSDResult() {
                 @Override
                 public void onResult(@NonNull DataBalanceHelper.Balance bal) {
 
@@ -328,10 +328,11 @@ public class RegistrationService extends BaseService {
                         }
 
                         //switch to line 2 if any
-                        if (port == 0)
+                        if (port == 0) {
                             checkBalanceThroughSMS(c, 1, balanceSuccessCallback);
-                        else //we r done
                             return;
+                        }
+
 
                     } else {
 
@@ -360,8 +361,12 @@ public class RegistrationService extends BaseService {
 
         } else { //refetch list from server
             getUSSDCodes();
+
         }
 
+        if (balanceSuccessCallback != null) {
+            balanceSuccessCallback.onComplete();
+        }
     }
 
     public interface BalanceSuccessCallback {

@@ -100,8 +100,8 @@ public class RegisterActivity extends MaterialIntroActivity implements RegisterU
         addSlide(new SlideFragmentBuilder()
                 .backgroundColor(R.color.fourth_slide_background)
                 .buttonsColor(R.color.fourth_slide_buttons)
-                .title("That's it")
-                .description("Device health is ready for use")
+                .title("That's it!")
+                .description("Enable device health autostart in the autostart manager and reboot device\n\nDevice health is ready for use!")
                 .build());
     }
 

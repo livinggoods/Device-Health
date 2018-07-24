@@ -23,7 +23,7 @@ public class USSDJobService extends com.firebase.jobdispatcher.JobService {
 
     final String TAG = this.getClass().getSimpleName();
 
-    public static int runEverySeconds = (int) TimeUnit.HOURS.toSeconds(12); // Every x hours periodicity expressed as seconds
+    public static int runEverySeconds = (int) TimeUnit.HOURS.toSeconds(24); // Every x hours periodicity expressed as seconds
 
 
     @Inject
@@ -31,9 +31,6 @@ public class USSDJobService extends com.firebase.jobdispatcher.JobService {
 
     @Inject
     DataBalanceService dataBalanceService;
-
-    @Inject
-    DataBalanceHelper dataBalanceHelper;
 
     @Inject
     RegistrationService registrationService;
@@ -92,7 +89,7 @@ public class USSDJobService extends com.firebase.jobdispatcher.JobService {
 
         //Tell the framework that the job has completed and does not needs to be reschedule
         //   jobFinished(parameters, true);
-        return false; // Answers the question: "Is there still work going on?"
+        return true; // Answers the question: "Is there still work going on?"
     }
 
 

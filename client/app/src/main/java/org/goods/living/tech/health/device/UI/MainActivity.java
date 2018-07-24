@@ -136,6 +136,7 @@ public class MainActivity extends FragmentActivity implements
 
         Utils.isGooglePlayServicesAvailable(this);
         AppController.getInstance().checkAndRequestPerms();
+
     }
 
     @Override
@@ -150,7 +151,7 @@ public class MainActivity extends FragmentActivity implements
     @Override
     protected void onResume() {
         super.onResume();
-
+        Crashlytics.log(Log.DEBUG, TAG, "onResume ");
         loadData();
 
     }

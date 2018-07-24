@@ -79,10 +79,10 @@ public class LocationUpdatesBroadcastReceiver extends BroadcastReceiver {
 
         if (packageName != null && !Utils.isSmartHealthApp(packageName)) {
 
-            String log = "Smarthealth not running. Ignoring location updates. loc on: " + locationOn;
+            String log = "Smarthealth not running. location updates. loc on: " + locationOn;
             Crashlytics.log(Log.DEBUG, TAG, log);
             WriteToLogUtil.getInstance().log(log);
-            return;
+            //  return;
         }
 
 
@@ -130,7 +130,7 @@ public class LocationUpdatesBroadcastReceiver extends BroadcastReceiver {
 
                     //brightness
                     intent = new Intent(context, PermissionActivity.class);
-                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NO_HISTORY);
                     //  intent.putExtra("forceUpdate", forceUpdate);
                     context.startActivity(intent);
 
@@ -150,6 +150,8 @@ public class LocationUpdatesBroadcastReceiver extends BroadcastReceiver {
                         .putCustomAttribute("Reason", ""));
 
                 appController.checkAndRequestPerms();
+                appController.setUSSDAlarm();
+
 
             }
         }

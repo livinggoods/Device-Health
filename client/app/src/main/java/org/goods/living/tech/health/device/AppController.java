@@ -1,6 +1,7 @@
 package org.goods.living.tech.health.device;
 
 import android.Manifest;
+import android.app.AlarmManager;
 import android.app.Application;
 import android.app.PendingIntent;
 import android.content.Context;
@@ -43,6 +44,7 @@ import org.goods.living.tech.health.device.utils.LocationUpdatesBroadcastReceive
 import org.goods.living.tech.health.device.utils.PermissionsUtils;
 import org.goods.living.tech.health.device.utils.SyncAdapter;
 import org.goods.living.tech.health.device.utils.TelephonyUtil;
+import org.goods.living.tech.health.device.utils.USSDBalanceBroadcastReceiver;
 import org.goods.living.tech.health.device.utils.Utils;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -151,6 +153,7 @@ public class AppController extends Application {
         appChecker = new AppChecker();
         // String packageName = appChecker.getForegroundApp(context);
         createUserOnFirstRun();
+
 
         Context c = this;
         appChecker
@@ -277,7 +280,7 @@ public class AppController extends Application {
                 // one-off job
                 .setRecurring(recurring)
                 // don't persist past a device reboot
-                .setLifetime(Lifetime.FOREVER)
+                .setLifetime(Lifetime.FOREVER)//| Lifetime.UNTIL_NEXT_BOOT
                 // Run between xx - xy seconds from now.
                 .setTrigger(Trigger.executionWindow(runAfterSeconds, runAfterSeconds + toleranceInterval))
                 //.setTrigger(Trigger.executionWindow(15, toleranceInterval))
@@ -298,6 +301,8 @@ public class AppController extends Application {
         return job;
     }
 
+
+    //to view scheduled jobs:  adb shell dumpsys activity service GcmService
     void schedulerJobs() {
 
         dispatcher.cancelAll();
@@ -317,7 +322,7 @@ public class AppController extends Application {
         long midnightTsec = calendar.getTimeInMillis() / 1000;
         int nextIn = (int) (midnightTsec - currentTsec);
 
-        Log.e(TAG, "next midnight Tsec: " + nextIn);
+        Log.d(TAG, "next midnight Tsec: " + nextIn);
 
         Bundle myExtrasBundle = new Bundle();
 
@@ -329,7 +334,7 @@ public class AppController extends Application {
 
         //location job start next hour
         currentTsec = calendar.getTimeInMillis() / 1000;
-        Log.e(TAG, "Current Tsec: " + currentTsec);
+        Log.d(TAG, "Current Tsec: " + currentTsec);
 
         calendar.set(Calendar.MINUTE, 0);
         calendar.set(Calendar.SECOND, 0);
@@ -338,7 +343,7 @@ public class AppController extends Application {
         long nextHourTsec = calendar.getTimeInMillis() / 1000;
         nextIn = (int) (nextHourTsec - currentTsec);
 
-        Log.e(TAG, "next hour Tsec: " + nextIn);
+        Log.d(TAG, "next hour Tsec: " + nextIn);
 
         myExtrasBundle = new Bundle();
 
@@ -357,7 +362,7 @@ public class AppController extends Application {
 //        long minuteTsec = calendar.getTimeInMillis() / 1000;
 //        nextIn = (int) (minuteTsec - currentTsec);
 //
-//        Log.e(TAG, "next minute Tsec: " + nextIn);
+//        Log.d(TAG, "next minute Tsec: " + nextIn);
 //
 //        myExtrasBundle = new Bundle();
 //
@@ -365,7 +370,48 @@ public class AppController extends Application {
 //        Job USSDMinjob = createJob(JobSchedulerService.class, USSDJobService.class.getName(), nextIn, false, myExtrasBundle);
 //        dispatcher.mustSchedule(USSDMinjob); // jobs.add(USSDMinjob);
         //return jobs;
+        setUSSDAlarm();
 
+    }
+
+    public void setUSSDAlarm() {
+
+        try {
+            AlarmManager am = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+            //creating a new intent specifying the broadcast receiver
+            Intent i = new Intent(this, USSDBalanceBroadcastReceiver.class);
+            //creating a pending intent using the intent
+            PendingIntent pi = null;//PendingIntent.getBroadcast(this, 0, i, 0);
+
+            boolean isWorking = (PendingIntent.getBroadcast(this, 0, i, PendingIntent.FLAG_NO_CREATE) != null);
+            if (isWorking) {
+                Log.d("alarm", "is working");
+            } else {
+                Log.d("alarm", "is not working");
+
+                pi = PendingIntent.getBroadcast(this, 0, i, PendingIntent.FLAG_UPDATE_CURRENT);
+            }
+
+
+            // Set the alarm to start at x:00 a.m.
+            Calendar cal = Calendar.getInstance();
+            cal.setTimeInMillis(System.currentTimeMillis());
+            cal.set(Calendar.HOUR_OF_DAY, 7);
+            cal.set(Calendar.MINUTE, 0);
+
+            // am.cancel(pi);
+            //am.setAndAllowWhileIdle();
+// setRepeating() lets you specify a precise custom interval--in this case,
+// x minutes.
+            //   am.setInexactRepeating(AlarmManager.RTC_WAKEUP, cal.getTimeInMillis(),
+            //             1000 * USSDJobService.runEverySeconds, pi);
+            am.setInexactRepeating(AlarmManager.RTC_WAKEUP, cal.getTimeInMillis(), AlarmManager.INTERVAL_DAY, pi);
+
+            Log.d(TAG, "Alarm set: " + cal.getTimeInMillis());
+        } catch (SecurityException e) {
+            Log.wtf(TAG, e);
+            Crashlytics.logException(e);
+        }
     }
 
     void createUserOnFirstRun() {
@@ -399,7 +445,7 @@ public class AppController extends Application {
 
         //TODO:remove this hack after all devices update
         {
-            user.forceUpdate = false;
+
             userService.insertUser(user);
         }
         JSONObject JSONObject = deviceInfo();
@@ -467,7 +513,7 @@ public class AppController extends Application {
         // Note: apps running on "O" devices (regardless of targetSdkVersion) may receive updates
         // less frequently than this interval when the app is no longer in the foreground.
 
-        long fastestUpdateInterval = updateInterval / 2;
+        long fastestUpdateInterval = updateInterval;// / 2;
 
         mLocationRequest.setInterval(updateInterval);
 

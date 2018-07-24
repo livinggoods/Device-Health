@@ -176,6 +176,8 @@ public class CustomCorsFilter implements ContainerRequestFilter, ContainerRespon
 		if (corsMaxAge > -1) {
 			builder.header(CorsHeaders.ACCESS_CONTROL_MAX_AGE, corsMaxAge);
 		}
+
+		logger.debug("Forbidden");
 		requestContext.abortWith(builder.build());
 
 	}
