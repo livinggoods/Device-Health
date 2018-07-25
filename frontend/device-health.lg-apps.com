@@ -1,7 +1,7 @@
  server {
               listen 80;
               server_name  localhost;
-              root /Device-Health/frontend/dist;
+              root /device_health_frontend;
               index index.html;
 
         }

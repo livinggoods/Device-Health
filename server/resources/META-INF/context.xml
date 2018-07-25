@@ -5,20 +5,20 @@
 <!--  -->
 	 <Resource name="jdbc/postgresClientDBDeviceHealth" auth="Container" type="javax.sql.DataSource"
 		driverClassName="org.postgresql.Driver"
-		url="jdbc:postgresql://localhost:5432/device_health_development"
+		url="jdbc:postgresql://host.docker.internal:5432/device_health_development"
 		username="${db.dh.username}" password="${db.dh.password}"  
 		validationQuery="SELECT 1;" testOnBorrow="true"/> 
 		<!--  factory="org.apache.commons.dbcp2.BasicDataSource" --> 
 		
 		<Resource name="jdbc/postgresClientDBMMUG" auth="Container" type="javax.sql.DataSource"
 		driverClassName="org.postgresql.Driver"
-		url="jdbc:postgresql://localhost:5433/livinggoods-ug"
+		url="jdbc:postgresql://host.docker.internal:5433/livinggoods-ug"
 		username="${db.mm.username}" password="${db.mm.password}" 
 		validationQuery="SELECT 1;" testOnBorrow="true"/> <!--  ssh -L 5433:127.0.0.1:5433 user@server -->
 
 	<Resource name="jdbc/postgresClientDBMMKE" auth="Container" type="javax.sql.DataSource"
 		driverClassName="org.postgresql.Driver"
-		url="jdbc:postgresql://localhost:5433/livinggoods-ke"
+		url="jdbc:postgresql://host.docker.internal:5433/livinggoods-ke"
 		username="${db.mm.username}" password="${db.mm.password}" 
 		validationQuery="SELECT 1;" testOnBorrow="true"/>
 
@@ -37,7 +37,7 @@
 	<Parameter name="org.goods.living.tech.health.device.jwt.token.life"
 		value="31536000" /> <!-- 1 year -->
 	<Parameter name="org.goods.living.tech.health.device.api"
-		value="10110" />
+		value="10111" />
 	<Parameter name="org.goods.living.tech.health.device.locationUpdateInterval"
 		value="300" />
 		<Parameter name="org.goods.living.tech.health.device.ussdBalanceCodes"

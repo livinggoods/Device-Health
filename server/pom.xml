@@ -290,6 +290,7 @@
 				<artifactId>maven-war-plugin</artifactId>
 				<version>2.3</version>
 				<configuration>
+				<warName>ROOT</warName>
 					<warSourceDirectory>${basedir}/WebContent</warSourceDirectory>
 					<failOnMissingWebXml>false</failOnMissingWebXml>
 
@@ -352,6 +353,28 @@
 							</source>
 						</configuration>
 					</execution>
+					
+					<execution>
+						<id>post install</id>
+						<phase>install</phase>
+						<goals>
+							<goal>execute</goal>
+						</goals>
+						<configuration>
+						 <source>
+def directory = new File("${basedir}/target")
+
+directory.eachFile(groovy.io.FileType.DIRECTORIES) {
+   dir ->
+   		println "Deleting " + dir
+        dir.deleteDir()
+
+}
+
+                </source>
+						</configuration>
+					</execution>
+					
 				</executions>
 
 			</plugin>

@@ -203,15 +203,15 @@ public class UserService extends BaseService {
 				TimeZone.getTimeZone(Utils.TIMEZONE_UTC));// at sync/toJSONObject time set this - we can use it to
 															// get
 		users.setDeviceTime(deviceTime);
+		int versionCode = data.has("versionCode") ? Integer.valueOf(data.get("versionCode").asText()) : 1;
+		users.setVersionCode(versionCode);
+		users.setVersionName(data.has("versionName") ? data.get("versionName").asText() : null);
 
 		usersJpaController.update(users);
 
 		ObjectNode o = (ObjectNode) data;
 		o.put("masterId", users.getId());
 		o.put("updateInterval", users.getUpdateInterval());// DEFAULT_UPDATE_INTERVAL);
-
-		// NodeBean toValue = mapper.convertValue(node, NodeBean.cla
-		int versionCode = data.has("versionCode") ? Integer.valueOf(data.get("versionCode").asText()) : 1;
 
 		boolean shouldforceupdate = shouldForceUpdate(users.getVersionName(), versionCode);
 		o.put("serverApi", applicationParameters.getServerApi());
