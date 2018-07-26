@@ -9,14 +9,14 @@
             </div>
 
             <ul class="nav">
-                <li class="active">
+                <li :class="currentRoute=='locationStatistics'?'active':''">
                     <a href="/">
                         <i class="pe-7s-map-marker"></i>
                         <p>Location Statistics</p>
                     </a>
                 </li>
-                <li>
-                    <a href="/error">
+                <li :class="currentRoute=='dataUsageStatistics'?'active':''">
+                    <a href="/data-usage-statistics">
                         <i class="pe-7s-graph1"></i>
                         <p>Data Usage Statistics</p>
                     </a>
@@ -42,8 +42,16 @@
 <script>
 export default {
     name: 'Sidebar',
+    data () {
+        return {
+            currentRoute: this.$router.currentRoute.name
+        }
+    },
     props: [
         'sidebarHeader'
-    ]
+    ],
+    created: function () {
+
+    }
 }
 </script>

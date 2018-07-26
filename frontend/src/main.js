@@ -7,6 +7,7 @@ import {generalConfig, api} from '../config/config'
 import './registerServiceWorker'
 import App from './App'
 import 'vue-loading-overlay/dist/vue-loading.min.css'
+import VueDataTables from 'vue-data-tables'
 
 Vue.config.productionTip = false
 
@@ -30,6 +31,7 @@ router.beforeEach((to, from, next) => {
 })
 
 Vue.use(ElementUI, {locale})
+Vue.use(VueDataTables)
 
 var app = new Vue({
     router,

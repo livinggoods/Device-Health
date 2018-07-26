@@ -5,6 +5,7 @@ import DashboardConfig from '@/components/DashboardConfig.vue'
 import Login from '@/views/Login.vue'
 import PasswordReset from '@/views/PasswordReset.vue'
 import PasswordResetVerification from '@/views/PasswordResetVerification.vue'
+import DataUsageStatistics from '@/views/DataUsageStatistics.vue'
 import NewAcc from '@/views/CreateAcc.vue'
 import Error from '@/views/Error.vue'
 
@@ -15,8 +16,14 @@ export default new Router({
     routes: [
         {
             path: '/',
-            name: 'locationTracker',
+            name: 'locationStatistics',
             component: LocationStatistics,
+            meta: { requiresAuth: true }
+        },
+        {
+            path: '/data-usage-statistics',
+            name: 'dataUsageStatistics',
+            component: DataUsageStatistics,
             meta: { requiresAuth: true }
         },
         {
