@@ -10,8 +10,7 @@ pipeline {
             }
             steps {
                 sh '''
-                    ls -a
-                    cd backend
+                    cd server
                     mvn -B -DskipTests clean package
                 '''
                 sh ''
