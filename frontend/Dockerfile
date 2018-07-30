@@ -9,11 +9,11 @@ FROM nginx:1.15.2-alpine
 
 #WORKDIR /device_health_frontend
 
-COPY docker-entrypoint.sh /usr/local/bin/
+# COPY docker-entrypoint.sh /usr/local/bin/
 
-CMD ["chmod", "+x","/usr/local/bin/docker-entrypoint.sh"]
+# CMD ["chmod", "+x","/usr/local/bin/docker-entrypoint.sh"]
 
-CMD ["/usr/local/bin/docker-entrypoint.sh"]
+# CMD ["/usr/local/bin/docker-entrypoint.sh"]
 
 EXPOSE 80
 
