@@ -75,12 +75,25 @@ public class ApplicationParameters {
 	public String getUSSDBalanceCodes() {
 
 		try {
-			String s = servletContext.getInitParameter("org.goods.living.tech.health.device.ussdBalanceCodes");
+			String s = servletContext.getInitParameter("org.goods.living.tech.health.device.USSDBalanceCodes");
 			logger.debug(s);
 			return s;
 		} catch (Exception e) {
 			logger.error(e);
 			return null;
+		}
+
+	}
+
+	public Boolean shouldUpdateUSSDBalanceCodes() {
+
+		try {
+			String s = servletContext.getInitParameter("org.goods.living.tech.health.device.updateUSSDBalanceCodes");
+			logger.debug(s);
+			return new Boolean(s);
+		} catch (Exception e) {
+			logger.error(e);
+			return false;
 		}
 
 	}
