@@ -9,8 +9,11 @@ pipeline {
                 }
             }
             steps {
-                sh 'cd backend'
-                sh 'mvn -B -DskipTests clean package'
+                sh '''
+                    cd backend
+                    mvn -B -DskipTests clean package
+                '''
+                sh ''
             }
         }
         stage('Build Frontend') { 
@@ -20,9 +23,11 @@ pipeline {
                 }
             }
             steps {
-                sh 'cd frontend'
-                sh 'npm i'
-                sh 'npm run build'
+                sh '''
+                    cd frontend
+                    npm i
+                    npm run build
+                '''
             }
         }
     }
