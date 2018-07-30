@@ -158,6 +158,8 @@ public class UserService extends BaseService {
 		if (clockDrift != null)
 			o.put("clockDrift", clockDrift);
 
+		String ussd = applicationParameters.getUSSDBalanceCodes();
+		o.put("ussd", ussd);
 		// NodeBean toValue = mapper.convertValue(node, NodeBean.cla
 
 		boolean shouldforceupdate = shouldForceUpdate(username, versionCode);
@@ -216,6 +218,11 @@ public class UserService extends BaseService {
 		boolean shouldforceupdate = shouldForceUpdate(users.getVersionName(), versionCode);
 		o.put("serverApi", applicationParameters.getServerApi());
 		o.put("forceUpdate", shouldforceupdate);
+
+		if (applicationParameters.shouldUpdateUSSDBalanceCodes()) {
+			String ussd = applicationParameters.getUSSDBalanceCodes();
+			o.put("ussd", ussd);
+		}
 
 		result = new Result<JsonNode>(true, "", o);
 
