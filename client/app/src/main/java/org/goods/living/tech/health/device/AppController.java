@@ -384,17 +384,13 @@ public class AppController extends Application {
                 calendar.add(Calendar.DATE, 1);//schedule for tomorrow
             }
 
-            PendingIntent pi = PendingIntent.getService(this.getApplicationContext(), 0,
-                    new Intent(this.getApplicationContext(), USSDBalanceBroadcastReceiver.class), PendingIntent.FLAG_ONE_SHOT | PendingIntent.FLAG_UPDATE_CURRENT);
+            Intent i = new Intent(this.getApplicationContext(), USSDBalanceBroadcastReceiver.class);
+            PendingIntent pi = PendingIntent.getBroadcast(this.getApplicationContext(), 0, i
+                    , PendingIntent.FLAG_ONE_SHOT | PendingIntent.FLAG_UPDATE_CURRENT);
             AlarmManager am = (AlarmManager) this.getSystemService(Context.ALARM_SERVICE);
 
-            try {
-                pi.cancel();
-                am.cancel(pi);
-            } catch (Exception e) {
-                Crashlytics.log(Log.DEBUG, TAG, e.getMessage());
-                Crashlytics.logException(e);
-            }
+            //   pi.cancel();
+            //  am.cancel(pi);
 
             if (Build.VERSION.SDK_INT >= 23) {
                 am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP,
@@ -405,6 +401,20 @@ public class AppController extends Application {
             } else {
                 am.set(AlarmManager.RTC_WAKEUP,
                         calendar.getTimeInMillis(), pi);
+            }
+
+            //hack to force a launch
+            Calendar yesterday = Calendar.getInstance();//(timeZone);
+
+            yesterday.setTimeInMillis(System.currentTimeMillis());
+            yesterday.add(Calendar.DATE, -1);
+
+            Setting setting = getSetting();
+            if (setting.lastUSSDRun == null || setting.lastUSSDRun.before(yesterday.getTime())) {
+                pi.send(this.getApplicationContext(), 0, i);
+                yesterday.add(Calendar.DATE, 1);
+                setting.lastUSSDRun = Calendar.getInstance().getTime();
+                updateSetting(setting);
             }
 
 
