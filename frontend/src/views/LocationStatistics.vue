@@ -31,6 +31,7 @@
 
                                     <li style="margin-top: 10px;margin-left: 5px;">
                                         <el-autocomplete
+                                                debounce="2000"
                                                 popper-class="my-autocomplete"
                                                 class="inline-input"
                                                 v-model="searchParams.chvName"
