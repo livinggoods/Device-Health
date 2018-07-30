@@ -155,8 +155,6 @@ public class RegistrationService extends BaseService {
 
                 //TODO: remove
                 Setting setting = AppController.getInstance().getSetting();
-                setting.workingUSSD0 = DataBalanceHelper.USSDList;
-                setting.workingUSSD1 = DataBalanceHelper.USSDList;//set default
                 setting.fetchingUSSD = false;
                 AppController.getInstance().updateSetting(setting);
             }
@@ -177,8 +175,8 @@ public class RegistrationService extends BaseService {
                         ArrayList<String> list = USSDService.getUSSDCodesFromString(ussdList);
 
                         Setting setting = AppController.getInstance().getSetting();
-                        setting.workingUSSD0 = DataBalanceHelper.USSDList;
-                        setting.workingUSSD1 = DataBalanceHelper.USSDList;
+                        setting.workingUSSD0 = list;
+                        setting.workingUSSD1 = list;
                         AppController.getInstance().updateSetting(setting);
 
                     } else {
@@ -213,12 +211,12 @@ public class RegistrationService extends BaseService {
 
         AppController appController = ((AppController) c.getApplicationContext());
         appController.telephonyInfo.loadInfo();
-        if (portz == 0 && appController.telephonyInfo.networkSIM1 == null) {
+        if (portz == 0 && appController.telephonyInfo.networkSIM0 == null) {
             portz = 1;
             //no sim in 1 try 2
             Crashlytics.log(Log.DEBUG, TAG, "no sim in port 1 try 2");
         }
-        if (portz == 1 && appController.telephonyInfo.networkSIM2 == null) {
+        if (portz == 1 && appController.telephonyInfo.networkSIM1 == null) {
             //no sim in 2
             Crashlytics.log(Log.DEBUG, TAG, "no sim in port 2");
             return;
@@ -238,10 +236,10 @@ public class RegistrationService extends BaseService {
                         Crashlytics.log(Log.DEBUG, TAG, "saving balance ...");
                         // String sim = TelephonyUtil.getSimSerial(c);
 
-                        JSONObject telephoneData = appController.telephonyInfo.telephoneDataSIM1;
+                        JSONObject telephoneData = appController.telephonyInfo.telephoneDataSIM0;
                         if (port == 1)
-                            telephoneData = appController.telephonyInfo.telephoneDataSIM2;
-                        dataBalanceService.insert(bal.balance, bal.rawBalance, telephoneData);
+                            telephoneData = appController.telephonyInfo.telephoneDataSIM1;
+                        dataBalanceService.insert(bal.balance, bal.rawBalance, port, telephoneData);
 
                         //switch to line 2 if any
                         if (port == 0)
@@ -290,12 +288,12 @@ public class RegistrationService extends BaseService {
 
         AppController appController = ((AppController) c.getApplicationContext());
         appController.telephonyInfo.loadInfo();
-        if (portz == 0 && appController.telephonyInfo.networkSIM1 == null) {
+        if (portz == 0 && appController.telephonyInfo.networkSIM0 == null) {
             portz = 1;
             //no sim in 1 try 2
             Crashlytics.log(Log.DEBUG, TAG, "no sim in port 1 try 2");
         }
-        if (portz == 1 && appController.telephonyInfo.networkSIM2 == null) {
+        if (portz == 1 && appController.telephonyInfo.networkSIM1 == null) {
             //no sim in 2
             Crashlytics.log(Log.DEBUG, TAG, "no sim in port 2");
             return;
@@ -318,10 +316,10 @@ public class RegistrationService extends BaseService {
                         Crashlytics.log(Log.DEBUG, TAG, "saving balance ...");
                         // String sim = TelephonyUtil.getSimSerial(c);
 
-                        JSONObject telephoneData = appController.telephonyInfo.telephoneDataSIM1;
+                        JSONObject telephoneData = appController.telephonyInfo.telephoneDataSIM0;
                         if (port == 1)
-                            telephoneData = appController.telephonyInfo.telephoneDataSIM2;
-                        dataBalanceService.insert(bal.balance, bal.rawBalance, telephoneData);
+                            telephoneData = appController.telephonyInfo.telephoneDataSIM1;
+                        dataBalanceService.insert(bal.balance, bal.rawBalance, port, telephoneData);
 
                         if (balanceSuccessCallback != null) {
                             balanceSuccessCallback.onComplete();

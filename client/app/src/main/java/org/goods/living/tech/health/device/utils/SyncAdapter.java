@@ -27,8 +27,15 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
         mContentResolver = context.getContentResolver();
         // myPrefs = new MyPrefs(mContext);
         //  apiInterface = ServiceGenerator.createService(ApiInterface.class);
+        AppController appController;
+        if (!(context.getApplicationContext() instanceof AppController)) {
+            appController = ((AppController) context.getApplicationContext());
 
-        AppController.getInstance().getComponent().inject(this);
+        } else {
+            appController = AppController.getInstance();
+
+        }
+        appController.getComponent().inject(this);
 
     }
 
@@ -51,10 +58,13 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
         Log.e("inPerformSync", "syncing");
         // sync data or perform your action
 
+
         Utils.getHandlerThread().post(new Runnable() {
             @Override
             public void run() {
                 syncService.sync(mContext);
+
+                AppController.getInstance().setUSSDAlarm();
 
             }
         });

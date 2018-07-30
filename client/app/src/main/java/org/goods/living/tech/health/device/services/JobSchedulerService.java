@@ -42,8 +42,6 @@ public class JobSchedulerService extends com.firebase.jobdispatcher.JobService {
 
                 if (jobToStart.equals(LocationJobService.class.getName())) {
                     AppController.getInstance().dispatcher.mustSchedule(createLocationJob(job.getExtras()));
-                } else if (jobToStart.equals(USSDJobService.class.getName())) {
-                    AppController.getInstance().dispatcher.mustSchedule(createUSSDJob(job.getExtras()));
                 }
 
 
@@ -71,12 +69,5 @@ public class JobSchedulerService extends com.firebase.jobdispatcher.JobService {
         return job;
     }
 
-    Job createUSSDJob(Bundle myExtrasBundle) {
-
-        Job job = AppController.getInstance().createJob(USSDJobService.class, USSDJobService.class.getName(), USSDJobService.runEverySeconds, true, myExtrasBundle);
-
-        return job;
-
-    }
 
 }

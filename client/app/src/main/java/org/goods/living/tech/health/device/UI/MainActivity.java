@@ -39,6 +39,7 @@ import com.google.android.gms.tasks.OnSuccessListener;
 import org.goods.living.tech.health.device.AppController;
 import org.goods.living.tech.health.device.R;
 import org.goods.living.tech.health.device.models.DataBalance;
+import org.goods.living.tech.health.device.models.Setting;
 import org.goods.living.tech.health.device.models.Stats;
 import org.goods.living.tech.health.device.models.User;
 import org.goods.living.tech.health.device.services.DataBalanceService;
@@ -125,7 +126,7 @@ public class MainActivity extends FragmentActivity implements
 
         balanceTextView = (TextView) findViewById(R.id.balanceTextView);
 
-        balanceTextView.setText(getString(R.string.data_balance, "0"));
+        balanceTextView.setText(getString(R.string.data_balance, "0", "", ""));
 
         intervalTextView = (TextView) findViewById(R.id.intervalTextView);
 
@@ -268,7 +269,7 @@ public class MainActivity extends FragmentActivity implements
         DataBalance dataBalance = list.size() > 0 ? list.get(0) : null;
         if (dataBalance != null)
             if (balanceTextView != null) {
-                balanceTextView.setText(getString(R.string.data_balance, dataBalance.balance));
+                balanceTextView.setText(getString(R.string.data_balance, dataBalance.sim, dataBalance.balance, dataBalance.balanceMessage));
             }
     }
 
@@ -297,8 +298,14 @@ public class MainActivity extends FragmentActivity implements
 
                                 Crashlytics.log(Log.DEBUG, TAG, result);
 
+                                Float bright = Utils.getBrightness(c, getWindow());
 
-                                statsService.insertLocation(location, AppController.getInstance().getSetting().brightness, c);
+                                Setting setting = AppController.getInstance().getSetting();
+                                setting.brightness = bright != null ? bright.doubleValue() : null;
+                                AppController.getInstance().updateSetting(setting);
+
+                                Integer batteryLevel = Utils.getBatteryPercentage(c);
+                                statsService.insertLocation(location, setting.brightness, batteryLevel);
                                 loadData();
 
                             }
@@ -341,7 +348,9 @@ public class MainActivity extends FragmentActivity implements
         List<DataBalance> l = dataBalanceService.getLatestRecords(1l);
         DataBalance dataBalance = l.size() > 0 ? l.get(0) : null;
 
-        balanceTextView.setText(getString(R.string.data_balance, dataBalance == null ? null : dataBalance.balance));
+        if (dataBalance != null) {
+            balanceTextView.setText(getString(R.string.data_balance, dataBalance.sim, dataBalance.balance, dataBalance.balanceMessage));
+        }
 
         Long total = statsService.countRecords();
         Long synced = statsService.countSyncedRecords();

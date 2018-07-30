@@ -140,7 +140,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:onClick="checkBalance"
-                    android:text="Check Balance" />
+                    android:text="Check Bundle Balance" />
 
 
             </LinearLayout>
@@ -154,7 +154,7 @@
                 <TextView
                     android:id="@+id/balanceTextView"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
+                    android:layout_height="34dp"
                     android:layout_weight="1"
                     android:text="@string/data_balance" />
 

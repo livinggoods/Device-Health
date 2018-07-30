@@ -8,7 +8,6 @@ import org.goods.living.tech.health.device.services.JobSchedulerService;
 import org.goods.living.tech.health.device.services.LocationJobService;
 import org.goods.living.tech.health.device.services.LocationUpdatesIntentService;
 import org.goods.living.tech.health.device.services.RegistrationService;
-import org.goods.living.tech.health.device.services.USSDJobService;
 import org.goods.living.tech.health.device.services.USSDService;
 import org.goods.living.tech.health.device.utils.DataBalanceHelper;
 import org.goods.living.tech.health.device.utils.LocationUpdatesBroadcastReceiver;
@@ -43,8 +42,6 @@ public interface AppcontrollerComponent extends AndroidInjector<AppController> {
     void inject(SyncAdapter target);
 
     void inject(LocationJobService target);
-
-    void inject(USSDJobService target);
 
     void inject(USSDService target);
 

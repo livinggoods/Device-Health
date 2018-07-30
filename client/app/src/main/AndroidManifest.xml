@@ -38,6 +38,8 @@
         android:name="android.permission.CALL_PRIVILEGED"
         tools:ignore="ProtectedPermissions" />
 
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+
 
     <!--  <uses-permission
           android:name="android.permission.PACKAGE_USAGE_STATS"
@@ -113,7 +115,14 @@
         <receiver
             android:name=".utils.USSDBalanceBroadcastReceiver"
             android:enabled="true"
-            android:exported="true" />
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="alarm" />
+            </intent-filter>
+        </receiver>
         <receiver
             android:name=".utils.UpdateBroadcastReceiver"
             android:enabled="true"
@@ -158,11 +167,6 @@
         </service>
 
         <service android:name=".services.LocationJobService">
-            <intent-filter>
-                <action android:name="com.firebase.jobdispatcher.ACTION_EXECUTE" />
-            </intent-filter>
-        </service>
-        <service android:name=".services.USSDJobService">
             <intent-filter>
                 <action android:name="com.firebase.jobdispatcher.ACTION_EXECUTE" />
             </intent-filter>

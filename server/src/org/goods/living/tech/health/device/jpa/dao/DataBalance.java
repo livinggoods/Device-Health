@@ -64,6 +64,8 @@ public class DataBalance implements Serializable {
 	private String balanceMessage;
 	@Column(name = "message")
 	private String message;
+	@Column(name = "sim")
+	private Integer sim;
 	@Column(name = "recorded_at")
 	@Temporal(TemporalType.TIMESTAMP)
 	private Date recordedAt;
@@ -120,6 +122,14 @@ public class DataBalance implements Serializable {
 
 	public void setMessage(String message) {
 		this.message = message;
+	}
+
+	public Integer getSim() {
+		return sim;
+	}
+
+	public void setSim(Integer sim) {
+		this.sim = sim;
 	}
 
 	public Date getRecordedAt() {
