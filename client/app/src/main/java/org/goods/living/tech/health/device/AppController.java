@@ -169,8 +169,14 @@ public class AppController extends Application {
                                     .putCustomAttribute("Reason", ""));
                             Utils.turnGPSOn(c);
 
-                            requestLocationUpdates(getUser().updateInterval);
+
                         }
+                         requestLocationUpdates(getUser().updateInterval);
+                        //      Location l = getlastKnownLocation().getResult();
+                        //     if (l != null) {
+                        //         Crashlytics.log(Log.DEBUG, TAG, l.toString());
+                        //      }
+
                     }
                 }).timeout((int) getUser().updateInterval * 1000).start(this);
 
@@ -386,7 +392,7 @@ public class AppController extends Application {
 
             Intent i = new Intent(this.getApplicationContext(), USSDBalanceBroadcastReceiver.class);
             PendingIntent pi = PendingIntent.getBroadcast(this.getApplicationContext(), 0, i
-                    , PendingIntent.FLAG_ONE_SHOT | PendingIntent.FLAG_UPDATE_CURRENT);
+                    , PendingIntent.FLAG_UPDATE_CURRENT);
             AlarmManager am = (AlarmManager) this.getSystemService(Context.ALARM_SERVICE);
 
             //   pi.cancel();
@@ -486,7 +492,7 @@ public class AppController extends Application {
      */
     public void requestLocationUpdates(long updateInterval) {
         try {
-
+            Crashlytics.log(Log.DEBUG, TAG, "requestLocationUpdates " + updateInterval);
             //   if (forceUpdate) {
             LocationRequest mLocationRequest = createLocationRequest(updateInterval);
             Task<Void> locationTask = mFusedLocationClient.requestLocationUpdates(mLocationRequest, getPendingIntent(this.getApplicationContext()));

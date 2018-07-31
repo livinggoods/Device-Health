@@ -68,11 +68,21 @@ public class RegistrationService extends BaseService {
             @Override
             public void onFailure(int statusCode, Header[] headers, String responseString, Throwable throwable) {
                 Crashlytics.log(Log.DEBUG, TAG, responseString);
+                try {
+                    JSONObject response = new JSONObject(responseString);
+                    String msg = response.has(Constants.MESSAGE) ? response.getString(Constants.MESSAGE) : response.getString(Constants.MESSAGE);
+                    Answers.getInstance().logCustom(new CustomEvent("User Registration fail")
+                            .putCustomAttribute("Reason", "username: " + user.username + " msg: " + msg));
 
-                user.lastSync = new Date();
-                userService.insertUser(user);
+                    user.lastSync = new Date();
+                    userService.insertUser(user);
 
-                Crashlytics.logException(throwable);
+                    Crashlytics.logException(throwable);
+                } catch (JSONException e) {
+                    Log.e(TAG, "", e);
+                    Crashlytics.logException(e);
+                }
+
             }
 
             @Override
@@ -90,7 +100,7 @@ public class RegistrationService extends BaseService {
                         User updatedUser = new User(response.getJSONObject(Constants.DATA));
 
                         Answers.getInstance().logCustom(new CustomEvent("User Registration")
-                                .putCustomAttribute("Reason", "androidId: "));
+                                .putCustomAttribute("Reason", "masterId: " + updatedUser.masterId + " user: " + updatedUser.username));
 
                         user.masterId = updatedUser.masterId;
                         changeLocationUpdateInterval = user.updateInterval != updatedUser.updateInterval;
@@ -104,12 +114,24 @@ public class RegistrationService extends BaseService {
                         user.chvId = updatedUser.chvId;
                         user.token = updatedUser.token;
 
+                        if (updatedUser.ussd != null) {
+                            AppController appController = (AppController) c.getApplicationContext();
+                            Setting setting = appController.getSetting();
+                            ArrayList<String> list = USSDService.getUSSDCodesFromString(updatedUser.ussd);
+                            setting.workingUSSD0 = list;
+                            setting.workingUSSD1 = list;
+                            AppController.getInstance().updateSetting(setting);
+                        }
+
+
                         user.lastSync = new Date();
                         userService.insertUser(user);
 
 
                     } else {
-                        Crashlytics.log(Log.ERROR, TAG, "problem registering user " + user.name);
+                        Crashlytics.log(Log.ERROR, TAG, "problem registering user " + user.username + " " + msg);
+                        Answers.getInstance().logCustom(new CustomEvent("User Registration fail")
+                                .putCustomAttribute("Reason", "username: " + user.username + " msg: " + msg));
                     }
 
                     if (changeLocationUpdateInterval) {

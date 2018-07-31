@@ -171,18 +171,34 @@ public class RegisterUserFragment extends SlideFragment {
     }
 
     void loadData() {
-        User user = userService.getRegisteredUser();
-        usernameText.setText(user.username);
-        if (user.phone != null)
-            ccp.setFullNumber(user.phone);
+        Utils.getHandlerThread().post(new Runnable() {
+            @Override
+            public void run() {
+                User user = userService.getRegisteredUser();
+                List<DataBalance> l = dataBalanceService.getLatestRecords(1l);
 
-        List<DataBalance> l = dataBalanceService.getLatestRecords(1l);
-        DataBalance dataBalance = l.size() > 0 ? l.get(0) : null;
+                new Handler(Looper.getMainLooper()).post(new Runnable() {
+                    @Override
+                    public void run() {
+                        //this runs on the UI thread
 
-        if (dataBalance != null)
-            if (balanceTextView != null) {
-                balanceTextView.setText(getString(R.string.data_balance, dataBalance.sim, dataBalance.balance, dataBalance.balanceMessage));
+
+                        usernameText.setText(user.username);
+                        if (user.phone != null)
+                            ccp.setFullNumber(user.phone);
+
+
+                        DataBalance dataBalance = l.size() > 0 ? l.get(0) : null;
+
+                        if (dataBalance != null)
+                            if (balanceTextView != null) {
+                                balanceTextView.setText(getString(R.string.data_balance, dataBalance.sim, dataBalance.balance, dataBalance.balanceMessage));
+                            }
+                    }
+                });
             }
+        });
+
     }
 
     /**
@@ -269,9 +285,13 @@ public class RegisterUserFragment extends SlideFragment {
         User user = userService.getRegisteredUser();
         String username = usernameText.getText().toString().trim();
         user.username = username.isEmpty() ? null : username;
-
-
-        String phone = ccp.getFullNumberWithPlus().trim();
+        String phone = "";
+        try {
+            if (!ccp.getFullNumber().trim().isEmpty())
+                phone = ccp.getFullNumberWithPlus().trim();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         //  PhoneNumberUtil pnu = PhoneNumberUtil.getInstance();
         String numOnly = phone.replace(ccp.getSelectedCountryCodeWithPlus(), "");
         user.phone = numOnly.isEmpty() ? null : phone;

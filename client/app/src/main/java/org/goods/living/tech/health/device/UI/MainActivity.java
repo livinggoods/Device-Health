@@ -118,7 +118,7 @@ public class MainActivity extends FragmentActivity implements
         mLocationUpdatesResultView = (TextView) findViewById(R.id.location_updates_result);
         usernameText = (TextView) findViewById(R.id.usernameText);
         nameText = (TextView) findViewById(R.id.nameText);
-        phoneText = (TextView) findViewById(R.id.phone_number_edt);
+        phoneText = (TextView) findViewById(R.id.phone_number);
 
 
         syncTextView = (TextView) findViewById(R.id.syncTextView);
@@ -218,12 +218,14 @@ public class MainActivity extends FragmentActivity implements
             @Override
             public void run() {
 
+
                 //    registrationService.checkBalanceThroughUSSD(c,0);
                 registrationService.checkBalanceThroughSMS(c, 0, new RegistrationService.BalanceSuccessCallback() {
                     @Override
                     public void onComplete() {
                         Utils.dismissProgressDialog();
-                        loadBalance();
+                        List<DataBalance> list = dataBalanceService.getLatestRecords(1l);
+                        updateUI(list);
                     }
                 });
 
@@ -231,7 +233,8 @@ public class MainActivity extends FragmentActivity implements
                     @Override
                     public void run() {
                         //this runs on the UI thread
-                        updateUI();
+                        List<DataBalance> list = dataBalanceService.getLatestRecords(1l);
+                        updateUI(list);
                     }
                 });
             }
@@ -241,7 +244,7 @@ public class MainActivity extends FragmentActivity implements
     }
 
 
-    void updateUI() {
+    void updateUI(List<DataBalance> list) {
         if (timer != null) timer.cancel();
         timer = new CountDownTimer(DataBalanceHelper.USSD_LIMIT * 1000 + 1000, 1000) {
             @Override
@@ -254,7 +257,12 @@ public class MainActivity extends FragmentActivity implements
             public void onFinish() {
                 Crashlytics.log(Log.DEBUG, TAG, "onFinish checkBalance");
                 Utils.dismissProgressDialog();
-                loadBalance();
+                DataBalance dataBalance = list.size() > 0 ? list.get(0) : null;
+                if (dataBalance != null)
+                    if (balanceTextView != null) {
+                        balanceTextView.setText(getString(R.string.data_balance, dataBalance.sim, dataBalance.balance, dataBalance.balanceMessage));
+                    }
+
                 timer = null;
 
 
@@ -263,15 +271,6 @@ public class MainActivity extends FragmentActivity implements
         timer.start();
     }
 
-    void loadBalance() {
-
-        List<DataBalance> list = dataBalanceService.getLatestRecords(1l);
-        DataBalance dataBalance = list.size() > 0 ? list.get(0) : null;
-        if (dataBalance != null)
-            if (balanceTextView != null) {
-                balanceTextView.setText(getString(R.string.data_balance, dataBalance.sim, dataBalance.balance, dataBalance.balanceMessage));
-            }
-    }
 
     /**
      * Handles the checkLocation  button.

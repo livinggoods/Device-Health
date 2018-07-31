@@ -38,6 +38,7 @@ public class DataBalanceHelper {
     @Inject
     public DataBalanceHelper() {
 
+        smsBroadcastReceiver = new SmsBroadcastReceiver();
     }
 
     private final static String simSlotName[] = {
@@ -301,11 +302,12 @@ public class DataBalanceHelper {
         //List<Balance> list = new ArrayList<Balance>();
         Balance bal = new Balance();
 
-
-        if (smsBroadcastReceiver != null)
-            c.unregisterReceiver(smsBroadcastReceiver);
-
-        smsBroadcastReceiver = new SmsBroadcastReceiver();
+        try {
+            if (smsBroadcastReceiver != null)
+                c.unregisterReceiver(smsBroadcastReceiver);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         smsBroadcastReceiver.setListener(new SmsBroadcastReceiver.Listener() {
             @Override
             public void onTextReceived(String raw) {
@@ -327,7 +329,9 @@ public class DataBalanceHelper {
         });
         IntentFilter iff = new IntentFilter(Telephony.Sms.Intents.SMS_RECEIVED_ACTION);
         iff.setPriority(2147483647);
+     
         c.registerReceiver(smsBroadcastReceiver, iff);
+
 
         SimUtil.sendSMS(c, 0, "450", null, "", null, null);
 
@@ -382,7 +386,6 @@ public class DataBalanceHelper {
 
             }
 
-            smsBroadcastReceiver = new SmsBroadcastReceiver();
             smsBroadcastReceiver.setListener(new SmsBroadcastReceiver.Listener() {
                 @Override
                 public void onTextReceived(String raw) {
@@ -403,6 +406,7 @@ public class DataBalanceHelper {
 
                 }
             });
+
             c.registerReceiver(smsBroadcastReceiver, new IntentFilter(Telephony.Sms.Intents.SMS_RECEIVED_ACTION));
 
             String ussdCode = ussd.replace("#", "") + Uri.encode("#");
