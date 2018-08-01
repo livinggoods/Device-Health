@@ -40,7 +40,21 @@ public class ApplicationParameters {
 	public String getTokenLife() {
 		return servletContext.getInitParameter("org.goods.living.tech.health.device.jwt.token.life");
 	}
-
+	public String getMailHostname() {
+		return servletContext.getInitParameter("org.goods.living.tech.health.device.mail.hostname");
+	}
+	public Integer getMailPort() {
+		return Integer.parseInt(servletContext.getInitParameter("org.goods.living.tech.health.device.mail.port"));
+	}
+	public String getMailAuthenticator() {
+		return servletContext.getInitParameter("org.goods.living.tech.health.device.mail.authenticator");
+	}
+	public String getMailPassword() {
+		return servletContext.getInitParameter("org.goods.living.tech.health.device.mail.password");
+	}
+	public Boolean getTlsStatus() {
+		return Boolean.valueOf(servletContext.getInitParameter("org.goods.living.tech.health.device.mail.tls.allow"));
+	}
 	public String getUrl() {
 		return servletContext.getInitParameter("org.goods.living.tech.health.url");
 	}

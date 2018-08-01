@@ -54,7 +54,7 @@ public class ControllerManager {
 
 	@Produces
 	public DataBalanceJpaController getDataBalanceJpaController() {
-		return new DataBalanceJpaController(entityManagerFactoryDH);
+		return new DataBalanceJpaController(entityManagerFactoryDH,entityManagerFactoryMMKE, entityManagerFactoryMMUG);
 	}
 
 	@Produces
