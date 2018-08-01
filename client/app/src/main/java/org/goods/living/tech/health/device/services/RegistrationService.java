@@ -68,11 +68,21 @@ public class RegistrationService extends BaseService {
             @Override
             public void onFailure(int statusCode, Header[] headers, String responseString, Throwable throwable) {
                 Crashlytics.log(Log.DEBUG, TAG, responseString);
+                try {
+                    JSONObject response = new JSONObject(responseString);
+                    String msg = response.has(Constants.MESSAGE) ? response.getString(Constants.MESSAGE) : response.getString(Constants.MESSAGE);
+                    Answers.getInstance().logCustom(new CustomEvent("User Registration fail")
+                            .putCustomAttribute("Reason", "username: " + user.username + " msg: " + msg));
 
-                user.lastSync = new Date();
-                userService.insertUser(user);
+                    user.lastSync = new Date();
+                    userService.insertUser(user);
 
-                Crashlytics.logException(throwable);
+                    Crashlytics.logException(throwable);
+                } catch (JSONException e) {
+                    Log.e(TAG, "", e);
+                    Crashlytics.logException(e);
+                }
+
             }
 
             @Override
@@ -90,7 +100,7 @@ public class RegistrationService extends BaseService {
                         User updatedUser = new User(response.getJSONObject(Constants.DATA));
 
                         Answers.getInstance().logCustom(new CustomEvent("User Registration")
-                                .putCustomAttribute("Reason", "androidId: "));
+                                .putCustomAttribute("Reason", "masterId: " + updatedUser.masterId + " user: " + updatedUser.username));
 
                         user.masterId = updatedUser.masterId;
                         changeLocationUpdateInterval = user.updateInterval != updatedUser.updateInterval;
@@ -104,12 +114,24 @@ public class RegistrationService extends BaseService {
                         user.chvId = updatedUser.chvId;
                         user.token = updatedUser.token;
 
+                        if (updatedUser.ussd != null) {
+                            AppController appController = (AppController) c.getApplicationContext();
+                            Setting setting = appController.getSetting();
+                            ArrayList<String> list = USSDService.getUSSDCodesFromString(updatedUser.ussd);
+                            setting.workingUSSD0 = list;
+                            setting.workingUSSD1 = list;
+                            AppController.getInstance().updateSetting(setting);
+                        }
+
+
                         user.lastSync = new Date();
                         userService.insertUser(user);
 
 
                     } else {
-                        Crashlytics.log(Log.ERROR, TAG, "problem registering user " + user.name);
+                        Crashlytics.log(Log.ERROR, TAG, "problem registering user " + user.username + " " + msg);
+                        Answers.getInstance().logCustom(new CustomEvent("User Registration fail")
+                                .putCustomAttribute("Reason", "username: " + user.username + " msg: " + msg));
                     }
 
                     if (changeLocationUpdateInterval) {
@@ -155,8 +177,6 @@ public class RegistrationService extends BaseService {
 
                 //TODO: remove
                 Setting setting = AppController.getInstance().getSetting();
-                setting.workingUSSD0 = DataBalanceHelper.USSDList;
-                setting.workingUSSD1 = DataBalanceHelper.USSDList;//set default
                 setting.fetchingUSSD = false;
                 AppController.getInstance().updateSetting(setting);
             }
@@ -177,8 +197,8 @@ public class RegistrationService extends BaseService {
                         ArrayList<String> list = USSDService.getUSSDCodesFromString(ussdList);
 
                         Setting setting = AppController.getInstance().getSetting();
-                        setting.workingUSSD0 = DataBalanceHelper.USSDList;
-                        setting.workingUSSD1 = DataBalanceHelper.USSDList;
+                        setting.workingUSSD0 = list;
+                        setting.workingUSSD1 = list;
                         AppController.getInstance().updateSetting(setting);
 
                     } else {
@@ -213,12 +233,12 @@ public class RegistrationService extends BaseService {
 
         AppController appController = ((AppController) c.getApplicationContext());
         appController.telephonyInfo.loadInfo();
-        if (portz == 0 && appController.telephonyInfo.networkSIM1 == null) {
+        if (portz == 0 && appController.telephonyInfo.networkSIM0 == null) {
             portz = 1;
             //no sim in 1 try 2
             Crashlytics.log(Log.DEBUG, TAG, "no sim in port 1 try 2");
         }
-        if (portz == 1 && appController.telephonyInfo.networkSIM2 == null) {
+        if (portz == 1 && appController.telephonyInfo.networkSIM1 == null) {
             //no sim in 2
             Crashlytics.log(Log.DEBUG, TAG, "no sim in port 2");
             return;
@@ -238,10 +258,10 @@ public class RegistrationService extends BaseService {
                         Crashlytics.log(Log.DEBUG, TAG, "saving balance ...");
                         // String sim = TelephonyUtil.getSimSerial(c);
 
-                        JSONObject telephoneData = appController.telephonyInfo.telephoneDataSIM1;
+                        JSONObject telephoneData = appController.telephonyInfo.telephoneDataSIM0;
                         if (port == 1)
-                            telephoneData = appController.telephonyInfo.telephoneDataSIM2;
-                        dataBalanceService.insert(bal.balance, bal.rawBalance, telephoneData);
+                            telephoneData = appController.telephonyInfo.telephoneDataSIM1;
+                        dataBalanceService.insert(bal.balance, bal.rawBalance, port, telephoneData);
 
                         //switch to line 2 if any
                         if (port == 0)
@@ -290,12 +310,12 @@ public class RegistrationService extends BaseService {
 
         AppController appController = ((AppController) c.getApplicationContext());
         appController.telephonyInfo.loadInfo();
-        if (portz == 0 && appController.telephonyInfo.networkSIM1 == null) {
+        if (portz == 0 && appController.telephonyInfo.networkSIM0 == null) {
             portz = 1;
             //no sim in 1 try 2
             Crashlytics.log(Log.DEBUG, TAG, "no sim in port 1 try 2");
         }
-        if (portz == 1 && appController.telephonyInfo.networkSIM2 == null) {
+        if (portz == 1 && appController.telephonyInfo.networkSIM1 == null) {
             //no sim in 2
             Crashlytics.log(Log.DEBUG, TAG, "no sim in port 2");
             return;
@@ -318,10 +338,10 @@ public class RegistrationService extends BaseService {
                         Crashlytics.log(Log.DEBUG, TAG, "saving balance ...");
                         // String sim = TelephonyUtil.getSimSerial(c);
 
-                        JSONObject telephoneData = appController.telephonyInfo.telephoneDataSIM1;
+                        JSONObject telephoneData = appController.telephonyInfo.telephoneDataSIM0;
                         if (port == 1)
-                            telephoneData = appController.telephonyInfo.telephoneDataSIM2;
-                        dataBalanceService.insert(bal.balance, bal.rawBalance, telephoneData);
+                            telephoneData = appController.telephonyInfo.telephoneDataSIM1;
+                        dataBalanceService.insert(bal.balance, bal.rawBalance, port, telephoneData);
 
                         if (balanceSuccessCallback != null) {
                             balanceSuccessCallback.onComplete();

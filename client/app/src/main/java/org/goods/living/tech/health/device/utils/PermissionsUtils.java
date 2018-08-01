@@ -27,7 +27,9 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.LocationManager;
+import android.net.Uri;
 import android.os.Build;
+import android.os.PowerManager;
 import android.provider.Settings;
 import android.support.v4.app.ActivityCompat;
 import android.util.Log;
@@ -294,4 +296,25 @@ public class PermissionsUtils {
         }
 
     }
+
+    public static void requestBatteryOptimisation(Context context) {
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                Intent intent = new Intent();
+                String packageName = context.getPackageName();
+                PowerManager pm = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
+                if (!pm.isIgnoringBatteryOptimizations(packageName)) {
+                    intent.setAction(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
+                    intent.setData(Uri.parse("package:" + packageName));
+                    context.startActivity(intent);
+                }
+            }
+        } catch (Exception e) {
+            Crashlytics.logException(e);
+
+        }
+
+    }
+
+
 }

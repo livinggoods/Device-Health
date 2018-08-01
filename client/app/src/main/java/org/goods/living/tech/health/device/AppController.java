@@ -8,6 +8,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
+import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.telephony.TelephonyManager;
@@ -35,7 +36,6 @@ import org.goods.living.tech.health.device.models.User;
 import org.goods.living.tech.health.device.services.JobSchedulerService;
 import org.goods.living.tech.health.device.services.LocationJobService;
 import org.goods.living.tech.health.device.services.SettingService;
-import org.goods.living.tech.health.device.services.USSDJobService;
 import org.goods.living.tech.health.device.services.UserService;
 import org.goods.living.tech.health.device.utils.AuthenticatorService;
 import org.goods.living.tech.health.device.utils.Constants;
@@ -169,8 +169,14 @@ public class AppController extends Application {
                                     .putCustomAttribute("Reason", ""));
                             Utils.turnGPSOn(c);
 
-                            requestLocationUpdates(getUser().updateInterval);
+
                         }
+                         requestLocationUpdates(getUser().updateInterval);
+                        //      Location l = getlastKnownLocation().getResult();
+                        //     if (l != null) {
+                        //         Crashlytics.log(Log.DEBUG, TAG, l.toString());
+                        //      }
+
                     }
                 }).timeout((int) getUser().updateInterval * 1000).start(this);
 
@@ -240,13 +246,13 @@ public class AppController extends Application {
             String myAndroidDeviceId = Settings.Secure.getString(getApplicationContext().getContentResolver(), Settings.Secure.ANDROID_ID);
             JSONObject.put("myAndroidDeviceId", myAndroidDeviceId);
 
+            if (telephonyInfo.networkSIM0 != null) {
+                JSONObject.put("networkSIM0", telephonyInfo.networkSIM0);
+                JSONObject.put("telephoneDataSIM0", telephonyInfo.telephoneDataSIM0);
+            }
             if (telephonyInfo.networkSIM1 != null) {
                 JSONObject.put("networkSIM1", telephonyInfo.networkSIM1);
                 JSONObject.put("telephoneDataSIM1", telephonyInfo.telephoneDataSIM1);
-            }
-            if (telephonyInfo.networkSIM2 != null) {
-                JSONObject.put("networkSIM2", telephonyInfo.networkSIM2);
-                JSONObject.put("telephoneDataSIM2", telephonyInfo.telephoneDataSIM2);
             }
 
             s = Utils.getInstalledApps(this);
@@ -310,30 +316,10 @@ public class AppController extends Application {
         // ArrayList<Job> jobs = new ArrayList();
         //ussd job start midnight
 
-
         Calendar calendar = Calendar.getInstance();
-        long currentTsec = calendar.getTimeInMillis() / 1000;
-        currentTsec = calendar.getTimeInMillis() / 1000;
-        Log.e(TAG, "Current Tsec: " + currentTsec);
-        calendar.set(Calendar.HOUR_OF_DAY, 0);
-        calendar.set(Calendar.MINUTE, 0);
-        calendar.set(Calendar.SECOND, 0);
-        calendar.add(Calendar.DATE, 1);
-        long midnightTsec = calendar.getTimeInMillis() / 1000;
-        int nextIn = (int) (midnightTsec - currentTsec);
-
-        Log.d(TAG, "next midnight Tsec: " + nextIn);
-
-        Bundle myExtrasBundle = new Bundle();
-
-        myExtrasBundle.putString(JobSchedulerService.JOB_NAME, USSDJobService.class.getName());
-        Job USSDjob = createJob(JobSchedulerService.class, USSDJobService.class.getName(), nextIn, false, myExtrasBundle);
-        dispatcher.mustSchedule(USSDjob);
-        //jobs.add(USSDjob);//
-
 
         //location job start next hour
-        currentTsec = calendar.getTimeInMillis() / 1000;
+        long currentTsec = calendar.getTimeInMillis() / 1000;
         Log.d(TAG, "Current Tsec: " + currentTsec);
 
         calendar.set(Calendar.MINUTE, 0);
@@ -341,11 +327,11 @@ public class AppController extends Application {
         //calendar.set(Calendar.MILLISECOND, 0);
         calendar.add(Calendar.HOUR_OF_DAY, 1);
         long nextHourTsec = calendar.getTimeInMillis() / 1000;
-        nextIn = (int) (nextHourTsec - currentTsec);
+        int nextIn = (int) (nextHourTsec - currentTsec);
 
         Log.d(TAG, "next hour Tsec: " + nextIn);
 
-        myExtrasBundle = new Bundle();
+        Bundle myExtrasBundle = new Bundle();
 
         myExtrasBundle.putString(JobSchedulerService.JOB_NAME, LocationJobService.class.getName());
         Job locationjob = createJob(JobSchedulerService.class, LocationJobService.class.getName(), nextIn, false, myExtrasBundle);
@@ -374,42 +360,73 @@ public class AppController extends Application {
 
     }
 
+    //adb shell dumpsys alarm
+    //https://stackoverflow.com/questions/28742884/how-to-read-adb-shell-dumpsys-alarm-output
     public void setUSSDAlarm() {
 
         try {
-            AlarmManager am = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
-            //creating a new intent specifying the broadcast receiver
-            Intent i = new Intent(this, USSDBalanceBroadcastReceiver.class);
-            //creating a pending intent using the intent
-            PendingIntent pi = null;//PendingIntent.getBroadcast(this, 0, i, 0);
 
-            boolean isWorking = (PendingIntent.getBroadcast(this, 0, i, PendingIntent.FLAG_NO_CREATE) != null);
-            if (isWorking) {
-                Log.d("alarm", "is working");
+            PermissionsUtils.requestBatteryOptimisation(this.getApplicationContext());
+
+
+            //    TimeZone timeZone = TimeZone.getTimeZone("UTC");
+            Calendar calendar = Calendar.getInstance();//(timeZone);
+
+            calendar.setTimeInMillis(System.currentTimeMillis());
+            calendar.set(Calendar.HOUR_OF_DAY, 7);
+            calendar.set(Calendar.MINUTE, 0);
+            calendar.set(Calendar.SECOND, 0);
+            calendar.set(Calendar.MILLISECOND, 0);
+
+
+            //TODO remove
+            //  calendar.setTime(new Date());
+            // calendar.add(Calendar.MINUTE, 2);
+
+            Calendar now = Calendar.getInstance();//timeZone);
+            long nowTime = now.getTimeInMillis();
+
+            if (nowTime > calendar.getTimeInMillis()) {
+                calendar.add(Calendar.DATE, 1);//schedule for tomorrow
+            }
+
+            Intent i = new Intent(this.getApplicationContext(), USSDBalanceBroadcastReceiver.class);
+            PendingIntent pi = PendingIntent.getBroadcast(this.getApplicationContext(), 0, i
+                    , PendingIntent.FLAG_UPDATE_CURRENT);
+            AlarmManager am = (AlarmManager) this.getSystemService(Context.ALARM_SERVICE);
+
+            //   pi.cancel();
+            //  am.cancel(pi);
+
+            if (Build.VERSION.SDK_INT >= 23) {
+                am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP,
+                        calendar.getTimeInMillis(), pi);
+            } else if (Build.VERSION.SDK_INT >= 19) {
+                am.setExact(AlarmManager.RTC_WAKEUP,
+                        calendar.getTimeInMillis(), pi);
             } else {
-                Log.d("alarm", "is not working");
+                am.set(AlarmManager.RTC_WAKEUP,
+                        calendar.getTimeInMillis(), pi);
+            }
 
-                pi = PendingIntent.getBroadcast(this, 0, i, PendingIntent.FLAG_UPDATE_CURRENT);
+            //hack to force a launch
+            Calendar yesterday = Calendar.getInstance();//(timeZone);
+
+            yesterday.setTimeInMillis(System.currentTimeMillis());
+            yesterday.add(Calendar.DATE, -1);
+
+            Setting setting = getSetting();
+            if (setting.lastUSSDRun == null || setting.lastUSSDRun.before(yesterday.getTime())) {
+                pi.send(this.getApplicationContext(), 0, i);
+                yesterday.add(Calendar.DATE, 1);
+                setting.lastUSSDRun = Calendar.getInstance().getTime();
+                updateSetting(setting);
             }
 
 
-            // Set the alarm to start at x:00 a.m.
-            Calendar cal = Calendar.getInstance();
-            cal.setTimeInMillis(System.currentTimeMillis());
-            cal.set(Calendar.HOUR_OF_DAY, 7);
-            cal.set(Calendar.MINUTE, 0);
-
-            // am.cancel(pi);
-            //am.setAndAllowWhileIdle();
-// setRepeating() lets you specify a precise custom interval--in this case,
-// x minutes.
-            //   am.setInexactRepeating(AlarmManager.RTC_WAKEUP, cal.getTimeInMillis(),
-            //             1000 * USSDJobService.runEverySeconds, pi);
-            am.setInexactRepeating(AlarmManager.RTC_WAKEUP, cal.getTimeInMillis(), AlarmManager.INTERVAL_DAY, pi);
-
-            Log.d(TAG, "Alarm set: " + cal.getTimeInMillis());
-        } catch (SecurityException e) {
-            Log.wtf(TAG, e);
+            Log.d(TAG, "Alarm set: " + calendar.getTimeInMillis());
+        } catch (Exception e) {
+            Crashlytics.log(Log.DEBUG, TAG, e.getMessage());
             Crashlytics.logException(e);
         }
     }
@@ -475,7 +492,7 @@ public class AppController extends Application {
      */
     public void requestLocationUpdates(long updateInterval) {
         try {
-
+            Crashlytics.log(Log.DEBUG, TAG, "requestLocationUpdates " + updateInterval);
             //   if (forceUpdate) {
             LocationRequest mLocationRequest = createLocationRequest(updateInterval);
             Task<Void> locationTask = mFusedLocationClient.requestLocationUpdates(mLocationRequest, getPendingIntent(this.getApplicationContext()));

@@ -1,6 +1,5 @@
 package org.goods.living.tech.health.device.services;
 
-import android.content.Context;
 import android.location.Location;
 import android.util.Log;
 
@@ -8,7 +7,6 @@ import com.crashlytics.android.Crashlytics;
 
 import org.goods.living.tech.health.device.models.Stats;
 import org.goods.living.tech.health.device.models.Stats_;
-import org.goods.living.tech.health.device.utils.Utils;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -172,13 +170,10 @@ public class StatsService extends BaseService {
      * @return
      */
 
-    public boolean insertFilteredLocationData(List<Location> locations, Double brightness, Context context) {
+    public boolean insertFilteredLocationData(List<Location> locations, Double brightness, Integer batteryLevel) {
         try {
 
             List<Stats> list = new ArrayList<>();
-
-            Integer batteryLevel = Utils.getBatteryPercentage(context);
-
 
             for (Location loc : locations) {
 
@@ -212,7 +207,7 @@ public class StatsService extends BaseService {
         }
     }
 
-    public boolean insertLocation(Location location, Double brightness, Context context) {
+    public boolean insertLocation(Location location, Double brightness, Integer batteryLevel) {
         try {
 
 
@@ -223,8 +218,6 @@ public class StatsService extends BaseService {
             stats.provider = location.getProvider();
             stats.recordedAt = new Date(location.getTime());
 
-
-            Integer batteryLevel = Utils.getBatteryPercentage(context);
             stats.brightness = brightness;
             stats.batteryLevel = batteryLevel;
 

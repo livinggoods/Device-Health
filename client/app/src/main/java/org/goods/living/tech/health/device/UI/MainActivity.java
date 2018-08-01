@@ -39,6 +39,7 @@ import com.google.android.gms.tasks.OnSuccessListener;
 import org.goods.living.tech.health.device.AppController;
 import org.goods.living.tech.health.device.R;
 import org.goods.living.tech.health.device.models.DataBalance;
+import org.goods.living.tech.health.device.models.Setting;
 import org.goods.living.tech.health.device.models.Stats;
 import org.goods.living.tech.health.device.models.User;
 import org.goods.living.tech.health.device.services.DataBalanceService;
@@ -117,7 +118,7 @@ public class MainActivity extends FragmentActivity implements
         mLocationUpdatesResultView = (TextView) findViewById(R.id.location_updates_result);
         usernameText = (TextView) findViewById(R.id.usernameText);
         nameText = (TextView) findViewById(R.id.nameText);
-        phoneText = (TextView) findViewById(R.id.phone_number_edt);
+        phoneText = (TextView) findViewById(R.id.phone_number);
 
 
         syncTextView = (TextView) findViewById(R.id.syncTextView);
@@ -125,7 +126,7 @@ public class MainActivity extends FragmentActivity implements
 
         balanceTextView = (TextView) findViewById(R.id.balanceTextView);
 
-        balanceTextView.setText(getString(R.string.data_balance, "0"));
+        balanceTextView.setText(getString(R.string.data_balance, "0", "", ""));
 
         intervalTextView = (TextView) findViewById(R.id.intervalTextView);
 
@@ -217,12 +218,14 @@ public class MainActivity extends FragmentActivity implements
             @Override
             public void run() {
 
+
                 //    registrationService.checkBalanceThroughUSSD(c,0);
                 registrationService.checkBalanceThroughSMS(c, 0, new RegistrationService.BalanceSuccessCallback() {
                     @Override
                     public void onComplete() {
                         Utils.dismissProgressDialog();
-                        loadBalance();
+                        List<DataBalance> list = dataBalanceService.getLatestRecords(1l);
+                        updateUI(list);
                     }
                 });
 
@@ -230,7 +233,8 @@ public class MainActivity extends FragmentActivity implements
                     @Override
                     public void run() {
                         //this runs on the UI thread
-                        updateUI();
+                        List<DataBalance> list = dataBalanceService.getLatestRecords(1l);
+                        updateUI(list);
                     }
                 });
             }
@@ -240,7 +244,7 @@ public class MainActivity extends FragmentActivity implements
     }
 
 
-    void updateUI() {
+    void updateUI(List<DataBalance> list) {
         if (timer != null) timer.cancel();
         timer = new CountDownTimer(DataBalanceHelper.USSD_LIMIT * 1000 + 1000, 1000) {
             @Override
@@ -253,7 +257,12 @@ public class MainActivity extends FragmentActivity implements
             public void onFinish() {
                 Crashlytics.log(Log.DEBUG, TAG, "onFinish checkBalance");
                 Utils.dismissProgressDialog();
-                loadBalance();
+                DataBalance dataBalance = list.size() > 0 ? list.get(0) : null;
+                if (dataBalance != null)
+                    if (balanceTextView != null) {
+                        balanceTextView.setText(getString(R.string.data_balance, dataBalance.sim, dataBalance.balance, dataBalance.balanceMessage));
+                    }
+
                 timer = null;
 
 
@@ -262,15 +271,6 @@ public class MainActivity extends FragmentActivity implements
         timer.start();
     }
 
-    void loadBalance() {
-
-        List<DataBalance> list = dataBalanceService.getLatestRecords(1l);
-        DataBalance dataBalance = list.size() > 0 ? list.get(0) : null;
-        if (dataBalance != null)
-            if (balanceTextView != null) {
-                balanceTextView.setText(getString(R.string.data_balance, dataBalance.balance));
-            }
-    }
 
     /**
      * Handles the checkLocation  button.
@@ -297,8 +297,14 @@ public class MainActivity extends FragmentActivity implements
 
                                 Crashlytics.log(Log.DEBUG, TAG, result);
 
+                                Float bright = Utils.getBrightness(c, getWindow());
 
-                                statsService.insertLocation(location, AppController.getInstance().getSetting().brightness, c);
+                                Setting setting = AppController.getInstance().getSetting();
+                                setting.brightness = bright != null ? bright.doubleValue() : null;
+                                AppController.getInstance().updateSetting(setting);
+
+                                Integer batteryLevel = Utils.getBatteryPercentage(c);
+                                statsService.insertLocation(location, setting.brightness, batteryLevel);
                                 loadData();
 
                             }
@@ -341,7 +347,9 @@ public class MainActivity extends FragmentActivity implements
         List<DataBalance> l = dataBalanceService.getLatestRecords(1l);
         DataBalance dataBalance = l.size() > 0 ? l.get(0) : null;
 
-        balanceTextView.setText(getString(R.string.data_balance, dataBalance == null ? null : dataBalance.balance));
+        if (dataBalance != null) {
+            balanceTextView.setText(getString(R.string.data_balance, dataBalance.sim, dataBalance.balance, dataBalance.balanceMessage));
+        }
 
         Long total = statsService.countRecords();
         Long synced = statsService.countSyncedRecords();

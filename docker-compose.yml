@@ -1,0 +1,51 @@
+version: '3'
+
+services:
+  frontend:
+    image: nginx:1.15.2-alpine
+    container_name: front
+    volumes:
+      - ./frontend/nginx.conf:/etc/nginx/nginx.conf
+      - ./frontend/dist:/dist
+    ports:
+      - 80:80
+    networks:
+      - device_health_net
+
+  backend:
+    container_name: back
+    depends_on:
+      - postgres
+    build:
+      context: "./server"
+      dockerfile: Dockerfile
+    ports:
+      - 8080:8080
+    volumes:
+      - type: bind
+        source: ./server/target/
+        target: /usr/local/tomcat/webapps/
+      - type: bind
+        source: ./server/target/
+        target: /usr/local/tomcat/logs/
+    networks:
+      - device_health_net
+ 
+  postgres:
+    container_name: db
+    image: postgres:alpine
+    restart: always
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRES_PASSWORD=
+      - POSTGRES_USER=
+      - PGDATA=/var/lib/postgres/data
+    volumes:
+      - ./database/data:/var/lib/postgres/data
+    networks:
+      - device_health_net
+    
+
+network:
+  device_health_net:

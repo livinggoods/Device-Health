@@ -123,4 +123,13 @@ public class RegisterActivity extends MaterialIntroActivity implements RegisterU
         registerUserFragment.onDoRegister();
     }
 
+    /**
+     * Handles the balance button.
+     */
+    @Override
+    public void onDoBalance(View view) {
+        registerUserFragment.onDoBalance();
+    }
+
+
 }

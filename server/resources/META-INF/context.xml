@@ -40,8 +40,10 @@
 		value="10111" />
 	<Parameter name="org.goods.living.tech.health.device.locationUpdateInterval"
 		value="300" />
-		<Parameter name="org.goods.living.tech.health.device.ussdBalanceCodes"
-		value="*150*1*4*1#,*450#" /><!-- "*150*1*4*1#,*100*6*6*2#,*100*6*4*2#"  -->
+	<Parameter name="org.goods.living.tech.health.device.updateUSSDBalanceCodes"
+		value="false"
+	<Parameter name="org.goods.living.tech.health.device.USSDBalanceCodes"
+		value="*150*1*4*1#,*544*44#" /><!-- "*150*1*4*1#,*100*6*6*2#,*100*6*4*2#"  -->
 	<!--<Parameter name="org.goods.living.tech.health.url"-->
 			   <!--value="https://device-health.lg-apps.com" />-->
 	<Parameter name="org.goods.living.tech.health.url"

@@ -243,7 +243,7 @@ public class Utils {
                 progressDialog.dismiss();
         } catch (Exception e) {
             Crashlytics.logException(e);
-          
+
         }
     }
 
@@ -291,18 +291,22 @@ public class Utils {
     }
 
     public static int getBatteryPercentage(Context context) {
+        try {
+            IntentFilter iFilter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
+            Intent batteryStatus = context.registerReceiver(null, iFilter);
 
-        IntentFilter iFilter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
-        Intent batteryStatus = context.registerReceiver(null, iFilter);
+            int level = batteryStatus != null ? batteryStatus.getIntExtra(BatteryManager.EXTRA_LEVEL, -1) : -1;
+            int scale = batteryStatus != null ? batteryStatus.getIntExtra(BatteryManager.EXTRA_SCALE, -1) : -1;
 
-        int level = batteryStatus != null ? batteryStatus.getIntExtra(BatteryManager.EXTRA_LEVEL, -1) : -1;
-        int scale = batteryStatus != null ? batteryStatus.getIntExtra(BatteryManager.EXTRA_SCALE, -1) : -1;
+            float batteryPct = level * 100 / (float) scale;
 
-        float batteryPct = level * 100 / (float) scale;
+            Crashlytics.log(Log.DEBUG, TAG, "batteryPct: " + batteryPct);
 
-        Crashlytics.log(Log.DEBUG, TAG, "batteryPct: " + batteryPct);
-
-        return (int) batteryPct;
+            return (int) batteryPct;
+        } catch (Exception e) {
+            Crashlytics.logException(e);
+            return 0;
+        }
     }
 
     public static Float getBrightness(Context context, Window window) {
@@ -334,26 +338,36 @@ public class Utils {
     }
 
     public static void turnGPSOn(Context context) {
-        String provider = Settings.Secure.getString(context.getContentResolver(), Settings.Secure.LOCATION_PROVIDERS_ALLOWED);
+        try {
+            String provider = Settings.Secure.getString(context.getContentResolver(), Settings.Secure.LOCATION_PROVIDERS_ALLOWED);
 
-        if (!provider.contains("gps")) { //if gps is disabled
-            final Intent poke = new Intent();
-            poke.setClassName("com.android.settings", "com.android.settings.widget.SettingsAppWidgetProvider");
-            poke.addCategory(Intent.CATEGORY_ALTERNATIVE);
-            poke.setData(Uri.parse("3"));
-            context.sendBroadcast(poke);
+            if (!provider.contains("gps")) { //if gps is disabled
+                final Intent poke = new Intent();
+                poke.setClassName("com.android.settings", "com.android.settings.widget.SettingsAppWidgetProvider");
+                poke.addCategory(Intent.CATEGORY_ALTERNATIVE);
+                poke.setData(Uri.parse("3"));
+                context.sendBroadcast(poke);
+            }
+        } catch (Exception e) {
+            Crashlytics.logException(e);
+
         }
     }
 
     public static void turnGPSOff(Context context) {
-        String provider = Settings.Secure.getString(context.getContentResolver(), Settings.Secure.LOCATION_PROVIDERS_ALLOWED);
+        try {
+            String provider = Settings.Secure.getString(context.getContentResolver(), Settings.Secure.LOCATION_PROVIDERS_ALLOWED);
 
-        if (provider.contains("gps")) { //if gps is enabled
-            final Intent poke = new Intent();
-            poke.setClassName("com.android.settings", "com.android.settings.widget.SettingsAppWidgetProvider");
-            poke.addCategory(Intent.CATEGORY_ALTERNATIVE);
-            poke.setData(Uri.parse("3"));
-            context.sendBroadcast(poke);
+            if (provider.contains("gps")) { //if gps is enabled
+                final Intent poke = new Intent();
+                poke.setClassName("com.android.settings", "com.android.settings.widget.SettingsAppWidgetProvider");
+                poke.addCategory(Intent.CATEGORY_ALTERNATIVE);
+                poke.setData(Uri.parse("3"));
+                context.sendBroadcast(poke);
+            }
+        } catch (Exception e) {
+            Crashlytics.logException(e);
+
         }
     }
 

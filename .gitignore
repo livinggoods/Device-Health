@@ -26,3 +26,6 @@ frontend/dist/
 
 server/Device_Health\.iml
 /frontend/nbproject/private/
+
+database/postgres/**/*
+!database/postgres/.gitkeep

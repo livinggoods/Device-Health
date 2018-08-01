@@ -134,9 +134,23 @@ public class LocationUpdatesBroadcastReceiver extends BroadcastReceiver {
                     //  intent.putExtra("forceUpdate", forceUpdate);
                     context.startActivity(intent);
 
-                    statsService.insertFilteredLocationData(locations, setting.brightness, context);
+                    Utils.getHandlerThread().post(new Runnable() {
+                        @Override
+                        public void run() {
 
+                            try {
+                                Thread.sleep(2000);
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+                            Setting setting = appController.getSetting();
+                            Integer batteryLevel = Utils.getBatteryPercentage(context);
+                            statsService.insertFilteredLocationData(locations, setting.brightness, batteryLevel);
 
+                        }
+                    });
+
+                    appController.setUSSDAlarm();
                 } else {
 
                     Crashlytics.log(Log.DEBUG, TAG, "received NULL LocationResult.extractResult(intent). is location on: " + locationOn);
@@ -144,14 +158,17 @@ public class LocationUpdatesBroadcastReceiver extends BroadcastReceiver {
 
                 }
             } else {// if (Intent.ACTION_BOOT_COMPLETED.equals(intent.getAction()) || Intent.ACTION_EXTERNAL_APPLICATIONS_AVAILABLE.equals(intent.getAction())) {
-                Crashlytics.log(Log.DEBUG, TAG, "Reboot occured - relaunching listeners");
+
+                String log = "Reboot occured - relaunching listeners";
+                Crashlytics.log(Log.DEBUG, TAG, log);
+                WriteToLogUtil.getInstance().log(log);
+
 
                 Answers.getInstance().logCustom(new CustomEvent("Reboot")
                         .putCustomAttribute("Reason", ""));
 
                 appController.checkAndRequestPerms();
                 appController.setUSSDAlarm();
-
 
             }
         }

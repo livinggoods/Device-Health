@@ -20,10 +20,10 @@ public class TelephonyUtil {
 
 
     private static TelephonyUtil telephonyInfo;
+    public String networkSIM0;
     public String networkSIM1;
-    public String networkSIM2;
+    public JSONObject telephoneDataSIM0;
     public JSONObject telephoneDataSIM1;
-    public JSONObject telephoneDataSIM2;
 
     Context context;
 
@@ -63,8 +63,8 @@ public class TelephonyUtil {
     public synchronized void loadInfo() {
         try {
 
+            telephoneDataSIM0 = new JSONObject();
             telephoneDataSIM1 = new JSONObject();
-            telephoneDataSIM2 = new JSONObject();
             //   getSims(context);
             HashMap<Method, Class<?>> map = potentialTelephonyManagerMethodNamesForThisDevice(context);
 
@@ -74,24 +74,24 @@ public class TelephonyUtil {
                 Method key = entry.getKey();
                 Class<?> value = entry.getValue();
 
-                String sim1 = getDeviceIdBySlot(key, 0);
-                String sim2 = getDeviceIdBySlot(key, 1);
+                String sim0 = getDeviceIdBySlot(key, 0);
+                String sim1 = getDeviceIdBySlot(key, 1);
 
-                if (sim1 != null) {
+                if (sim0 != null) {
 
                     // results.add(key.getName() + " " + sim);
-                    telephoneDataSIM1.put(key.getName(), sim1);
-                    Crashlytics.log(Log.DEBUG, TAG, key.getName() + " " + sim1);
+                    telephoneDataSIM0.put(key.getName(), sim0);
+                    Crashlytics.log(Log.DEBUG, TAG, key.getName() + " " + sim0);
 
 //                    if (key.getName().toLowerCase().contains("operator") && !sim1.trim().isEmpty()) {
 //                        telephoneDataSIM1.put("simPresent", true);
 //                    }
                     //   break;
                 }
-                if (sim2 != null) {
+                if (sim1 != null) {
 
-                    telephoneDataSIM2.put(key.getName(), sim2);
-                    Crashlytics.log(Log.DEBUG, TAG, key.getName() + " " + sim2);
+                    telephoneDataSIM1.put(key.getName(), sim1);
+                    Crashlytics.log(Log.DEBUG, TAG, key.getName() + " " + sim1);
 
 //                    if (key.getName().toLowerCase().contains("operator") && !sim1.trim().isEmpty()) {
 //                        telephoneDataSIM1.put("simPresent", true);
@@ -122,12 +122,12 @@ public class TelephonyUtil {
             parameter[0] = int.class;
             Method methodLive = telephonyClass.getMethod(networkProvider, parameter);
 
-            String sim1 = getDeviceIdBySlot(methodLive, 0);
-            String sim2 = getDeviceIdBySlot(methodLive, 1);
+            String sim0 = getDeviceIdBySlot(methodLive, 0);
+            String sim1 = getDeviceIdBySlot(methodLive, 1);
 
 
+            this.networkSIM0 = (sim0 != null && !sim0.trim().isEmpty()) ? sim0.trim() : null;
             this.networkSIM1 = (sim1 != null && !sim1.trim().isEmpty()) ? sim1.trim() : null;
-            this.networkSIM2 = (sim2 != null && !sim2.trim().isEmpty()) ? sim2.trim() : null;
             //    break;
             //   }
             //      }

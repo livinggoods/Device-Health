@@ -97,6 +97,8 @@ public class RegisterUserFragment extends SlideFragment {
     public interface RegistrationFlow {
 
         public void onDoRegister(View view);
+
+        public void onDoBalance(View view);
     }
 
     @Nullable
@@ -116,7 +118,7 @@ public class RegisterUserFragment extends SlideFragment {
 
         balanceTextView = (TextView) view.findViewById(R.id.balanceTextView);
 
-        balanceTextView.setText(getString(R.string.data_balance, "0"));
+        balanceTextView.setText(getString(R.string.data_balance, "0", "", ""));
 
 
         loadData();
@@ -169,22 +171,41 @@ public class RegisterUserFragment extends SlideFragment {
     }
 
     void loadData() {
-        User user = userService.getRegisteredUser();
-        usernameText.setText(user.username);
-        if (user.phone != null)
-            ccp.setFullNumber(user.phone);
+        Utils.getHandlerThread().post(new Runnable() {
+            @Override
+            public void run() {
+                User user = userService.getRegisteredUser();
+                List<DataBalance> l = dataBalanceService.getLatestRecords(1l);
 
-        List<DataBalance> l = dataBalanceService.getLatestRecords(1l);
-        DataBalance dataBalance = l.size() > 0 ? l.get(0) : null;
+                new Handler(Looper.getMainLooper()).post(new Runnable() {
+                    @Override
+                    public void run() {
+                        //this runs on the UI thread
 
-        balanceTextView.setText(getString(R.string.data_balance, dataBalance == null ? null : dataBalance.balance));
+
+                        usernameText.setText(user.username);
+                        if (user.phone != null)
+                            ccp.setFullNumber(user.phone);
+
+
+                        DataBalance dataBalance = l.size() > 0 ? l.get(0) : null;
+
+                        if (dataBalance != null)
+                            if (balanceTextView != null) {
+                                balanceTextView.setText(getString(R.string.data_balance, dataBalance.sim, dataBalance.balance, dataBalance.balanceMessage));
+                            }
+                    }
+                });
+            }
+        });
+
     }
 
     /**
      * Handles the Save registration button.
      */
     public void onDoRegister() {
-        Crashlytics.log(Log.DEBUG, TAG, "registrationSave");
+        Crashlytics.log(Log.DEBUG, TAG, "onDoRegister");
 
         final AlertDialog.Builder builder = new AlertDialog.Builder(this.getActivity());
         builder.setTitle("Register CHV");
@@ -204,14 +225,73 @@ public class RegisterUserFragment extends SlideFragment {
 
     }
 
+    /**
+     * Handles the Balance button.
+     */
+    public void onDoBalance() {
+        Crashlytics.log(Log.DEBUG, TAG, "onDoBalance");
+
+        checkBalance();
+
+    }
+
+    public void checkBalance() {
+
+        Context c = this.getActivity();
+
+        Utils.showProgressDialog(c);
+
+        Utils.getHandlerThread().post(new Runnable() {
+            @Override
+            public void run() {
+
+                //    registrationService.checkBalanceThroughUSSD(c,0);
+                registrationService.checkBalanceThroughSMS(c, 0, new RegistrationService.BalanceSuccessCallback() {
+                    @Override
+                    public void onComplete() {
+                        Utils.dismissProgressDialog();
+                        new Handler(Looper.getMainLooper()).post(new Runnable() {
+                            @Override
+                            public void run() {
+                                //this runs on the UI thread
+                                List<DataBalance> l = dataBalanceService.getLatestRecords(1l);
+                                DataBalance dataBalance = l.size() > 0 ? l.get(0) : null;
+
+                                if (dataBalance != null && balanceTextView != null) {
+                                    balanceTextView.setText(getString(R.string.data_balance, dataBalance.sim, dataBalance.balance, dataBalance.balanceMessage));
+                                }
+                            }
+                        });
+
+
+                    }
+                });
+
+                new Handler(Looper.getMainLooper()).post(new Runnable() {
+                    @Override
+                    public void run() {
+                        //this runs on the UI thread
+
+                    }
+                });
+            }
+        });
+
+
+    }
+
     void saveRegistration() {
 
         User user = userService.getRegisteredUser();
         String username = usernameText.getText().toString().trim();
         user.username = username.isEmpty() ? null : username;
-
-
-        String phone = ccp.getFullNumberWithPlus().trim();
+        String phone = "";
+        try {
+            if (!ccp.getFullNumber().trim().isEmpty())
+                phone = ccp.getFullNumberWithPlus().trim();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         //  PhoneNumberUtil pnu = PhoneNumberUtil.getInstance();
         String numOnly = phone.replace(ccp.getSelectedCountryCodeWithPlus(), "");
         user.phone = numOnly.isEmpty() ? null : phone;

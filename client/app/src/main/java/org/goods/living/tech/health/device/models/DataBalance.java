@@ -25,6 +25,8 @@ public class DataBalance extends BaseModel {
     public String balanceMessage;
     public String message;
 
+    public Integer sim;
+
     @Convert(converter = JSonObjectConverter.class, dbType = String.class)
     public JSONObject info;
 
@@ -48,6 +50,7 @@ public class DataBalance extends BaseModel {
             }
 
             if (info != null) JSONObject.put("info", info);
+            if (sim != null) JSONObject.put("sim", sim);
 
             return JSONObject;
         } catch (JSONException e) {

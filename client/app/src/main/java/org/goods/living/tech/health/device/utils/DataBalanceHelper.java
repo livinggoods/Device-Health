@@ -38,6 +38,7 @@ public class DataBalanceHelper {
     @Inject
     public DataBalanceHelper() {
 
+        smsBroadcastReceiver = new SmsBroadcastReceiver();
     }
 
     private final static String simSlotName[] = {
@@ -71,10 +72,10 @@ public class DataBalanceHelper {
 
     CountDownTimer timer;
 
-    public static final String USSD_KE1 = "*450#";//"*100*6*6*2#";// "*100*6*4*2#"; "*100#,6,6,2";//"*100*1*1#";
+    public static final String USSD_KE_SAF = "*544*44#";//"*100*6*6*2#";// "*100*6*4*2#"; "*100#,6,6,2";//"*100*1*1#";
     //public static final String USSD_KE2 = "*100*6*4*2#";
-    public static final String USSD_UG = "*150*1*4*1#";//"*150*1#,4,1";
-    public static final List<String> USSDList = Arrays.asList(USSD_KE1, USSD_UG);
+    public static final String USSD_UG_MTN = "*150*1*4*1#";//"*150*1#,4,1";
+    public static final List<String> USSDList = Arrays.asList(USSD_KE_SAF, USSD_UG_MTN);
 
     SmsBroadcastReceiver smsBroadcastReceiver;
 
@@ -301,11 +302,12 @@ public class DataBalanceHelper {
         //List<Balance> list = new ArrayList<Balance>();
         Balance bal = new Balance();
 
-
-        if (smsBroadcastReceiver != null)
-            c.unregisterReceiver(smsBroadcastReceiver);
-
-        smsBroadcastReceiver = new SmsBroadcastReceiver();
+        try {
+            if (smsBroadcastReceiver != null)
+                c.unregisterReceiver(smsBroadcastReceiver);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         smsBroadcastReceiver.setListener(new SmsBroadcastReceiver.Listener() {
             @Override
             public void onTextReceived(String raw) {
@@ -327,7 +329,9 @@ public class DataBalanceHelper {
         });
         IntentFilter iff = new IntentFilter(Telephony.Sms.Intents.SMS_RECEIVED_ACTION);
         iff.setPriority(2147483647);
+     
         c.registerReceiver(smsBroadcastReceiver, iff);
+
 
         SimUtil.sendSMS(c, 0, "450", null, "", null, null);
 
@@ -382,7 +386,6 @@ public class DataBalanceHelper {
 
             }
 
-            smsBroadcastReceiver = new SmsBroadcastReceiver();
             smsBroadcastReceiver.setListener(new SmsBroadcastReceiver.Listener() {
                 @Override
                 public void onTextReceived(String raw) {
@@ -403,6 +406,7 @@ public class DataBalanceHelper {
 
                 }
             });
+
             c.registerReceiver(smsBroadcastReceiver, new IntentFilter(Telephony.Sms.Intents.SMS_RECEIVED_ACTION));
 
             String ussdCode = ussd.replace("#", "") + Uri.encode("#");

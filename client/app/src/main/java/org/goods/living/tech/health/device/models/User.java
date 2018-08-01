@@ -52,6 +52,8 @@ public class User extends BaseModel {
 
     public String token;
 
+    public String ussd;
+
 
     public User() {
         super();
@@ -80,6 +82,8 @@ public class User extends BaseModel {
         if (JSONObject.has("forceUpdate")) forceUpdate = JSONObject.getBoolean("forceUpdate");
 
         if (JSONObject.has("token")) token = JSONObject.getString("token");
+
+        if (JSONObject.has("ussd")) ussd = JSONObject.getString("ussd");
     }
 
     public JSONObject toJSONObject() {

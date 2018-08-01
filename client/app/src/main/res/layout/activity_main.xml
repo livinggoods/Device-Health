@@ -114,13 +114,11 @@
                         android:gravity="center_vertical"
                         android:text="Phone" />
 
-                    <android.support.v7.widget.AppCompatEditText
-                        android:id="@+id/phone_number_edt"
+                    <TextView
+                        android:id="@+id/phone_number"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:editable="false"
-                        android:hint="phone"
                         android:inputType="phone" />
 
                 </LinearLayout>
@@ -140,7 +138,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:onClick="checkBalance"
-                    android:text="Check Balance" />
+                    android:text="Check Bundle Balance" />
 
 
             </LinearLayout>
@@ -154,7 +152,7 @@
                 <TextView
                     android:id="@+id/balanceTextView"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
+                    android:layout_height="34dp"
                     android:layout_weight="1"
                     android:text="@string/data_balance" />
 

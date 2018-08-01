@@ -14,6 +14,7 @@ import org.goods.living.tech.health.device.BuildConfig;
 import org.goods.living.tech.health.device.R;
 import org.goods.living.tech.health.device.UI.UpgradeActivity;
 import org.goods.living.tech.health.device.models.DataBalance;
+import org.goods.living.tech.health.device.models.Setting;
 import org.goods.living.tech.health.device.models.Stats;
 import org.goods.living.tech.health.device.models.User;
 import org.goods.living.tech.health.device.utils.Constants;
@@ -22,6 +23,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -196,6 +198,15 @@ public class SyncService extends BaseService {
 
                         user.lastSync = new Date();
                         userService.insertUser(user);
+
+                        if (updatedUser.ussd != null) {
+                            AppController appController = (AppController) c.getApplicationContext();
+                            Setting setting = appController.getSetting();
+                            ArrayList<String> list = USSDService.getUSSDCodesFromString(updatedUser.ussd);
+                            setting.workingUSSD0 = list;
+                            setting.workingUSSD1 = list;
+                            AppController.getInstance().updateSetting(setting);
+                        }
 
 
                     } else {

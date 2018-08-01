@@ -70,6 +70,7 @@ public class DatabalanceService extends BaseService {
 			model.setBalance(j.has("balance") ? j.get("balance").asDouble() : null);
 			model.setBalanceMessage(j.has("balanceMessage") ? j.get("balanceMessage").asText() : null);
 			model.setMessage(j.has("message") ? j.get("message").asText() : null);
+			model.setSim(j.has("sim") ? j.get("sim").asInt() : null);
 
 			if (j.has("info")) {
 				// JacksonUtil.toJsonNode();

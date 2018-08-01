@@ -4,6 +4,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import io.objectbox.annotation.Convert;
@@ -21,6 +22,7 @@ public class Setting extends BaseModel {
 
     public Double brightness;
 
+    public Date lastUSSDRun;
 
     @Convert(converter = StringListConverter.class, dbType = String.class)
     public List<String> workingUSSD0;
