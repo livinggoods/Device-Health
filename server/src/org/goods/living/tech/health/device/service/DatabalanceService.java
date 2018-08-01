@@ -1,6 +1,7 @@
 package org.goods.living.tech.health.device.service;
 
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -13,9 +14,15 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
 import org.codehaus.jackson.JsonNode;
+import org.codehaus.jackson.map.ObjectMapper;
+import org.codehaus.jackson.node.JsonNodeFactory;
+import org.codehaus.jackson.node.ObjectNode;
 import org.goods.living.tech.health.device.jpa.controllers.DataBalanceJpaController;
+import org.goods.living.tech.health.device.jpa.controllers.MedicJpaController;
 import org.goods.living.tech.health.device.jpa.controllers.UsersJpaController;
+import org.goods.living.tech.health.device.jpa.dao.Branch;
 import org.goods.living.tech.health.device.jpa.dao.DataBalance;
+import org.goods.living.tech.health.device.jpa.dao.MedicUser;
 import org.goods.living.tech.health.device.jpa.dao.Users;
 import org.goods.living.tech.health.device.models.Result;
 import org.goods.living.tech.health.device.service.security.qualifier.Secured;
@@ -44,6 +51,9 @@ public class DatabalanceService extends BaseService {
 
 	@Inject
 	UsersJpaController usersJpaController;
+
+	@Inject
+	MedicJpaController medicJpaController;
 
 	// String formattedDate = dateFormat.format(date);
 
@@ -105,6 +115,90 @@ public class DatabalanceService extends BaseService {
 		String ussd = applicationParameters.getUSSDBalanceCodes();
 
 		Result<String> result = new Result<String>(true, "", ussd);
+		return result;
+
+	}
+
+	@Secured(value = UserCategory.ADMIN)
+	@POST
+	// @Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path(Constants.URL.BRANCHES+""+Constants.URL.FIND)
+	public Result<JsonNode> findBranch(InputStream incomingData) throws Exception {
+		logger.debug("findBranches");
+		JsonNode data = JSonHelper.getJsonNode(incomingData);
+
+		String branchName = data.has("branchName") ? data.get("branchName").asText() : null;
+
+		List<Branch> branches = branchName == null ? null
+				: dataBalanceJpaController.findBranchMatching(branchName);
+
+		if (branches == null) {
+			Result<JsonNode> result = new Result<JsonNode>(false, "", null);
+			return result;
+		}
+
+		List<JsonNode> results = new ArrayList<>();
+
+		ObjectMapper mapper = new ObjectMapper();
+		for (Branch branch : branches) {
+			ObjectNode root = mapper.createObjectNode();
+			root.put("branch", branch.getName());
+			root.put("uuid", branch.getUuid());
+			results.add(root);
+		}
+
+		ObjectNode node = JsonNodeFactory.instance.objectNode();
+
+		node.putArray("branches").addAll(results);
+
+		Result<JsonNode> result = new Result<JsonNode>(true, "", node);
+		return result;
+
+	}
+	@Secured(value = UserCategory.ADMIN)
+	@POST
+	// @Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path(Constants.URL.STATS+""+Constants.URL.FIND)
+	public Result<JsonNode> fetchBalances(InputStream incomingData) throws Exception {
+		logger.debug("findStats");
+		JsonNode data = JSonHelper.getJsonNode(incomingData);
+
+		String branchName = data.has("branchName") ? data.get("branchName").asText() : null;
+		String chvName = data.has("chvName") ? data.get("chvName").asText() : null;
+		String operator = data.has("operator") ? data.get("operator").asText() : null;
+		String value = data.has("value") ? data.get("value").asText() : null;
+		String page = data.has("page") ? data.get("page").asText() : null;
+
+
+		List<Object[]> balances = dataBalanceJpaController.fetchBalances(branchName, chvName, operator, value, page);
+
+		if (balances == null) {
+			Result<JsonNode> result = new Result<JsonNode>(false, "", null);
+			return result;
+		}
+
+		List<JsonNode> results = new ArrayList<>();
+
+		ObjectMapper mapper = new ObjectMapper();
+		for (Object[] balance : balances) {
+			ObjectNode root = mapper.createObjectNode();
+			root.put("username", balance[1]!=null?balance[1].toString():null);
+			root.put("name", balance[2]!=null?balance[2].toString():null);
+			root.put("branch", balance[3]!=null?balance[3].toString():null);
+			root.put("version_code", balance[4]!=null?balance[4].toString():null);
+			root.put("balance", balance[5]!=null?balance[5].toString():null);
+			root.put("balance_message", balance[6]!=null?balance[6].toString():null);
+			root.put("date", balance[7]!=null?balance[7].toString():null);
+			results.add(root);
+		}
+
+		ObjectNode node = JsonNodeFactory.instance.objectNode();
+
+		node.putArray("balances").addAll(results);
+
+		Result<JsonNode> result = new Result<JsonNode>(true, "", node);
 		return result;
 
 	}

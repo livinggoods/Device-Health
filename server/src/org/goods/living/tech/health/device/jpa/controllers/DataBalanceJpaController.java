@@ -6,6 +6,7 @@
 package org.goods.living.tech.health.device.jpa.controllers;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.persistence.EntityManager;
@@ -15,8 +16,11 @@ import javax.persistence.Query;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Root;
 
+import org.codehaus.jackson.JsonNode;
 import org.goods.living.tech.health.device.jpa.controllers.exceptions.NonexistentEntityException;
+import org.goods.living.tech.health.device.jpa.dao.Branch;
 import org.goods.living.tech.health.device.jpa.dao.DataBalance;
+import org.goods.living.tech.health.device.jpa.dao.MedicUser;
 import org.goods.living.tech.health.device.jpa.dao.Users;
 
 /**
@@ -25,14 +29,25 @@ import org.goods.living.tech.health.device.jpa.dao.Users;
  */
 public class DataBalanceJpaController implements Serializable {
 
-	public DataBalanceJpaController(EntityManagerFactory emf) {
+	public DataBalanceJpaController(EntityManagerFactory emf, EntityManagerFactory emfKE, EntityManagerFactory emfUG) {
 		this.emf = emf;
+		this.emfKE = emfKE;
+		this.emfUG = emfUG;
 	}
 
 	private EntityManagerFactory emf = null;
+	private EntityManagerFactory emfUG = null;
+	private EntityManagerFactory emfKE = null;
 
 	public EntityManager getEntityManager() {
 		return emf.createEntityManager();
+	}
+	public EntityManager getEntityManagerUG() {
+		return emfUG.createEntityManager();
+	}
+
+	public EntityManager getEntityManagerKE() {
+		return emfKE.createEntityManager();
 	}
 
 	public void create(DataBalance dataBalance) {
@@ -166,6 +181,55 @@ public class DataBalanceJpaController implements Serializable {
 		} finally {
 			em.close();
 		}
+	}
+	public List<Branch> findBranchMatching(String name) {
+
+		EntityManager em = getEntityManager();
+		try {
+
+			List<String> list = em.createNativeQuery("SELECT * FROM events.branches  WHERE branch " +
+					"ILIKE :name").setParameter("name", "%"+name+"%").getResultList();
+			List<Branch> branches = new ArrayList<>();
+			for (String obj : list) {
+				if(obj!=null){
+					Branch b = new Branch();
+					b.setName( obj);
+					branches.add(b);
+				}
+			}
+			return branches;
+		} catch (Exception e) {
+			return null;
+		} finally {
+			em.close();
+		}
+
+	}
+	public List<Object[]> fetchBalances(String branchName, String chvName, String operator, String value, String page ) {
+		final Integer perPage= 20;
+		EntityManager em = getEntityManager();
+		Integer pageNumber=page==""?1:Integer.parseInt(page);
+		String userWhere=chvName!=""?" where  name ILIKE '%"+chvName+ "%' ":" where true";
+		String branchWhere=branchName!=""?" and branch = '"+branchName+ "' ":"";
+		String comparisonOperator=null;
+		if(operator=="less_than") comparisonOperator="<";
+		else if( operator=="equal_to") comparisonOperator= "=";
+		String valueWhere=value!=""?" and balance "+ operator+" '"+value+ "' ":"";
+		String query="Select * from (SELECT u.id, u.username,u.name, u.branch, u.version_code, b.balance, b.balance_message, b.recorded_at FROM events.users " +
+				"u left join (SELECT DISTINCT ON (b.user_id) b.* FROM events.data_balance b " +
+				"ORDER BY b.user_id, b.recorded_at DESC) as b on u.id=b.user_id ) as c " + userWhere + branchWhere + valueWhere;
+		try {
+
+			List<Object[]> balances = em.createNativeQuery(query).setMaxResults(perPage)
+					.getResultList();
+
+			return balances;
+		} catch (Exception e) {
+			return null;
+		} finally {
+			em.close();
+		}
+
 	}
 
 }

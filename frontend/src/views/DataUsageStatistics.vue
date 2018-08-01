@@ -21,7 +21,7 @@
                                         <el-autocomplete
                                                 popper-class="my-autocomplete"
                                                 class="inline-input"
-                                                v-model="searchParams.branch"
+                                                v-model="searchParams.branchName"
                                                 placeholder="Branch"
                                                 :trigger-on-focus="false"
                                                 @select="selectBranch"
@@ -30,7 +30,11 @@
                                                     class="el-icon-edit el-input__icon"
                                                     slot="suffix">
                                             </i>
-                                        ></el-autocomplete>
+                                            <template slot-scope="{ item }" style="width: 50px">
+                                                <div class="value"><strong></strong> {{ item.value }}
+                                                </div>
+                                            </template>
+                                        </el-autocomplete>
                                     </li>
 
                                     <li style="margin-top: 10px;margin-left: 5px;">
@@ -40,19 +44,18 @@
                                         </i></el-input>
                                     </li>
                                     <li style="margin-left: 5px; margin-top: 10px;">
-                                        <el-select v-model="searchParams.operator" placeholder="Operator">
-                                            <el-option
-                                                    label="Less Than"
-                                                    value="<">
-                                            </el-option>
-                                            <el-option
-                                                    label="Equal To"
-                                                    value="=">
-                                            </el-option>
-                                        </el-select>
-                                    </li>
-                                    <li style="margin-left: 5px; margin-top: 10px;">
-                                        <el-input-number v-model="searchParams.amount" :min="1"></el-input-number>
+                                        <el-input label="With data bundle'" placeholder="Amount" v-model="searchParams.amount" >
+                                            <el-select style="width: 250px;" slot="prepend" v-model="searchParams.operator" placeholder="Operator" >
+                                                <el-option
+                                                        label="With data bundle Less Than"
+                                                        value="less_than">
+                                                </el-option>
+                                                <el-option
+                                                        label="With data bundle Equal To"
+                                                        value="equal_to">
+                                                </el-option>
+                                            </el-select>
+                                        </el-input>
                                     </li>
 
                                     <li>
@@ -104,7 +107,7 @@
                     </nav>
                 </div>
                 <Sidebar :sidebar-header="sidebarHeader"></Sidebar>
-                <data-tables :data="data" :pagination-props="{ pageSizes: [20] }">
+                <data-tables style="margin-top: 70px;" :data="balances" :pagination-props="{ pageSizes: [20] }">
                     <el-table-column v-for="title in titles" :prop="title.prop" :label="title.label" :key="title.label">
                     </el-table-column>
                 </data-tables>
@@ -129,8 +132,8 @@ export default {
             'isLoading': false,
             'sidebarHeader': generalConfig.sidebarHeader,
             titles: [{
-                prop: 'id',
-                label: 'Id'
+                prop: 'username',
+                label: 'Username'
             }, {
                 prop: 'name',
                 label: 'Name'
@@ -139,20 +142,20 @@ export default {
                 label: 'Branch'
             },
             {
+                prop: 'version_code',
+                label: 'App Version'
+            },
+            {
                 prop: 'balance',
                 label: 'Balance'
             },
             {
-                prop: 'app_version',
-                label: 'App Version'
+                prop: 'balance_message',
+                label: 'Raw Message'
             },
             {
                 prop: 'date',
                 label: 'Date'
-            },
-            {
-                prop: 'raw_message',
-                label: 'Raw Message'
             }],
             'mapOptions': {
                 style: 'mapbox://styles/mapbox/streets-v10',
@@ -160,13 +163,13 @@ export default {
                 zoom: 5
             },
             'searchParams': {
-                'branch': '',
-                'chvId': '',
-                'operator': '=',
+                'branchName': '',
+                'chvName': '',
+                'operator': 'equal_to',
                 'value': '',
                 'page': ''
             },
-            data: []
+            balances: []
 
         }
     },
@@ -177,17 +180,17 @@ export default {
     },
     methods: {
         searchBranch: function (branchName, callback) {
-            api.post('/branch/find', {
-                'name': branchName
+            api.post('databalance/branches/find', {
+                'branchName': branchName
             }).then(function (response) {
                 var errorResult = [{'value': 'Branch not found'}]
                 if (response.data.status === true) {
                     var branches = []
                     if (response.data.data.branches.length > 0) {
                         response.data.data.branches.forEach(function (branch) {
-                            branches.push({'value': branch.name, 'branchObject': branch})
-                            callback(branch)
+                            branches.push({'value': branch.branch})
                         })
+                        callback(branches)
                     } else {
                         callback(errorResult)
                     }
@@ -201,7 +204,7 @@ export default {
             })
         },
         selectBranch: function (branch) {
-            this.searchParams.branch = branch
+            this.searchParams.branchName = branch.value
         },
         settingsHandler: function (command) {
             if (command === 'logout') {
@@ -212,12 +215,13 @@ export default {
         },
         getDataStats: function () {
             var self = this
-            api.post('/data-statistics/find',
+            api.post('/databalance/stats/find',
                 self.searchParams
             ).then(function (response) {
                 if (response.data.status === true) {
-                    self.data.push(response.data.data)
+                    self.balances = response.data.data.balances
                 }
+                console.log(self.balances)
             }).catch(function (error) {
                 console.log(error)
             })
