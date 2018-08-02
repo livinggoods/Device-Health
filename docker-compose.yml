@@ -31,6 +31,18 @@ services:
     networks:
       - device_health_net
  
+  migrate:
+    container_name: migrate
+    depends_on:
+      - postgres 
+    image: hortonworks/mybatis-migrations
+    restart: always
+    volumes:
+      - ./database/drivers:/migrate/drivers
+      - ./database/environments:/migrate/environments
+    networks:
+      - device_health_net
+
   postgres:
     container_name: db
     image: postgres:alpine
@@ -38,8 +50,8 @@ services:
     ports:
       - 5432:5432
     environment:
-      - POSTGRES_PASSWORD=
-      - POSTGRES_USER=
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_USER=postgres
       - PGDATA=/var/lib/postgres/data
     volumes:
       - ./database/data:/var/lib/postgres/data
