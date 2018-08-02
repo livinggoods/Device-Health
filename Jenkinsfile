@@ -6,7 +6,7 @@ pipeline {
                 stage('server') { 
                     agent {
                         docker {
-                            image 'maven:3-alpine' 
+                            image 'maven:alpine' 
                             args '-v $HOME/.m2:/root/.m2'
                         }
                     }
@@ -21,14 +21,14 @@ pipeline {
                 stage('frontend') { 
                     agent {
                         docker {
-                            image 'node:8-alpine' 
+                            image 'node:alpine' 
                             args '-u 0:0'
                         }
                     }
                     steps {
                         sh '''
                             cd frontend
-                            npm i
+                            npm i npm@latest -g
                             npm run build
                         '''
                     }
