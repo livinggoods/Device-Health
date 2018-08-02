@@ -55,6 +55,7 @@ services:
       - PGDATA=/var/lib/postgres/data
     volumes:
       - ./database/data:/var/lib/postgres/data
+      - ./database/misc_scripts/ :/docker-entrypoint-initdb.d/
     networks:
       - device_health_net
     

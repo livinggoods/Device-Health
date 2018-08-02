@@ -1,12 +1,16 @@
 --SELECT * FROM pg_authid
-ALTER DATABASE device_health_development OWNER TO device_health_admin;
-GRANT ALL ON DATABASE device_health_development TO device_health_admin;
+DROP DATABASE IF EXISTS device_health_development;
+CREATE DATABASE device_health_development;
 
 --Create and grant permissions
 DROP ROLE IF EXISTS "device_health_admin";
 CREATE ROLE "device_health_admin" WITH NOINHERIT LOGIN ENCRYPTED PASSWORD 'md512f891c8d70729da378192737c19e4aa'; --admin
 DROP ROLE IF EXISTS "device_health_user";
 CREATE ROLE "device_health_user" WITH NOINHERIT LOGIN ENCRYPTED PASSWORD 'md5de7655f697c2e3129c0b5fe66cacc984'; --user
+
+
+ALTER DATABASE device_health_development OWNER TO device_health_admin;
+GRANT ALL ON DATABASE device_health_development TO device_health_admin;
 
 --create database device_health_development;
 --connect device_health_development;
