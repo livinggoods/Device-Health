@@ -15,7 +15,7 @@ pipeline {
                             cd server
                             mvn -B -DskipTests clean package
                         '''
-                        sh ''
+                    
                     }
                 }
                 stage('frontend') { 

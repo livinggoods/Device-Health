@@ -52,6 +52,7 @@ services:
     environment:
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_USER=postgres
+      - POSTGRES_DB=device_health_development
       - PGDATA=/var/lib/postgres/data
     volumes:
       - ./database/data:/var/lib/postgres/data
