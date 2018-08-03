@@ -1,4 +1,4 @@
-version: '3'
+version: '3.2'
 
 services:
   frontend:
@@ -35,7 +35,7 @@ services:
     container_name: migrate
     depends_on:
       - postgres 
-    image: hortonworks/mybatis-migrations
+    image: hortonworks/mybatis-migrations:1.0.0
     restart: always
     volumes:
       - ./database/drivers:/migrate/drivers
@@ -60,5 +60,5 @@ services:
       - device_health_net
     
 
-network:
+networks:
   device_health_net:
