@@ -5,7 +5,6 @@ import android.util.Log;
 import com.crashlytics.android.Crashlytics;
 
 import org.goods.living.tech.health.device.BuildConfig;
-import org.goods.living.tech.health.device.utils.Constants;
 import org.goods.living.tech.health.device.utils.Utils;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -28,7 +27,6 @@ public class User extends BaseModel {
     public String name;
     public String password;
     public String androidId;
-    public long updateInterval = Constants.UPDATE_INTERVAL; // seconds
     public String phone;
     public String country;
     public String branch;
@@ -52,7 +50,7 @@ public class User extends BaseModel {
 
     public String token;
 
-    public String ussd;
+    public String fcmToken;
 
 
     public User() {
@@ -74,19 +72,17 @@ public class User extends BaseModel {
         if (JSONObject.has("country")) country = JSONObject.getString("country");
 
 
-        if (JSONObject.has("updateInterval"))
-            updateInterval = JSONObject.getLong("updateInterval"); // seconds in millis 1000=1
-
         //   JSONObject.put("versionCode", versionCode);
         if (JSONObject.has("serverApi")) serverApi = JSONObject.getInt("serverApi");
         if (JSONObject.has("forceUpdate")) forceUpdate = JSONObject.getBoolean("forceUpdate");
 
         if (JSONObject.has("token")) token = JSONObject.getString("token");
 
-        if (JSONObject.has("ussd")) ussd = JSONObject.getString("ussd");
+        if (JSONObject.has("fcmToken")) fcmToken = JSONObject.getString("fcmToken");
+
     }
 
-    public JSONObject toJSONObject() {
+    public JSONObject toJSONObject(Setting setting) {
 
         try {
             JSONObject JSONObject = super.toJSONObject();
@@ -95,7 +91,6 @@ public class User extends BaseModel {
             if (masterId != null) JSONObject.put("masterId", masterId);
             if (chvId != null) JSONObject.put("chvId", chvId);
             if (androidId != null) JSONObject.put("androidId", androidId);
-            JSONObject.put("updateInterval", String.valueOf(updateInterval));
             if (createdAt != null) {
                 String formattedDate = Utils.getStringTimeStampWithTimezoneFromDate(createdAt, TimeZone.getTimeZone(Utils.TIMEZONE_UTC));
                 JSONObject.put("createdAt", formattedDate);
@@ -117,6 +112,8 @@ public class User extends BaseModel {
 
             if (token != null) JSONObject.put("token", token);
 
+            if (fcmToken != null) JSONObject.put("fcmToken", fcmToken);
+
             int versionCode = BuildConfig.VERSION_CODE;
             String versionName = BuildConfig.VERSION_NAME;
             JSONObject.put("versionCode", versionCode);
@@ -128,6 +125,9 @@ public class User extends BaseModel {
                 JSONObject.put("deviceTime", formattedDate);
             }
 
+            if (setting != null) {
+                JSONObject.put("setting", setting.toJSONObject());
+            }
 
             return JSONObject;
         } catch (JSONException e) {

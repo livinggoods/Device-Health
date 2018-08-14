@@ -44,6 +44,9 @@ public class RegistrationService extends BaseService {
 
     @Inject
     DataBalanceHelper dataBalanceHelper;
+    @Inject
+    SettingService settingService;
+
 
     ServerRestClient serverRestClient = new ServerRestClient(AppController.getInstance().getString(R
 
@@ -59,8 +62,9 @@ public class RegistrationService extends BaseService {
 
         final User user = userService.getRegisteredUser();
         user.deviceTime = new Date();
+        Setting setting = settingService.getRecord();
 
-        StringEntity entity = new StringEntity(user.toJSONObject().toString(), "UTF-8");
+        StringEntity entity = new StringEntity(user.toJSONObject(setting).toString(), "UTF-8");
         //RequestParams params = new RequestParams(user.toJSONObject());
         //params.setUseJsonStreamer(true);
 
@@ -95,7 +99,7 @@ public class RegistrationService extends BaseService {
 
                     boolean success = response.has(Constants.STATUS) && response.getBoolean(Constants.STATUS);
                     String msg = response.has(Constants.MESSAGE) ? response.getString(Constants.MESSAGE) : response.getString(Constants.MESSAGE);
-                    boolean changeLocationUpdateInterval = false;
+
                     if (success && response.has(Constants.DATA)) {
                         User updatedUser = new User(response.getJSONObject(Constants.DATA));
 
@@ -103,8 +107,6 @@ public class RegistrationService extends BaseService {
                                 .putCustomAttribute("Reason", "masterId: " + updatedUser.masterId + " user: " + updatedUser.username));
 
                         user.masterId = updatedUser.masterId;
-                        changeLocationUpdateInterval = user.updateInterval != updatedUser.updateInterval;
-                        user.updateInterval = updatedUser.updateInterval;
                         user.serverApi = updatedUser.serverApi;
                         user.forceUpdate = updatedUser.forceUpdate;
                         user.phone = updatedUser.phone;
@@ -114,16 +116,6 @@ public class RegistrationService extends BaseService {
                         user.chvId = updatedUser.chvId;
                         user.token = updatedUser.token;
 
-                        if (updatedUser.ussd != null) {
-                            AppController appController = (AppController) c.getApplicationContext();
-                            Setting setting = appController.getSetting();
-                            ArrayList<String> list = USSDService.getUSSDCodesFromString(updatedUser.ussd);
-                            setting.workingUSSD0 = list;
-                            setting.workingUSSD1 = list;
-                            AppController.getInstance().updateSetting(setting);
-                        }
-
-
                         user.lastSync = new Date();
                         userService.insertUser(user);
 
@@ -132,11 +124,6 @@ public class RegistrationService extends BaseService {
                         Crashlytics.log(Log.ERROR, TAG, "problem registering user " + user.username + " " + msg);
                         Answers.getInstance().logCustom(new CustomEvent("User Registration fail")
                                 .putCustomAttribute("Reason", "username: " + user.username + " msg: " + msg));
-                    }
-
-                    if (changeLocationUpdateInterval) {
-                        AppController appController = (AppController) c.getApplicationContext();
-                        appController.requestLocationUpdates(user.updateInterval);
                     }
 
                 } catch (JSONException e) {
@@ -165,7 +152,7 @@ public class RegistrationService extends BaseService {
 
         //  String  deviceSyncTimeStr = Utils.getStringTimeStampWithTimezoneFromDate(deviceSyncTime, TimeZone.getTimeZone(Utils.TIMEZONE_UTC));
 
-        StringEntity entity = new StringEntity(user.toJSONObject().toString(), "UTF-8");
+        StringEntity entity = new StringEntity(user.toJSONObject(setting).toString(), "UTF-8");
         //RequestParams params = new RequestParams(user.toJSONObject());
         //params.setUseJsonStreamer(true);
 

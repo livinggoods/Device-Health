@@ -55,6 +55,7 @@ import com.vladmihalcea.hibernate.type.json.JsonNodeBinaryType;
 		@NamedQuery(name = "Users.findByName", query = "SELECT u FROM Users u WHERE u.name = :name"),
 		@NamedQuery(name = "Users.findByBranch", query = "SELECT u FROM Users u WHERE u.branch = :branch"),
 		@NamedQuery(name = "Users.findByCountry", query = "SELECT u FROM Users u WHERE u.country = :country"),
+		@NamedQuery(name = "Users.findByFcmToken", query = "SELECT u FROM Users u WHERE u.fcmToken = :fcmToken"),
 		@NamedQuery(name = "Users.findByUserNameAndAndroidId", query = "SELECT u FROM Users u WHERE u.username = :username AND u.androidId = :androidId"),
 		@NamedQuery(name = "Users.findByUsernameLike", query = "SELECT u FROM Users u WHERE u.username like :username") })
 @TypeDef(name = "jsonb-node", typeClass = JsonNodeBinaryType.class)
@@ -73,9 +74,7 @@ public class Users implements Serializable {
 	@Basic(optional = false)
 	@Column(name = "android_id", nullable = false, length = 64)
 	private String androidId;
-	@Basic(optional = false)
-	@Column(name = "update_interval", nullable = false)
-	private int updateInterval;
+
 	@Basic(optional = false)
 	@Column(name = "created_at", nullable = false)
 	@Temporal(TemporalType.TIMESTAMP)
@@ -106,12 +105,18 @@ public class Users implements Serializable {
 	@Column(name = "country", length = 8)
 	private String country;
 
+	@Column(name = "fcm_token", length = 128)
+	private String fcmToken;
+
 	@Type(type = "jsonb-node")
 	@Column(name = "device_info", columnDefinition = "jsonb")
 
 	// org.codehaus.jackson.node.ObjectNode cannot be cast to
 	// com.fasterxml.jackson.databind.JsonNode
 	private com.fasterxml.jackson.databind.JsonNode deviceInfo;
+	@Type(type = "jsonb-node")
+	@Column(name = "setting", columnDefinition = "jsonb")
+	private com.fasterxml.jackson.databind.JsonNode setting;
 	@OneToMany(cascade = CascadeType.ALL, mappedBy = "userId")
 	private Collection<Stats> statsCollection;
 	@OneToMany(cascade = CascadeType.ALL, mappedBy = "userId")
@@ -124,10 +129,9 @@ public class Users implements Serializable {
 		this.id = id;
 	}
 
-	public Users(Long id, String androidId, int updateInterval, Date createdAt, int versionCode, String username) {
+	public Users(Long id, String androidId, Date createdAt, int versionCode, String username) {
 		this.id = id;
 		this.androidId = androidId;
-		this.updateInterval = updateInterval;
 		this.createdAt = createdAt;
 		this.versionCode = versionCode;
 		this.username = username;
@@ -163,14 +167,6 @@ public class Users implements Serializable {
 
 	public void setAndroidId(String androidId) {
 		this.androidId = androidId;
-	}
-
-	public int getUpdateInterval() {
-		return updateInterval;
-	}
-
-	public void setUpdateInterval(int updateInterval) {
-		this.updateInterval = updateInterval;
 	}
 
 	public Date getCreatedAt() {
@@ -261,12 +257,28 @@ public class Users implements Serializable {
 		this.country = country;
 	}
 
+	public String getFcmToken() {
+		return fcmToken;
+	}
+
+	public void setFcmToken(String fcmToken) {
+		this.fcmToken = fcmToken;
+	}
+
 	public com.fasterxml.jackson.databind.JsonNode getDeviceInfo() {
 		return deviceInfo;
 	}
 
 	public void setDeviceInfo(com.fasterxml.jackson.databind.JsonNode deviceInfo) {
 		this.deviceInfo = deviceInfo;
+	}
+
+	public com.fasterxml.jackson.databind.JsonNode getSetting() {
+		return setting;
+	}
+
+	public void setSetting(com.fasterxml.jackson.databind.JsonNode setting) {
+		this.setting = setting;
 	}
 
 	@XmlTransient

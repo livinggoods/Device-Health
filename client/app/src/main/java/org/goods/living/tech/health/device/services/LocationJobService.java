@@ -74,7 +74,7 @@ public class LocationJobService extends com.firebase.jobdispatcher.JobService {
                     setting.loglocationOffEvent = true;
                     appController.updateSetting(setting);
                 }
-                appController.requestLocationUpdates(appController.getUser().updateInterval);
+                appController.requestLocationUpdates(setting.locationUpdateInterval);
                 appController.checkAndRequestPerms();
 
                 jobFinished(job, false);

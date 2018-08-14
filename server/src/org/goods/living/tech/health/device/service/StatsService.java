@@ -85,7 +85,7 @@ public class StatsService extends BaseService {
 			stats.setProvider(j.has("provider") ? j.get("provider").asText() : null);
 
 			stats.setBatteryLevel(j.has("batteryLevel") ? j.get("batteryLevel").asDouble() : null);
-			stats.setAccuracy(j.has("brightness") ? j.get("brightness").asDouble() : null);
+			stats.setBrightness(j.has("brightness") ? j.get("brightness").asDouble() : null);
 			if (j.has("recordedAt")) {
 				SimpleDateFormat dateFormat = new SimpleDateFormat("MM-dd-yyyy HH:mm:ss");
 				Date recordedAt = dateFormat.parse(j.get("recordedAt").asText());

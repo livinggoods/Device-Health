@@ -10,7 +10,9 @@ import javax.ws.rs.core.SecurityContext;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.goods.living.tech.health.device.jpa.controllers.AdminUsersJpaController;
 import org.goods.living.tech.health.device.jpa.controllers.UsersJpaController;
+import org.goods.living.tech.health.device.jpa.dao.AdminUsers;
 import org.goods.living.tech.health.device.jpa.dao.Users;
 import org.goods.living.tech.health.device.models.Result;
 import org.goods.living.tech.health.device.service.security.ValidUser;
@@ -32,6 +34,9 @@ public class BaseService {
 
 	@Inject
 	UsersJpaController usersJpaController;
+
+	@Inject
+	AdminUsersJpaController adminUsersJpaController;
 
 	public BaseService() {
 	}
@@ -68,4 +73,13 @@ public class BaseService {
 		return null;
 	}
 
+	public AdminUsers getCurrentAdmin() {// Response
+		logger.debug("getCurrentAdmin");
+		ValidUser ValidUser = getValidUser();
+		if (ValidUser != null) {
+			AdminUsers adminUsers = adminUsersJpaController.findAdminUsers(ValidUser.getId());
+			return adminUsers;
+		}
+		return null;
+	}
 }

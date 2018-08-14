@@ -355,7 +355,7 @@ public class MainActivity extends FragmentActivity implements
         Long synced = statsService.countSyncedRecords();
         syncTextView.setText(getString(R.string.sync_data, synced.toString(), total.toString()));
 
-        intervalTextView.setText(getString(R.string.locationupdate_interval, "" + user.updateInterval));
+        intervalTextView.setText(getString(R.string.locationupdate_interval, "" + AppController.getInstance().getSetting().locationUpdateInterval));
         // }
 
 

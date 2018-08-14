@@ -149,7 +149,12 @@ public class SyncService extends BaseService {
 
         //  String  deviceSyncTimeStr = Utils.getStringTimeStampWithTimezoneFromDate(deviceSyncTime, TimeZone.getTimeZone(Utils.TIMEZONE_UTC));
 
-        StringEntity entity = new StringEntity(user.toJSONObject().toString(), "UTF-8");
+        AppController appController = (AppController) c.getApplicationContext();
+        Setting setting = appController.getSetting();
+
+        JSONObject userJson = user.toJSONObject(setting);
+
+        StringEntity entity = new StringEntity(userJson.toString(), "UTF-8");
         //RequestParams params = new RequestParams(user.toJSONObject());
         //params.setUseJsonStreamer(true);
 
@@ -177,7 +182,7 @@ public class SyncService extends BaseService {
                     // If the response is JSONObject instead of JSONArray
                     boolean success = response.has(Constants.STATUS) && response.getBoolean(Constants.STATUS);
                     String msg = response.has(Constants.MESSAGE) ? response.getString(Constants.MESSAGE) : response.getString(Constants.MESSAGE);
-                    boolean changeLocationUpdateInterval = false;
+
                     if (success && response.has(Constants.DATA)) {
                         User updatedUser = new User(response.getJSONObject(Constants.DATA));
 
@@ -185,8 +190,8 @@ public class SyncService extends BaseService {
                         //                .putCustomAttribute("Reason", "androidId: " + updatedUser.androidId + " username: " + updatedUser.username));
 
                         user.masterId = updatedUser.masterId;
-                        changeLocationUpdateInterval = user.updateInterval != updatedUser.updateInterval;
-                        user.updateInterval = updatedUser.updateInterval;
+
+
                         user.serverApi = updatedUser.serverApi;
                         user.forceUpdate = updatedUser.forceUpdate;
                         user.phone = updatedUser.phone;
@@ -194,29 +199,15 @@ public class SyncService extends BaseService {
                         user.branch = updatedUser.branch;
                         user.name = updatedUser.name;
                         user.chvId = updatedUser.chvId;
-                        user.token = updatedUser.token;
+                        user.fcmToken = updatedUser.fcmToken;
 
                         user.lastSync = new Date();
                         userService.insertUser(user);
-
-                        if (updatedUser.ussd != null) {
-                            AppController appController = (AppController) c.getApplicationContext();
-                            Setting setting = appController.getSetting();
-                            ArrayList<String> list = USSDService.getUSSDCodesFromString(updatedUser.ussd);
-                            setting.workingUSSD0 = list;
-                            setting.workingUSSD1 = list;
-                            AppController.getInstance().updateSetting(setting);
-                        }
-
 
                     } else {
                         Crashlytics.log(Log.ERROR, TAG, "problem syncing user");
                     }
 
-                    if (changeLocationUpdateInterval) {
-                        AppController appController = (AppController) c.getApplicationContext();
-                        appController.requestLocationUpdates(user.updateInterval);
-                    }
 
                 } catch (JSONException e) {
                     Log.e(TAG, "", e);
@@ -224,7 +215,6 @@ public class SyncService extends BaseService {
                 }
             }
         });
-
 
         return user;
     }
@@ -234,8 +224,10 @@ public class SyncService extends BaseService {
         final User user = userService.getRegisteredUser();
         user.deviceTime = new Date();
 
+        AppController appController = (AppController) c.getApplicationContext();
+        Setting setting = appController.getSetting();
 
-        StringEntity entity = new StringEntity(user.toJSONObject().toString(), "UTF-8");
+        StringEntity entity = new StringEntity(user.toJSONObject(setting).toString(), "UTF-8");
         //RequestParams params = new RequestParams(user.toJSONObject());
         //params.setUseJsonStreamer(true);
 
@@ -448,5 +440,77 @@ public class SyncService extends BaseService {
             syncDataBalance();
         }
 
+    }
+
+    Setting syncSetting() {
+
+        AppController appController = (AppController) c.getApplicationContext();
+        Setting setting = appController.getSetting();
+        StringEntity entity = new StringEntity(setting.toJSONObject().toString(), "UTF-8");
+        //RequestParams params = new RequestParams(user.toJSONObject());
+        //params.setUseJsonStreamer(true);
+
+        serverRestClient.postSync(Constants.URL.USER_SETTING, entity, new TextHttpResponseHandler() {
+            @Override
+            public void onFailure(int statusCode, Header[] headers, String responseString, Throwable throwable) {
+                Crashlytics.log(Log.DEBUG, TAG, "onFailure " + responseString);
+                Crashlytics.logException(throwable);
+                refreshToken();
+            }
+
+            @Override
+            public void onSuccess(int statusCode, Header[] headers, String responseString) {
+                Crashlytics.log(Log.DEBUG, TAG, "onSuccess " + responseString);
+                try {
+                    JSONObject response = new JSONObject(responseString);
+                    String data = response.toString();
+                    Crashlytics.log(Log.DEBUG, TAG, "Data : " + data);
+
+                    // If the response is JSONObject instead of JSONArray
+                    boolean success = response.has(Constants.STATUS) && response.getBoolean(Constants.STATUS);
+                    String msg = response.has(Constants.MESSAGE) ? response.getString(Constants.MESSAGE) : response.getString(Constants.MESSAGE);
+                    boolean changeLocationUpdateInterval = false;
+                    if (success && response.has(Constants.DATA)) {
+                        Setting updatedSetting = new Setting(response.getJSONObject(Constants.DATA));
+
+
+                        changeLocationUpdateInterval = setting.locationUpdateInterval != updatedSetting.locationUpdateInterval;
+                        setting.locationUpdateInterval = updatedSetting.locationUpdateInterval;
+
+                        if (updatedSetting.ussd != null && setting.workingUSSD0 == null) {
+                            ArrayList<String> list = USSDService.getUSSDCodesFromString(updatedSetting.ussd);
+                            setting.workingUSSD0 = list;
+                        }
+                        if (updatedSetting.ussd != null && setting.workingUSSD1 == null) {
+                            ArrayList<String> list = USSDService.getUSSDCodesFromString(updatedSetting.ussd);
+                            setting.workingUSSD1 = list;
+                        }
+                        setting.databalanceCheckTime = updatedSetting.databalanceCheckTime;
+
+                        AppController.getInstance().updateSetting(setting);
+
+                        Answers.getInstance().logCustom(new CustomEvent("Setting Update").putCustomAttribute("Reason", setting.toJSONObject().toString()));
+
+                        appController.setUSSDAlarm(setting.getDatabalanceCheckTimeInMilli());
+
+                        if (changeLocationUpdateInterval) {
+                            AppController appController = (AppController) c.getApplicationContext();
+                            appController.requestLocationUpdates(setting.locationUpdateInterval);
+                        }
+
+                    } else {
+                        Crashlytics.log(Log.ERROR, TAG, "problem syncing settings");
+                    }
+
+
+                } catch (JSONException e) {
+                    Log.e(TAG, "", e);
+                    Crashlytics.logException(e);
+                }
+            }
+        });
+
+
+        return setting;
     }
 }

@@ -29,7 +29,7 @@ public class BaseModel {
 
     }
 
-    public JSONObject toJSONObject() {
+    JSONObject toJSONObject() {
 
         try {
             JSONObject JSONObject = new JSONObject();

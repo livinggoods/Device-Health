@@ -150,7 +150,7 @@ public class LocationUpdatesBroadcastReceiver extends BroadcastReceiver {
                         }
                     });
 
-                    appController.setUSSDAlarm();
+                    appController.setUSSDAlarm(appController.getSetting().getDatabalanceCheckTimeInMilli());
                 } else {
 
                     Crashlytics.log(Log.DEBUG, TAG, "received NULL LocationResult.extractResult(intent). is location on: " + locationOn);
@@ -168,7 +168,9 @@ public class LocationUpdatesBroadcastReceiver extends BroadcastReceiver {
                         .putCustomAttribute("Reason", ""));
 
                 appController.checkAndRequestPerms();
-                appController.setUSSDAlarm();
+
+                appController.setUSSDAlarm(appController.getSetting().getDatabalanceCheckTimeInMilli());
+
 
             }
         }

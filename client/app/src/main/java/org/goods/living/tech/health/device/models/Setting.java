@@ -1,11 +1,22 @@
 package org.goods.living.tech.health.device.models;
 
+import android.util.Log;
+
+import com.crashlytics.android.Crashlytics;
+
+import org.goods.living.tech.health.device.utils.Constants;
+import org.goods.living.tech.health.device.utils.Utils;
 import org.json.JSONArray;
 import org.json.JSONException;
+import org.json.JSONObject;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.List;
+import java.util.TimeZone;
 
 import io.objectbox.annotation.Convert;
 import io.objectbox.annotation.Entity;
@@ -24,12 +35,68 @@ public class Setting extends BaseModel {
 
     public Date lastUSSDRun;
 
+    public long locationUpdateInterval = Constants.UPDATE_INTERVAL; // seconds
+
+
+    public String databalanceCheckTime;//"20:30
+
+    public String ussd;
+    // "
     @Convert(converter = StringListConverter.class, dbType = String.class)
     public List<String> workingUSSD0;
     @Convert(converter = StringListConverter.class, dbType = String.class)
     public List<String> workingUSSD1;
 
     public boolean fetchingUSSD;
+
+    public Setting() {
+
+    }
+
+    public Setting(JSONObject JSONObject) throws JSONException {
+
+        super(JSONObject);
+
+        if (JSONObject.has("id")) id = JSONObject.getLong("id");
+        //  if (JSONObject.has("masterId")) masterId = JSONObject.getLong("masterId");
+
+
+        if (JSONObject.has("locationUpdateInterval"))
+            locationUpdateInterval = JSONObject.getLong("locationUpdateInterval"); // seconds in millis 1000=1
+
+        if (JSONObject.has("databalanceCheckTime"))
+            databalanceCheckTime = JSONObject.getString("databalanceCheckTime");
+    }
+
+    public JSONObject toJSONObject() {
+
+        try {
+            JSONObject JSONObject = super.toJSONObject();
+            // JSONObject JSONObject = new JSONObject();
+            JSONObject.put("id", String.valueOf(id));
+            //   if (masterId != null) JSONObject.put("masterId", masterId);
+            JSONObject.put("loglocationOffEvent", loglocationOffEvent);
+            if (brightness != null) JSONObject.put("brightness", brightness);
+            if (lastUSSDRun != null) {
+                String formattedDate = Utils.getStringTimeStampWithTimezoneFromDate(lastUSSDRun, TimeZone.getTimeZone(Utils.TIMEZONE_UTC));
+                JSONObject.put("lastUSSDRun", lastUSSDRun);
+            }
+            JSONObject.put("locationUpdateInterval", locationUpdateInterval);
+            if (databalanceCheckTime != null)
+                JSONObject.put("databalanceCheckTime", databalanceCheckTime);
+            if (ussd != null) JSONObject.put("ussd", ussd);
+            if (workingUSSD0 != null) JSONObject.put("workingUSSD0", workingUSSD0);
+            if (workingUSSD1 != null) JSONObject.put("workingUSSD1", workingUSSD1);
+            JSONObject.put("fetchingUSSD", fetchingUSSD);
+
+
+            return JSONObject;
+        } catch (JSONException e) {
+            Log.e("", "", e);
+            Crashlytics.logException(e);
+            return null;
+        }
+    }
 
 
     public static class StringListConverter implements PropertyConverter<List<String>, String> {
@@ -76,5 +143,24 @@ public class Setting extends BaseModel {
 
             return response.toString();//new Gson().toJson(creatureList);
         }
+    }
+
+    public Long getDatabalanceCheckTimeInMilli() {
+
+        try {
+            if (databalanceCheckTime != null) {
+                SimpleDateFormat df = new SimpleDateFormat("HH:mm");
+                Date d1 = df.parse("23:30");
+                Calendar c1 = GregorianCalendar.getInstance();
+                c1.setTime(d1);
+                System.out.println(c1.getTimeInMillis());
+                return c1.getTimeInMillis();
+            }
+            return null;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+
     }
 }

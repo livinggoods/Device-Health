@@ -188,7 +188,7 @@ public class AdminService extends BaseService {
 					String output = writer.toString().trim();
 
 					Email passworResetEmail = new HtmlEmail();
-					passworResetEmail.setHostName("smtp.office365.com");
+					passworResetEmail.setHostName(applicationParameters.getEmailHostName());
 					passworResetEmail.setSmtpPort(587);
 					passworResetEmail.setAuthenticator(new DefaultAuthenticator(applicationParameters.getEmail(),
 							applicationParameters.getEmailPassword()));

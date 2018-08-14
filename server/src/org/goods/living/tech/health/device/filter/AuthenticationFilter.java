@@ -9,6 +9,7 @@ import javax.ws.rs.Priorities;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ContainerRequestFilter;
 import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.ext.Provider;
 import javax.xml.bind.DatatypeConverter;
@@ -24,6 +25,7 @@ import org.goods.living.tech.health.device.service.security.ValidUser;
 import org.goods.living.tech.health.device.service.security.qualifier.Secured;
 import org.goods.living.tech.health.device.service.security.qualifier.UserCategory;
 import org.goods.living.tech.health.device.utility.ApplicationParameters;
+import org.goods.living.tech.health.device.utility.Constants;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
@@ -48,7 +50,7 @@ public class AuthenticationFilter implements ContainerRequestFilter {
 	@Override
 	public void filter(ContainerRequestContext requestContext) throws IOException {
 
-		logger.debug("request filter: " + applicationParameters.getTokenLife());
+		logger.debug("request filter: ", requestContext.getHeaders());
 
 		// Get the HTTP Authorization header from the request
 		String authorizationHeader = requestContext.getHeaderString(HttpHeaders.AUTHORIZATION);
@@ -56,12 +58,17 @@ public class AuthenticationFilter implements ContainerRequestFilter {
 		// Check if the HTTP Authorization header is present and formatted correctly
 		if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
 
-			// TODO: enable this after devices sync
+			if (isAdminEndpoint(requestContext)) {
+				logger.debug("Unauthorised - aborting request");
+				requestContext.abortWith(Response.status(Response.Status.UNAUTHORIZED).build());
+				return;
+				// throw new NotAuthorizedException("Authorization header must be provided");
+			}
+
 			// requestContext.abortWith(Response.status(Response.Status.UNAUTHORIZED).build());
 			logger.debug("Skipping auth filter. TODO remove this soon");
 			return;
 
-			// throw new NotAuthorizedException("Authorization header must be provided");
 		}
 		// Extract the token from the HTTP Authorization header
 		String token = authorizationHeader.substring("Bearer".length()).trim();
@@ -74,13 +81,28 @@ public class AuthenticationFilter implements ContainerRequestFilter {
 			requestContext.setSecurityContext(new CustomSecurityContext(user, scheme));
 
 		} catch (Exception e) {
-			logger.error("Exception: " + e);
+			logger.error("Exception", e);
+
+			if (isAdminEndpoint(requestContext)) {
+				logger.debug("Unauthorised - aborting request");
+				requestContext.abortWith(Response.status(Response.Status.UNAUTHORIZED).build());
+				return;
+				// throw new NotAuthorizedException("Authorization header must be provided");
+			}
+
 			logger.debug("Skipping auth filter. TODO remove this soon");
 			return;
 			// logger.debug("Forbidden");
 			// requestContext.abortWith(Response.status(Response.Status.UNAUTHORIZED).build());
 		}
 
+	}
+
+	boolean isAdminEndpoint(ContainerRequestContext requestContext) {
+		boolean isadmin = requestContext.getUriInfo().getPath().toString().contains(Constants.URL.FIND);
+
+		isadmin = isadmin || requestContext.getUriInfo().getPath().toString().contains(Constants.URL.FIND);
+		return (isadmin);
 	}
 
 	public ValidUser validateToken(String token) throws Exception {

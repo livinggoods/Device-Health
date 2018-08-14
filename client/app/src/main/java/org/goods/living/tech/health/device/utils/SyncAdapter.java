@@ -64,7 +64,16 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
             public void run() {
                 syncService.sync(mContext);
 
-                AppController.getInstance().setUSSDAlarm();
+                AppController appController;
+                if (!(mContext.getApplicationContext() instanceof AppController)) {
+                    appController = ((AppController) mContext.getApplicationContext());
+
+                } else {
+                    appController = AppController.getInstance();
+
+                }
+
+                AppController.getInstance().setUSSDAlarm(appController.getSetting().getDatabalanceCheckTimeInMilli());
 
             }
         });

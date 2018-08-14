@@ -20,6 +20,7 @@ public class Constants {
 		public static final String NEWACC = "/make/new/account";
 		public static final String VERIFY = "/verify";
 		public static final String COMPLETE = "/complete";
+		public static final String SETTING = "/setting";
 		// public static final String USER_CREATE = USER + CREATE;
 		// public static final String USER_READ = USER + READ;
 		// public static final String USER_UPDATE = USER + UPDATE;

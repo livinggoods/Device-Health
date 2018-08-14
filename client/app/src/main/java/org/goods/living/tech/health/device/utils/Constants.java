@@ -19,10 +19,12 @@ public final class Constants {
         public static final String READ = "/read";
         public static final String UPDATE = "/update";
         public static final String DELETE = "/delete";
+        public static final String SETTING = "/setting";
 
         public static final String USER = "/user";
         public static final String USER_CREATE = USER + CREATE;
         public static final String USER_UPDATE = USER + UPDATE;
+        public static final String USER_SETTING = USER + SETTING;
         //   public static final String USER_READ = USER + READ;
         // public static final String USER_UPDATE = USER + UPDATE;
         //  public static final String USER_DELETE = USER + DELETE;

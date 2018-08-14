@@ -79,6 +79,7 @@ public class UserService extends BaseService {
 		String deviceTimeStr = data.has("deviceTime") ? data.get("deviceTime").asText() : null;
 		String country = data.has("country") ? data.get("country").asText() : null;
 		String token = data.has("token") ? data.get("token").asText() : null;
+		String fcmToken = data.has("fcmToken") ? data.get("fcmToken").asText() : null;
 
 		Date deviceTime = Utils.getDateFromTimeStampWithTimezone(deviceTimeStr,
 				TimeZone.getTimeZone(Utils.TIMEZONE_UTC));// at sync/toJSONObject time set this - we can use it to get
@@ -98,6 +99,7 @@ public class UserService extends BaseService {
 			users.setPassword(data.has("password") ? data.get("password").asText() : null);
 			users.setAndroidId(androidId);
 			users.setCountry(country);
+			users.setFcmToken(fcmToken);
 
 			// set chvId - retrieve from medic
 			MedicUser mu = medicJpaController.findByUsername(country, username);
@@ -126,6 +128,13 @@ public class UserService extends BaseService {
 			com.fasterxml.jackson.databind.JsonNode entity = JacksonUtil.toJsonNode(data.get("deviceInfo").toString());
 			users.setDeviceInfo(entity);
 		}
+		if (data.has("setting")) {
+			// JacksonUtil.toJsonNode(); JsonNode entity = new
+			// ObjectMapper().readTree(data.get("deviceInfo").toString());
+			com.fasterxml.jackson.databind.JsonNode settingEntity = JacksonUtil
+					.toJsonNode(data.get("setting").toString());
+			users.setSetting(settingEntity);
+		}
 
 		if (data.has("recordedAt")) {
 			Date recordedAt = Utils.getDateFromTimeStampWithTimezone(data.get("recordedAt").asText(),
@@ -150,17 +159,12 @@ public class UserService extends BaseService {
 
 		ObjectNode o = (ObjectNode) data;
 		o.put("masterId", users.getId());
-		o.put("updateInterval", users.getUpdateInterval());// DEFAULT_UPDATE_INTERVAL);
 		o.put("phone", users.getPhone());
 		o.put("chvId", users.getChvId());
 		if (token != null)
 			o.put("token", token);
 		if (clockDrift != null)
 			o.put("clockDrift", clockDrift);
-
-		String ussd = applicationParameters.getUSSDBalanceCodes();
-		o.put("ussd", ussd);
-		// NodeBean toValue = mapper.convertValue(node, NodeBean.cla
 
 		boolean shouldforceupdate = shouldForceUpdate(username, versionCode);
 		o.put("serverApi", applicationParameters.getServerApi());
@@ -204,25 +208,30 @@ public class UserService extends BaseService {
 		Date deviceTime = Utils.getDateFromTimeStampWithTimezone(deviceTimeStr,
 				TimeZone.getTimeZone(Utils.TIMEZONE_UTC));// at sync/toJSONObject time set this - we can use it to
 															// get
+		String fcmToken = data.has("fcmToken") ? data.get("fcmToken").asText() : null;
+
+		if (data.has("setting")) {
+			// JacksonUtil.toJsonNode(); JsonNode entity = new
+			// ObjectMapper().readTree(data.get("deviceInfo").toString());
+			com.fasterxml.jackson.databind.JsonNode settingEntity = JacksonUtil
+					.toJsonNode(data.get("setting").toString());
+			users.setSetting(settingEntity);
+		}
+
+		users.setFcmToken(fcmToken);
 		users.setDeviceTime(deviceTime);
 		int versionCode = data.has("versionCode") ? Integer.valueOf(data.get("versionCode").asText()) : 1;
 		users.setVersionCode(versionCode);
 		users.setVersionName(data.has("versionName") ? data.get("versionName").asText() : null);
-
+		users.setUpdatedAt(new Date());
 		usersJpaController.update(users);
 
 		ObjectNode o = (ObjectNode) data;
 		o.put("masterId", users.getId());
-		o.put("updateInterval", users.getUpdateInterval());// DEFAULT_UPDATE_INTERVAL);
 
 		boolean shouldforceupdate = shouldForceUpdate(users.getVersionName(), versionCode);
 		o.put("serverApi", applicationParameters.getServerApi());
 		o.put("forceUpdate", shouldforceupdate);
-
-		if (applicationParameters.shouldUpdateUSSDBalanceCodes()) {
-			String ussd = applicationParameters.getUSSDBalanceCodes();
-			o.put("ussd", ussd);
-		}
 
 		result = new Result<JsonNode>(true, "", o);
 
@@ -308,6 +317,35 @@ public class UserService extends BaseService {
 		ObjectNode node = JsonNodeFactory.instance.objectNode();
 
 		node.putArray("users").addAll(results);
+
+		Result<JsonNode> result = new Result<JsonNode>(true, "", node);
+		return result;
+
+	}
+
+	@Secured(value = UserCategory.USER)
+	@POST
+	// @Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path(Constants.URL.SETTING)
+	public Result<JsonNode> setting(InputStream incomingData) throws Exception {
+		logger.debug("setting");
+		JsonNode data = JSonHelper.getJsonNode(incomingData);
+		// String username = data.has("username") ? data.get("username").asText() :
+		// null;
+
+		Users users = getCurrentUser();
+
+		ObjectNode node = JsonNodeFactory.instance.objectNode();
+
+		node.put("locationUpdateInterval", applicationParameters.getLocationUpdateInterval());// DEFAULT_UPDATE_INTERVAL);
+
+		if (applicationParameters.shouldUpdateUSSDBalanceCodes()) {
+			String ussd = applicationParameters.getUSSDBalanceCodes();
+			node.put("ussd", ussd);
+		}
+
+		node.put("databalanceCheckTime", applicationParameters.getDataBalanceCheckTime());
 
 		Result<JsonNode> result = new Result<JsonNode>(true, "", node);
 		return result;

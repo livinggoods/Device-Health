@@ -40,21 +40,27 @@ public class ApplicationParameters {
 	public String getTokenLife() {
 		return servletContext.getInitParameter("org.goods.living.tech.health.device.jwt.token.life");
 	}
+
 	public String getMailHostname() {
 		return servletContext.getInitParameter("org.goods.living.tech.health.device.mail.hostname");
 	}
+
 	public Integer getMailPort() {
 		return Integer.parseInt(servletContext.getInitParameter("org.goods.living.tech.health.device.mail.port"));
 	}
+
 	public String getMailAuthenticator() {
 		return servletContext.getInitParameter("org.goods.living.tech.health.device.mail.authenticator");
 	}
+
 	public String getMailPassword() {
 		return servletContext.getInitParameter("org.goods.living.tech.health.device.mail.password");
 	}
+
 	public Boolean getTlsStatus() {
 		return Boolean.valueOf(servletContext.getInitParameter("org.goods.living.tech.health.device.mail.tls.allow"));
 	}
+
 	public String getUrl() {
 		return servletContext.getInitParameter("org.goods.living.tech.health.url");
 	}
@@ -75,7 +81,7 @@ public class ApplicationParameters {
 	}
 
 	public int getLocationUpdateInterval() {
-		int temp = 1;
+		int temp = 300;
 		try {
 			temp = Integer.parseInt(
 					servletContext.getInitParameter("org.goods.living.tech.health.device.locationUpdateInterval"));
@@ -112,6 +118,19 @@ public class ApplicationParameters {
 
 	}
 
+	public String getDataBalanceCheckTime() {
+
+		try {
+			String s = servletContext.getInitParameter("org.goods.living.tech.health.device.dataBalanceCheckTime");
+			logger.debug(s);
+			return s;
+		} catch (Exception e) {
+			logger.error(e);
+			return null;
+		}
+
+	}
+
 	public String getEmail() {
 
 		try {
@@ -129,6 +148,19 @@ public class ApplicationParameters {
 
 		try {
 			String s = servletContext.getInitParameter("org.goods.living.tech.health.device.email.password");
+			logger.debug(s);
+			return s;
+		} catch (Exception e) {
+			logger.error(e);
+			return null;
+		}
+
+	}
+
+	public String getEmailHostName() {
+
+		try {
+			String s = servletContext.getInitParameter("org.goods.living.tech.health.device.email.hostname");
 			logger.debug(s);
 			return s;
 		} catch (Exception e) {

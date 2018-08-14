@@ -38,7 +38,6 @@ import org.goods.living.tech.health.device.services.LocationJobService;
 import org.goods.living.tech.health.device.services.SettingService;
 import org.goods.living.tech.health.device.services.UserService;
 import org.goods.living.tech.health.device.utils.AuthenticatorService;
-import org.goods.living.tech.health.device.utils.Constants;
 import org.goods.living.tech.health.device.utils.DataBalanceHelper;
 import org.goods.living.tech.health.device.utils.LocationUpdatesBroadcastReceiver;
 import org.goods.living.tech.health.device.utils.PermissionsUtils;
@@ -171,14 +170,14 @@ public class AppController extends Application {
 
 
                         }
-                         requestLocationUpdates(getUser().updateInterval);
+                        requestLocationUpdates(getSetting().locationUpdateInterval);
                         //      Location l = getlastKnownLocation().getResult();
                         //     if (l != null) {
                         //         Crashlytics.log(Log.DEBUG, TAG, l.toString());
                         //      }
 
                     }
-                }).timeout((int) getUser().updateInterval * 1000).start(this);
+                }).timeout((int) this.getSetting().locationUpdateInterval * 1000).start(this);
 
 
         schedulerJobs();
@@ -209,7 +208,7 @@ public class AppController extends Application {
 // do this in your activities/fragments to get hold of a Box
         // notesBox = ((AppController) getApplication()).getBoxStore().boxFor(Note.class);
 
-        requestLocationUpdates(this.getUser().updateInterval);
+        requestLocationUpdates(this.getSetting().locationUpdateInterval);
 
     }
 
@@ -356,27 +355,32 @@ public class AppController extends Application {
 //        Job USSDMinjob = createJob(JobSchedulerService.class, USSDJobService.class.getName(), nextIn, false, myExtrasBundle);
 //        dispatcher.mustSchedule(USSDMinjob); // jobs.add(USSDMinjob);
         //return jobs;
-        setUSSDAlarm();
+
+        Setting setting = getSetting();
+        setUSSDAlarm(setting.getDatabalanceCheckTimeInMilli());
 
     }
 
     //adb shell dumpsys alarm
     //https://stackoverflow.com/questions/28742884/how-to-read-adb-shell-dumpsys-alarm-output
-    public void setUSSDAlarm() {
+    public void setUSSDAlarm(Long alarmTime) {
 
         try {
 
             PermissionsUtils.requestBatteryOptimisation(this.getApplicationContext());
 
 
-            //    TimeZone timeZone = TimeZone.getTimeZone("UTC");
-            Calendar calendar = Calendar.getInstance();//(timeZone);
+            if (alarmTime == null) {
+                //    TimeZone timeZone = TimeZone.getTimeZone("UTC");
+                Calendar calendar = Calendar.getInstance();//(timeZone);
 
-            calendar.setTimeInMillis(System.currentTimeMillis());
-            calendar.set(Calendar.HOUR_OF_DAY, 7);
-            calendar.set(Calendar.MINUTE, 0);
-            calendar.set(Calendar.SECOND, 0);
-            calendar.set(Calendar.MILLISECOND, 0);
+                calendar.setTimeInMillis(System.currentTimeMillis());
+                calendar.set(Calendar.HOUR_OF_DAY, 7);
+                calendar.set(Calendar.MINUTE, 0);
+                calendar.set(Calendar.SECOND, 0);
+                calendar.set(Calendar.MILLISECOND, 0);
+                alarmTime = calendar.getTimeInMillis();
+            }
 
 
             //TODO remove
@@ -386,9 +390,9 @@ public class AppController extends Application {
             Calendar now = Calendar.getInstance();//timeZone);
             long nowTime = now.getTimeInMillis();
 
-            if (nowTime > calendar.getTimeInMillis()) {
-                calendar.add(Calendar.DATE, 1);//schedule for tomorrow
-            }
+            // if (nowTime > calendar.getTimeInMillis()) {
+            //     calendar.add(Calendar.DATE, 1);//schedule for tomorrow
+            // }
 
             Intent i = new Intent(this.getApplicationContext(), USSDBalanceBroadcastReceiver.class);
             PendingIntent pi = PendingIntent.getBroadcast(this.getApplicationContext(), 0, i
@@ -396,18 +400,19 @@ public class AppController extends Application {
             AlarmManager am = (AlarmManager) this.getSystemService(Context.ALARM_SERVICE);
 
             //   pi.cancel();
-            //  am.cancel(pi);
+            try {
+                am.cancel(pi);
+            } catch (Exception e) {
+                Crashlytics.log(Log.DEBUG, TAG, e.getMessage());
+                Crashlytics.logException(e);
+            }
 
             if (Build.VERSION.SDK_INT >= 23) {
                 am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP,
-                        calendar.getTimeInMillis(), pi);
+                        alarmTime, pi);
             } else if (Build.VERSION.SDK_INT >= 19) {
-                am.setExact(AlarmManager.RTC_WAKEUP,
-                        calendar.getTimeInMillis(), pi);
-            } else {
-                am.set(AlarmManager.RTC_WAKEUP,
-                        calendar.getTimeInMillis(), pi);
-            }
+                am.setExact(AlarmManager.RTC_WAKEUP, alarmTime, pi);
+            }// else {am.set(AlarmManager.RTC_WAKEUP,alarmTime, pi); }
 
             //hack to force a launch
             Calendar yesterday = Calendar.getInstance();//(timeZone);
@@ -424,7 +429,7 @@ public class AppController extends Application {
             }
 
 
-            Log.d(TAG, "Alarm set: " + calendar.getTimeInMillis());
+            Log.d(TAG, "Alarm set: " + alarmTime);
         } catch (Exception e) {
             Crashlytics.log(Log.DEBUG, TAG, e.getMessage());
             Crashlytics.logException(e);
@@ -447,7 +452,6 @@ public class AppController extends Application {
         User user = userService.getRegisteredUser();
         if (user == null) {
             user = new User();
-            user.updateInterval = Constants.UPDATE_INTERVAL;
             //add device info
             String androidId = Utils.getAndroidId(this);
             user.androidId = androidId;

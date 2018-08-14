@@ -216,7 +216,7 @@ public class PermissionActivity extends FragmentActivity {
 
                             User user = AppController.getInstance().getUser();
                             AppController appController = (AppController) this.getApplicationContext();
-                            appController.requestLocationUpdates(user.updateInterval);
+                            appController.requestLocationUpdates(appController.getSetting().locationUpdateInterval);
                         }
                     }
                 }
