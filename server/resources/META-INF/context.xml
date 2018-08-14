@@ -45,6 +45,8 @@
 		value="false" />
 	<Parameter name="org.goods.living.tech.health.device.USSDBalanceCodes"
 		value="*150*1*4*1#,*544*44#" /><!-- "*150*1*4*1#,*100*6*6*2#,*100*6*4*2#"  -->
+		<Parameter name="org.goods.living.tech.health.device.dataBalanceCheckTime"
+		value="07:00" />
 	<!--<Parameter name="org.goods.living.tech.health.url"-->
 			   <!--value="https://device-health.lg-apps.com" />-->
 	<Parameter name="org.goods.living.tech.health.url"
@@ -54,5 +56,10 @@
 		value="${email.username}" />
 	<Parameter name="org.goods.living.tech.health.device.email.password"
 		value="${email.password}" />
+		
+		<Parameter name="org.goods.living.tech.health.device.email.hostname"
+		value="smtp.office365.com" />
+		
+		
 
 		</Context>

@@ -37,6 +37,7 @@
 -- BigInteger and String compatible fields respectively.
 
 
+DROP TABLE IF EXISTS shared.${changelog} ;
 
 CREATE TABLE shared.${changelog} (
 ID NUMERIC(20,0) NOT NULL,
@@ -52,6 +53,6 @@ PRIMARY KEY (id);
 
 DROP TABLE ${changelog};
 
-DROP SCHEMA events;
-DROP SCHEMA shared;
+--DROP SCHEMA events;
+--DROP SCHEMA shared;
 

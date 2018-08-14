@@ -19,8 +19,7 @@
 CREATE OR REPLACE VIEW events.branches AS
 select distinct branch from events.users;
 
-ALTER TABLE events.branches
-    OWNER TO device_health_admin;
+--ALTER TABLE events.branches OWNER TO device_health_admin;
 
 
 -- //@UNDO
