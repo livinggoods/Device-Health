@@ -6,6 +6,7 @@ import com.crashlytics.android.Crashlytics;
 
 import org.goods.living.tech.health.device.models.DataBalance;
 import org.goods.living.tech.health.device.models.DataBalance_;
+import org.goods.living.tech.health.device.utils.DataBalanceHelper;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
@@ -33,35 +34,6 @@ public class DataBalanceService extends BaseService {
 
     }
 
-    public boolean insertDataBalance(DataBalance model) {
-
-        try {
-
-
-            box.put(model);
-            return true;
-
-        } catch (Exception e) {
-            Crashlytics.log(Log.DEBUG, TAG, e.toString());
-            return false;
-        }
-
-    }
-
-    public boolean insertDataBalance(List<DataBalance> models) {
-
-        try {
-
-
-            box.put(models);
-            return true;
-
-        } catch (Exception e) {
-            Crashlytics.logException(e);
-            return false;
-        }
-
-    }
 
     public @Nonnull
     List<DataBalance> getLatestDataBalance(@Nullable Long limit) {
@@ -132,12 +104,13 @@ public class DataBalanceService extends BaseService {
 
     }
 
-    public boolean insert(Double bal, String raw, Integer sim, JSONObject telephoneData) {
+    public boolean insert(DataBalanceHelper.Balance bal, Integer sim, JSONObject telephoneData) {
         try {
 
             DataBalance model = new DataBalance();
-            model.balance = bal;
-            model.balanceMessage = raw;
+            model.balance = bal.balance;
+            model.expiryDate = bal.expiryDate;
+            model.balanceMessage = bal.rawBalance;
             model.sim = sim;
             model.info = telephoneData;
             model.recordedAt = new Date();

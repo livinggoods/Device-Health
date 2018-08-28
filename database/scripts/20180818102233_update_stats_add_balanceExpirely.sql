@@ -14,20 +14,15 @@
 --    limitations under the License.
 --
 
--- // update users drop unique chv id constraint
+-- // update stats add balanceExpirely
 -- Migration SQL that makes the change goes here.
 
-ALTER TABLE events.users drop  constraint "UNIQUE_CHV_ID";
-ALTER TABLE events.users ADD COLUMN fcm_token character varying(512);
-ALTER TABLE events.users drop COLUMN if exists update_interval ;
-ALTER TABLE events.users ADD COLUMN setting jsonb;
+
+
+ALTER TABLE events.data_balance ADD COLUMN expiry_date timestamp with time zone ;
 -- //@UNDO
 -- SQL to undo the change goes here.
 
-ALTER TABLE events.users DROP COLUMN setting;
-ALTER TABLE events.users drop COLUMN if exists update_interval ;
-ALTER TABLE events.users add COLUMN update_interval integer not null default 300;
+ALTER TABLE events.data_balance DROP COLUMN expiry_date;
 
-ALTER TABLE events.users add CONSTRAINT "UNIQUE_CHV_ID" UNIQUE(chv_id);
-ALTER TABLE events.users drop COLUMN if exists fcm_token ;
 

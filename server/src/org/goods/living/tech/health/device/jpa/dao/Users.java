@@ -43,7 +43,6 @@ import com.vladmihalcea.hibernate.type.json.JsonNodeBinaryType;
 		@NamedQuery(name = "Users.findByChvId", query = "SELECT u FROM Users u WHERE u.chvId = :chvId"),
 		@NamedQuery(name = "Users.findByPhone", query = "SELECT u FROM Users u WHERE u.phone = :phone"),
 		@NamedQuery(name = "Users.findByAndroidId", query = "SELECT u FROM Users u WHERE u.androidId = :androidId"),
-		@NamedQuery(name = "Users.findByUpdateInterval", query = "SELECT u FROM Users u WHERE u.updateInterval = :updateInterval"),
 		@NamedQuery(name = "Users.findByCreatedAt", query = "SELECT u FROM Users u WHERE u.createdAt = :createdAt"),
 		@NamedQuery(name = "Users.findByUpdatedAt", query = "SELECT u FROM Users u WHERE u.updatedAt = :updatedAt"),
 		@NamedQuery(name = "Users.findByVersionCode", query = "SELECT u FROM Users u WHERE u.versionCode = :versionCode"),
@@ -105,7 +104,7 @@ public class Users implements Serializable {
 	@Column(name = "country", length = 8)
 	private String country;
 
-	@Column(name = "fcm_token", length = 128)
+	@Column(name = "fcm_token", length = 512)
 	private String fcmToken;
 
 	@Type(type = "jsonb-node")

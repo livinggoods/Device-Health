@@ -73,7 +73,6 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
 
                 }
 
-                AppController.getInstance().setUSSDAlarm(appController.getSetting().getDatabalanceCheckTimeInMilli());
 
             }
         });

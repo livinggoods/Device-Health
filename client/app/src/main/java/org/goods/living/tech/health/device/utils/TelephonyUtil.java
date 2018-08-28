@@ -75,7 +75,9 @@ public class TelephonyUtil {
                 Class<?> value = entry.getValue();
 
                 String sim0 = getDeviceIdBySlot(key, 0);
+                sim0 = (sim0 != null && !sim0.trim().isEmpty()) ? sim0.trim() : null;
                 String sim1 = getDeviceIdBySlot(key, 1);
+                sim1 = (sim1 != null && !sim1.trim().isEmpty()) ? sim1.trim() : null;
 
                 if (sim0 != null) {
 

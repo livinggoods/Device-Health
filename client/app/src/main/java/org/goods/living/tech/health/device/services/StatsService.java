@@ -7,12 +7,15 @@ import com.crashlytics.android.Crashlytics;
 
 import org.goods.living.tech.health.device.models.Stats;
 import org.goods.living.tech.health.device.models.Stats_;
+import org.goods.living.tech.health.device.utils.Utils;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TimeZone;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -28,7 +31,7 @@ public class StatsService extends BaseService {
     @Inject
     Box<Stats> box;//= boxStore.boxFor(Stats.class);
 
-    public static long ACCURACY_THRESHHOLD = 10;
+    // public static long ACCURACY_THRESHHOLD = 10;
 
 
     @Inject
@@ -170,17 +173,17 @@ public class StatsService extends BaseService {
      * @return
      */
 
-    public boolean insertFilteredLocationData(List<Location> locations, Double brightness, Integer batteryLevel) {
+    public boolean insertLocationData(List<Location> locations, Double brightness, Integer batteryLevel) {
         try {
 
             List<Stats> list = new ArrayList<>();
 
             for (Location loc : locations) {
-
-                if (loc.getAccuracy() < ACCURACY_THRESHHOLD) {//take only accurate readings
-                    Crashlytics.log(Log.DEBUG, TAG, String.format("skipping inaccurate readings accuracy: %s  lat: %s  lon: %s ", loc.getAccuracy(), loc.getLatitude(), loc.getLongitude()));
-                    continue;
-                }
+//
+//                if (loc.getAccuracy() < ACCURACY_THRESHHOLD) {//take only accurate readings
+//                    Crashlytics.log(Log.DEBUG, TAG, String.format("skipping inaccurate readings accuracy: %s  lat: %s  lon: %s ", loc.getAccuracy(), loc.getLatitude(), loc.getLongitude()));
+//                    continue;
+//                }
 
                 Stats stats = new Stats();
                 stats.longitude = loc.getLongitude();
@@ -193,6 +196,10 @@ public class StatsService extends BaseService {
                 stats.batteryLevel = batteryLevel;
                 stats.brightness = brightness;
                 stats.createdAt = new Date();
+
+                String formattedDate = Utils.getStringTimeStampWithTimezoneFromDate(stats.recordedAt, TimeZone.getTimeZone(Utils.TIMEZONE_UTC));
+                SimpleDateFormat dateFormat = new SimpleDateFormat("MM-dd-yyyy HH:mm:ss Z");
+                Date serverRecordedAt = dateFormat.parse(formattedDate);
 
 
                 list.add(stats);
@@ -233,7 +240,7 @@ public class StatsService extends BaseService {
         }
     }
 
-    public boolean insertFailedLocationData(String reason) {
+    public boolean insertMessageData(String reason) {
         try {
 
             Stats stats = new Stats();

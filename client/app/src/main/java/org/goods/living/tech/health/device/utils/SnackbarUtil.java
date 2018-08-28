@@ -97,7 +97,7 @@ public class SnackbarUtil {
     }
 
     public static void showSnackWithProgress(Activity activity, String text) {
-        Snackbar bar = Snackbar.make(activity.getWindow().getDecorView().getRootView(), "processing...", Snackbar.LENGTH_INDEFINITE);
+        Snackbar bar = Snackbar.make(activity.getWindow().getDecorView().getRootView(), "processing...\n " + text, Snackbar.LENGTH_INDEFINITE);
         ViewGroup contentLay = (ViewGroup) bar.getView().findViewById(android.support.design.R.id.snackbar_text).getParent();
         ProgressBar item = new ProgressBar(activity);
         contentLay.addView(item, 0);

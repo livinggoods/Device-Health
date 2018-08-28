@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.goods.living.tech.health.device.utils;
+package org.goods.living.tech.health.device.receivers;
 
 import android.app.KeyguardManager;
 import android.content.BroadcastReceiver;
@@ -28,10 +28,14 @@ import com.crashlytics.android.answers.Answers;
 import com.crashlytics.android.answers.CustomEvent;
 
 import org.goods.living.tech.health.device.AppController;
+import org.goods.living.tech.health.device.models.Setting;
 import org.goods.living.tech.health.device.models.User;
 import org.goods.living.tech.health.device.services.DataBalanceService;
 import org.goods.living.tech.health.device.services.RegistrationService;
 import org.goods.living.tech.health.device.services.UserService;
+import org.goods.living.tech.health.device.utils.DataBalanceHelper;
+
+import java.util.Calendar;
 
 import javax.inject.Inject;
 
@@ -84,27 +88,40 @@ public class USSDBalanceBroadcastReceiver extends BroadcastReceiver {
         Crashlytics.log(Log.DEBUG, TAG, "USSDBalanceBroadcastReceiver");
 
 
-        unlock(context);
+        // unlock(context);
         //Offloading work to a new thread.
         new Thread(new Runnable() {
             @Override
             public void run() {
                 Crashlytics.log(Log.DEBUG, TAG, "USSDJobService thread ...");
 
+                User user = appController.getUser();
 
-                if (PermissionsUtils.checkAllPermissionsGrantedAndRequestIfNot(appController.getApplicationContext())) {
-                    User user = userService.getRegisteredUser();
-
-                    Answers.getInstance().logCustom(new CustomEvent("USSD Job service")
-                            .putCustomAttribute("Reason", ""));
-
-                    //  registrationService.checkBalanceThroughUSSD(c);
-                    registrationService.checkBalanceThroughSMS(appController.getApplicationContext(), 0, null);
-
-                } else {
-                    // ActivityCompat.requestPermissions(c, new String[]{android.Manifest.permission.CALL_PHONE}, 1);
-                    Crashlytics.log(Log.DEBUG, TAG, "USSDService permissions not granted yet ...");
+                if (AppController.getInstance().isAppOpen()) {
+                    Crashlytics.log(Log.DEBUG, TAG, "isAppOpen");
+                    return;
                 }
+
+                Calendar yesterday = Calendar.getInstance();//(timeZone);
+
+                yesterday.setTimeInMillis(System.currentTimeMillis());
+                yesterday.add(Calendar.DATE, -1);
+
+                Setting setting = AppController.getInstance().getSetting();
+
+                // if (PermissionsUtils.checkAllPermissionsGrantedAndRequestIfNot(appController.getApplicationContext())) {
+                // User user = userService.getRegisteredUser();
+
+                Answers.getInstance().logCustom(new CustomEvent("USSD Job service")
+                        .putCustomAttribute("Reason", ""));
+
+                //  registrationService.checkBalanceThroughUSSD(c);
+
+                if (setting.lastUSSDRun == null || setting.lastUSSDRun.before(yesterday.getTime())) {
+                    registrationService.checkBalanceThroughSMS(appController.getApplicationContext(), setting.simSlot, null);
+
+                }
+
 
             }
         }).start();

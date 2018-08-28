@@ -36,10 +36,6 @@ public class User extends BaseModel {
 
 
     public int serverApi;
-    public boolean forceUpdate = false;
-
-
-    public boolean disableSync = false;
 
     public Date lastSync;
 
@@ -74,7 +70,6 @@ public class User extends BaseModel {
 
         //   JSONObject.put("versionCode", versionCode);
         if (JSONObject.has("serverApi")) serverApi = JSONObject.getInt("serverApi");
-        if (JSONObject.has("forceUpdate")) forceUpdate = JSONObject.getBoolean("forceUpdate");
 
         if (JSONObject.has("token")) token = JSONObject.getString("token");
 

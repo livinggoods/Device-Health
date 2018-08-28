@@ -11,6 +11,7 @@ import com.firebase.jobdispatcher.JobParameters;
 import org.goods.living.tech.health.device.AppController;
 import org.goods.living.tech.health.device.models.Setting;
 import org.goods.living.tech.health.device.utils.PermissionsUtils;
+import org.goods.living.tech.health.device.utils.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,6 +53,7 @@ public class LocationJobService extends com.firebase.jobdispatcher.JobService {
                 Answers.getInstance().logCustom(new CustomEvent("Location Job service")
                         .putCustomAttribute("Reason", ""));
 
+                Utils.turnGPSOn(c);
                 boolean locationOn = PermissionsUtils.isLocationOn(c);
 
                 Crashlytics.log(Log.DEBUG, TAG, "LocationJobService is location on: " + locationOn);
@@ -62,7 +64,7 @@ public class LocationJobService extends com.firebase.jobdispatcher.JobService {
 
                     if (setting.loglocationOffEvent) {
 
-                        statsService.insertFailedLocationData(locOffError);
+                        statsService.insertMessageData(locOffError);
                         Crashlytics.log(Log.DEBUG, TAG, locOffError);
                         Answers.getInstance().logCustom(new CustomEvent("Location")
                                 .putCustomAttribute("Reason", locOffError));
@@ -70,12 +72,15 @@ public class LocationJobService extends com.firebase.jobdispatcher.JobService {
                         setting.loglocationOffEvent = false;
                         appController.updateSetting(setting);
                     }
+                    appController.checkAndRequestPerms();
+
                 } else {
                     setting.loglocationOffEvent = true;
                     appController.updateSetting(setting);
                 }
+
                 appController.requestLocationUpdates(setting.locationUpdateInterval);
-                appController.checkAndRequestPerms();
+
 
                 jobFinished(job, false);
             }

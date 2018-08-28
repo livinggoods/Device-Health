@@ -3,6 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     package="org.goods.living.tech.health.device">
 
+
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
@@ -77,9 +78,9 @@
             android:name=".UI.UpgradeActivity"
             android:theme="@android:style/Theme.Translucent.NoTitleBar"></activity>
 
-        <activity
-            android:name=".UI.UnlockActivity"
-            android:theme="@android:style/Theme.Translucent.NoTitleBar"></activity>
+        <!--     <activity
+              android:name=".UI.UnlockActivity"
+              android:theme="@android:style/Theme.Translucent.NoTitleBar"></activity> -->
 
         <activity
             android:name=".UI.RegisterActivity"
@@ -90,7 +91,7 @@
 
 
         <receiver
-            android:name=".utils.LocationUpdatesBroadcastReceiver"
+            android:name=".receivers.LocationUpdatesBroadcastReceiver"
             android:enabled="true"
             android:exported="true">
             <intent-filter>
@@ -113,18 +114,17 @@
         </receiver>
 
         <receiver
-            android:name=".utils.USSDBalanceBroadcastReceiver"
+            android:name=".receivers.USSDBalanceBroadcastReceiver"
             android:enabled="true"
             android:exported="true"></receiver>
         <receiver
-            android:name=".utils.UpdateBroadcastReceiver"
+            android:name=".receivers.UpdateBroadcastReceiver"
             android:enabled="true"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
             </intent-filter>
         </receiver>
-
 
         <service android:name=".utils.AuthenticatorService">
             <intent-filter>
@@ -177,6 +177,13 @@
                 android:name="android.accessibilityservice"
                 android:resource="@xml/accessibilitysettings" />
         </service>
+
+        <service android:name=".services.FirebaseMessageService">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
+
 
         <meta-data
             android:name="io.fabric.ApiKey"

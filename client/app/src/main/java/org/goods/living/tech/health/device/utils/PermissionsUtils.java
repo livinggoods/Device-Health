@@ -145,6 +145,7 @@ public class PermissionsUtils {
                 return false;
             }
 
+
 //            if (!hasUsageStatsPermission(context)) {
 //                Answers.getInstance().logCustom(new CustomEvent("Missing Permissions")
 //                        .putCustomAttribute("Reason", "usage stats"));
@@ -209,6 +210,7 @@ public class PermissionsUtils {
 
         }
     }
+
 
     public static boolean areAllPermissionsGranted(Context c) {
 
@@ -315,6 +317,5 @@ public class PermissionsUtils {
         }
 
     }
-
 
 }

@@ -1,5 +1,6 @@
 package org.goods.living.tech.health.device.services;
 
+import android.app.Activity;
 import android.content.Context;
 import android.support.annotation.NonNull;
 import android.util.Log;
@@ -16,6 +17,7 @@ import org.goods.living.tech.health.device.models.User;
 import org.goods.living.tech.health.device.utils.Constants;
 import org.goods.living.tech.health.device.utils.DataBalanceHelper;
 import org.goods.living.tech.health.device.utils.ServerRestClient;
+import org.goods.living.tech.health.device.utils.SnackbarUtil;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -58,7 +60,7 @@ public class RegistrationService extends BaseService {
 
     }
 
-    public User register(Context c) {
+    public User register(Activity c) {
 
         final User user = userService.getRegisteredUser();
         user.deviceTime = new Date();
@@ -73,6 +75,8 @@ public class RegistrationService extends BaseService {
             public void onFailure(int statusCode, Header[] headers, String responseString, Throwable throwable) {
                 Crashlytics.log(Log.DEBUG, TAG, responseString);
                 try {
+                    Crashlytics.logException(throwable);
+                    if (responseString == null) return;
                     JSONObject response = new JSONObject(responseString);
                     String msg = response.has(Constants.MESSAGE) ? response.getString(Constants.MESSAGE) : response.getString(Constants.MESSAGE);
                     Answers.getInstance().logCustom(new CustomEvent("User Registration fail")
@@ -81,7 +85,7 @@ public class RegistrationService extends BaseService {
                     user.lastSync = new Date();
                     userService.insertUser(user);
 
-                    Crashlytics.logException(throwable);
+
                 } catch (JSONException e) {
                     Log.e(TAG, "", e);
                     Crashlytics.logException(e);
@@ -108,7 +112,6 @@ public class RegistrationService extends BaseService {
 
                         user.masterId = updatedUser.masterId;
                         user.serverApi = updatedUser.serverApi;
-                        user.forceUpdate = updatedUser.forceUpdate;
                         user.phone = updatedUser.phone;
                         user.country = updatedUser.country;
                         user.branch = updatedUser.branch;
@@ -119,11 +122,14 @@ public class RegistrationService extends BaseService {
                         user.lastSync = new Date();
                         userService.insertUser(user);
 
+                        serverRestClient.setAuthHeader(user.token);
 
                     } else {
                         Crashlytics.log(Log.ERROR, TAG, "problem registering user " + user.username + " " + msg);
                         Answers.getInstance().logCustom(new CustomEvent("User Registration fail")
                                 .putCustomAttribute("Reason", "username: " + user.username + " msg: " + msg));
+
+                        SnackbarUtil.showSnack(c, msg);
                     }
 
                 } catch (JSONException e) {
@@ -147,7 +153,7 @@ public class RegistrationService extends BaseService {
 
             setting.fetchingUSSD = false;
             AppController.getInstance().updateSetting(setting);
-            return setting.workingUSSD0;
+            return setting.workingUSSD;
         }
 
         //  String  deviceSyncTimeStr = Utils.getStringTimeStampWithTimezoneFromDate(deviceSyncTime, TimeZone.getTimeZone(Utils.TIMEZONE_UTC));
@@ -184,8 +190,7 @@ public class RegistrationService extends BaseService {
                         ArrayList<String> list = USSDService.getUSSDCodesFromString(ussdList);
 
                         Setting setting = AppController.getInstance().getSetting();
-                        setting.workingUSSD0 = list;
-                        setting.workingUSSD1 = list;
+                        setting.workingUSSD = list;
                         AppController.getInstance().updateSetting(setting);
 
                     } else {
@@ -208,85 +213,8 @@ public class RegistrationService extends BaseService {
         setting = AppController.getInstance().getSetting();
 
 
-        return setting.workingUSSD0;
+        return setting.workingUSSD;
     }
-
-    private void checkBalanceThroughUSSD(
-            Context c, int portz) {
-
-        Crashlytics.log(Log.DEBUG, TAG, "checkBalanceThroughUSSD");
-
-        Setting setting = AppController.getInstance().getSetting();
-
-        AppController appController = ((AppController) c.getApplicationContext());
-        appController.telephonyInfo.loadInfo();
-        if (portz == 0 && appController.telephonyInfo.networkSIM0 == null) {
-            portz = 1;
-            //no sim in 1 try 2
-            Crashlytics.log(Log.DEBUG, TAG, "no sim in port 1 try 2");
-        }
-        if (portz == 1 && appController.telephonyInfo.networkSIM1 == null) {
-            //no sim in 2
-            Crashlytics.log(Log.DEBUG, TAG, "no sim in port 2");
-            return;
-        }
-
-        List<String> ussdlist = (portz == 0) ? setting.workingUSSD0 : setting.workingUSSD1;
-        final int port = portz;
-
-        String ussd = (ussdlist != null && ussdlist.size() > 0) ? ussdlist.get(0) : null;
-        if (ussd != null) {
-            dataBalanceHelper.USSDtoSMSNumber(c, ussd, port, new DataBalanceHelper.USSDResult() {
-                @Override
-                public void onResult(@NonNull DataBalanceHelper.Balance bal) {
-
-                    if (bal.balance != null) { //this method works -good code and there is sim?
-
-                        Crashlytics.log(Log.DEBUG, TAG, "saving balance ...");
-                        // String sim = TelephonyUtil.getSimSerial(c);
-
-                        JSONObject telephoneData = appController.telephonyInfo.telephoneDataSIM0;
-                        if (port == 1)
-                            telephoneData = appController.telephonyInfo.telephoneDataSIM1;
-                        dataBalanceService.insert(bal.balance, bal.rawBalance, port, telephoneData);
-
-                        //switch to line 2 if any
-                        if (port == 0)
-                            checkBalanceThroughUSSD(c, 1);
-                        else //we r done
-                            return;
-
-                    } else {
-
-                        ussdlist.remove(ussd);
-                        AppController.getInstance().updateSetting(setting);
-
-                        if (ussdlist.size() > 0) { //try again
-                            Crashlytics.log(Log.DEBUG, TAG, "trying again balance check ...");
-
-                            checkBalanceThroughUSSD(c, port);
-                        } else {
-                            //switch to line 2 if any
-                            if (port == 0)
-                                checkBalanceThroughUSSD(c, 1);
-                            else //we r done
-                                return;
-                        }
-
-
-                    }
-
-
-                }
-            });
-
-
-        } else { //refetch list from server
-            getUSSDCodes();
-        }
-
-    }
-
 
     public void checkBalanceThroughSMS(
             Context c, int portz, BalanceSuccessCallback balanceSuccessCallback) {
@@ -298,9 +226,9 @@ public class RegistrationService extends BaseService {
         AppController appController = ((AppController) c.getApplicationContext());
         appController.telephonyInfo.loadInfo();
         if (portz == 0 && appController.telephonyInfo.networkSIM0 == null) {
-            portz = 1;
             //no sim in 1 try 2
-            Crashlytics.log(Log.DEBUG, TAG, "no sim in port 1 try 2");
+            Crashlytics.log(Log.DEBUG, TAG, "no sim in port 1");
+            return;
         }
         if (portz == 1 && appController.telephonyInfo.networkSIM1 == null) {
             //no sim in 2
@@ -308,7 +236,7 @@ public class RegistrationService extends BaseService {
             return;
         }
 
-        List<String> ussdlist = (portz == 0) ? setting.workingUSSD0 : setting.workingUSSD1;
+        List<String> ussdlist = setting.workingUSSD;
         final int port = portz;
 
         String ussd = (ussdlist != null && ussdlist.size() > 0) ? ussdlist.get(0) : null;
@@ -328,19 +256,11 @@ public class RegistrationService extends BaseService {
                         JSONObject telephoneData = appController.telephonyInfo.telephoneDataSIM0;
                         if (port == 1)
                             telephoneData = appController.telephonyInfo.telephoneDataSIM1;
-                        dataBalanceService.insert(bal.balance, bal.rawBalance, port, telephoneData);
+                        dataBalanceService.insert(bal, port, telephoneData);
 
                         if (balanceSuccessCallback != null) {
                             balanceSuccessCallback.onComplete();
                         }
-
-                        //switch to line 2 if any
-                        if (port == 0) {
-                            checkBalanceThroughSMS(c, 1, balanceSuccessCallback);
-                            return;
-                        }
-
-
                     } else {
 
                         ussdlist.remove(ussd);
@@ -350,15 +270,7 @@ public class RegistrationService extends BaseService {
                             Crashlytics.log(Log.DEBUG, TAG, "trying again balance check ...");
 
                             checkBalanceThroughSMS(c, port, balanceSuccessCallback);
-                        } else {
-                            //switch to line 2 if any
-                            if (port == 0)
-                                checkBalanceThroughSMS(c, 1, balanceSuccessCallback);
-                            else //we r done
-                                return;
                         }
-
-
                     }
 
 

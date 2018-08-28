@@ -37,15 +37,22 @@ public class Setting extends BaseModel {
 
     public long locationUpdateInterval = Constants.UPDATE_INTERVAL; // seconds
 
+    public boolean forceUpdate = false;
+    public boolean disableSync = false;
+    public int serverApi;
 
-    public String databalanceCheckTime;//"20:30
+
+    public String databalanceCheckTime = "7:00";//"20:30
 
     public String ussd;
+
+    public String network;
+
+    public int simSlot;
+
     // "
     @Convert(converter = StringListConverter.class, dbType = String.class)
-    public List<String> workingUSSD0;
-    @Convert(converter = StringListConverter.class, dbType = String.class)
-    public List<String> workingUSSD1;
+    public List<String> workingUSSD;
 
     public boolean fetchingUSSD;
 
@@ -66,6 +73,15 @@ public class Setting extends BaseModel {
 
         if (JSONObject.has("databalanceCheckTime"))
             databalanceCheckTime = JSONObject.getString("databalanceCheckTime");
+
+        if (JSONObject.has("forceUpdate"))
+            forceUpdate = JSONObject.getBoolean("forceUpdate");
+        if (JSONObject.has("disableSync"))
+            disableSync = JSONObject.getBoolean("disableSync");
+        if (JSONObject.has("serverApi"))
+            serverApi = JSONObject.getInt("serverApi");
+
+
     }
 
     public JSONObject toJSONObject() {
@@ -85,9 +101,16 @@ public class Setting extends BaseModel {
             if (databalanceCheckTime != null)
                 JSONObject.put("databalanceCheckTime", databalanceCheckTime);
             if (ussd != null) JSONObject.put("ussd", ussd);
-            if (workingUSSD0 != null) JSONObject.put("workingUSSD0", workingUSSD0);
-            if (workingUSSD1 != null) JSONObject.put("workingUSSD1", workingUSSD1);
+            if (workingUSSD != null) JSONObject.put("workingUSSD", workingUSSD);
+
             JSONObject.put("fetchingUSSD", fetchingUSSD);
+
+            JSONObject.put("simSlot", simSlot);
+            JSONObject.put("network", network);
+
+            JSONObject.put("forceUpdate", forceUpdate);
+            JSONObject.put("disableSync", disableSync);
+            JSONObject.put("serverApi", serverApi);
 
 
             return JSONObject;
@@ -148,15 +171,14 @@ public class Setting extends BaseModel {
     public Long getDatabalanceCheckTimeInMilli() {
 
         try {
-            if (databalanceCheckTime != null) {
-                SimpleDateFormat df = new SimpleDateFormat("HH:mm");
-                Date d1 = df.parse("23:30");
-                Calendar c1 = GregorianCalendar.getInstance();
-                c1.setTime(d1);
-                System.out.println(c1.getTimeInMillis());
-                return c1.getTimeInMillis();
-            }
-            return null;
+
+            SimpleDateFormat df = new SimpleDateFormat("HH:mm");
+            Date d1 = df.parse(databalanceCheckTime);//df.parse( "23:30");
+            Calendar c1 = GregorianCalendar.getInstance();
+            c1.setTime(d1);
+            System.out.println(c1.getTimeInMillis());
+            return c1.getTimeInMillis();
+
         } catch (Exception e) {
             e.printStackTrace();
             return null;

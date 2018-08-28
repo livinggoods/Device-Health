@@ -6,11 +6,14 @@ import android.app.Application;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.StrictMode;
 import android.provider.Settings;
+import android.support.annotation.NonNull;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 
@@ -27,23 +30,28 @@ import com.firebase.jobdispatcher.Trigger;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.analytics.FirebaseAnalytics;
+import com.google.firebase.iid.FirebaseInstanceId;
+import com.google.firebase.iid.InstanceIdResult;
+import com.google.firebase.messaging.FirebaseMessaging;
 import com.rvalerio.fgchecker.AppChecker;
 
+import org.goods.living.tech.health.device.UI.MainActivity;
 import org.goods.living.tech.health.device.models.Setting;
 import org.goods.living.tech.health.device.models.User;
+import org.goods.living.tech.health.device.receivers.LocationUpdatesBroadcastReceiver;
+import org.goods.living.tech.health.device.receivers.USSDBalanceBroadcastReceiver;
 import org.goods.living.tech.health.device.services.JobSchedulerService;
 import org.goods.living.tech.health.device.services.LocationJobService;
 import org.goods.living.tech.health.device.services.SettingService;
 import org.goods.living.tech.health.device.services.UserService;
 import org.goods.living.tech.health.device.utils.AuthenticatorService;
 import org.goods.living.tech.health.device.utils.DataBalanceHelper;
-import org.goods.living.tech.health.device.utils.LocationUpdatesBroadcastReceiver;
 import org.goods.living.tech.health.device.utils.PermissionsUtils;
 import org.goods.living.tech.health.device.utils.SyncAdapter;
 import org.goods.living.tech.health.device.utils.TelephonyUtil;
-import org.goods.living.tech.health.device.utils.USSDBalanceBroadcastReceiver;
 import org.goods.living.tech.health.device.utils.Utils;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -82,10 +90,14 @@ public class AppController extends Application {
 
     public AppChecker appChecker;
 
+    Intent restartServiceIntent;
 
-    private static final long MAX_WAIT_RECORDS = 2; // Every 5 items
+    boolean appOpen;
 
-    private static final long SMALLEST_DISPLACEMENT_LIMIT = 10; //metres
+
+    private static final long MAX_WAIT_RECORDS = 10; // Every x items
+
+    private static final long SMALLEST_DISPLACEMENT_LIMIT = 5; //metres
 
 
     public static AppController getInstance() {
@@ -101,6 +113,13 @@ public class AppController extends Application {
         return instance;
     }
 
+    public void appOpen(boolean open) {
+        this.appOpen = open;
+    }
+
+    public boolean isAppOpen() {
+        return appOpen;
+    }
 
     public AppcontrollerComponent getComponent() {
         return component;
@@ -109,6 +128,11 @@ public class AppController extends Application {
     public User getUser() {
         User user = userService.getRegisteredUser();
         return user;
+    }
+
+    public void updateUser(User model) {
+        userService.insertUser(model);
+
     }
 
     public Setting getSetting() {
@@ -126,14 +150,57 @@ public class AppController extends Application {
         return mFirebaseAnalytics;
     }
 
+
+    Thread.UncaughtExceptionHandler handler = new Thread.UncaughtExceptionHandler() {
+        public void uncaughtException(Thread thread, Throwable ex) {
+            Log.e(TAG, "Uncaught exception is: ", ex);
+            //  Looper.getMainLooper().getThread() == Thread.currentThread()
+            Crashlytics.logException(ex);
+            Answers.getInstance().logCustom(new CustomEvent("App crash")
+                    .putCustomAttribute("Reason", ex.getMessage()));
+
+            // log it & phone home.
+            // androidDefaultUEH.uncaughtException(thread, ex);
+            Intent intent = new Intent(instance, MainActivity.class);
+            PendingIntent pi = PendingIntent.getBroadcast(instance, 0, intent
+                    , PendingIntent.FLAG_UPDATE_CURRENT);
+            AlarmManager mgr = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+            mgr.set(AlarmManager.RTC, System.currentTimeMillis() + 2000, pi);
+            System.exit(2);
+
+        }
+    };
+
+
     @Override
     public void onCreate() {
+        boolean isDebug = ((this.getApplicationInfo().flags &
+                ApplicationInfo.FLAG_DEBUGGABLE) != 0);
+
+        if (isDebug) {//BuildConfig.DEBUG) {
+            StrictMode.setThreadPolicy(new StrictMode.ThreadPolicy.Builder()
+                    .detectDiskReads()
+                    .detectDiskWrites()
+                    .detectNetwork()   // or .detectAll() for all detectable problems
+                    .penaltyLog()
+                    .build());
+            StrictMode.setVmPolicy(new StrictMode.VmPolicy.Builder()
+                    .detectLeakedSqlLiteObjects()
+                    .detectLeakedClosableObjects()
+                    .penaltyLog()
+                    .penaltyDeath()
+                    .build());
+        }
+
         super.onCreate();
         component = DaggerAppcontrollerComponent.builder().appControllerModule(new AppControllerModule(this)).build();
         component.inject(this);
         if (instance == null) {
             instance = this;
         }
+
+        Thread.setDefaultUncaughtExceptionHandler(handler);
+
         mFirebaseAnalytics = FirebaseAnalytics.getInstance(this);
         mFirebaseAnalytics.logEvent(FirebaseAnalytics.Event.APP_OPEN, null);
 
@@ -155,29 +222,27 @@ public class AppController extends Application {
 
 
         Context c = this;
-        appChecker
-                .whenAny(new AppChecker.Listener() {
-                    @Override
-                    public void onForeground(String packageName) {
-                        // do something
-                        Crashlytics.log(Log.DEBUG, TAG, "foreground " + packageName);
-
-                        if (Utils.isSmartHealthApp(packageName)) {
-                            Crashlytics.log(Log.DEBUG, TAG, "foreground Smarthealth: " + packageName);
-                            Answers.getInstance().logCustom(new CustomEvent("Smarthealth foreground")
-                                    .putCustomAttribute("Reason", ""));
-                            Utils.turnGPSOn(c);
-
-
-                        }
-                        requestLocationUpdates(getSetting().locationUpdateInterval);
-                        //      Location l = getlastKnownLocation().getResult();
-                        //     if (l != null) {
-                        //         Crashlytics.log(Log.DEBUG, TAG, l.toString());
-                        //      }
-
-                    }
-                }).timeout((int) this.getSetting().locationUpdateInterval * 1000).start(this);
+//        appChecker
+//                .whenAny(new AppChecker.Listener() {
+//                    @Override
+//                    public void onForeground(String packageName) {
+//                        // do something
+//                        Crashlytics.log(Log.DEBUG, TAG, "foreground " + packageName);
+//
+//                        if (Utils.isSmartHealthApp(packageName)) {
+//                            Crashlytics.log(Log.DEBUG, TAG, "foreground Smarthealth: " + packageName);
+//                            Answers.getInstance().logCustom(new CustomEvent("Smarthealth foreground")
+//                                    .putCustomAttribute("Reason", ""));
+//                            Utils.turnGPSOn(c);
+//                        }
+//                        requestLocationUpdates(getSetting().locationUpdateInterval);
+//                        //      Location l = getlastKnownLocation().getResult();
+//                        //     if (l != null) {
+//                        //         Crashlytics.log(Log.DEBUG, TAG, l.toString());
+//                        //      }
+//
+//                    }
+//                }).timeout((int) this.getSetting().locationUpdateInterval * 1000).start(this);
 
 
         schedulerJobs();
@@ -191,6 +256,8 @@ public class AppController extends Application {
 
         // Perform a manual sync by calling this:
         SyncAdapter.performSync();
+
+        firebaseSetup();
 
         // component = DaggerAppcontrollerComponent.builder().appModule(new AppModule(this)).build();
 
@@ -209,6 +276,15 @@ public class AppController extends Application {
         // notesBox = ((AppController) getApplication()).getBoxStore().boxFor(Note.class);
 
         requestLocationUpdates(this.getSetting().locationUpdateInterval);
+
+    }
+
+
+    @Override
+    public void onTerminate() {
+        this.stopService(restartServiceIntent);
+        Log.i(TAG, "onTerminate!");
+        super.onTerminate();
 
     }
 
@@ -390,9 +466,12 @@ public class AppController extends Application {
             Calendar now = Calendar.getInstance();//timeZone);
             long nowTime = now.getTimeInMillis();
 
-            // if (nowTime > calendar.getTimeInMillis()) {
-            //     calendar.add(Calendar.DATE, 1);//schedule for tomorrow
-            // }
+            Calendar calendar = Calendar.getInstance();
+            calendar.setTimeInMillis(alarmTime);
+            if (nowTime > calendar.getTimeInMillis()) {
+                calendar.add(Calendar.DATE, 1);//schedule for tomorrow
+                alarmTime = calendar.getTimeInMillis();
+            }
 
             Intent i = new Intent(this.getApplicationContext(), USSDBalanceBroadcastReceiver.class);
             PendingIntent pi = PendingIntent.getBroadcast(this.getApplicationContext(), 0, i
@@ -429,7 +508,7 @@ public class AppController extends Application {
             }
 
 
-            Log.d(TAG, "Alarm set: " + alarmTime);
+            Crashlytics.log(Log.DEBUG, TAG, "Alarm set: " + new Date(alarmTime));
         } catch (Exception e) {
             Crashlytics.log(Log.DEBUG, TAG, e.getMessage());
             Crashlytics.logException(e);
@@ -442,8 +521,7 @@ public class AppController extends Application {
         if (setting == null) {
             setting = new Setting();
             setting.fetchingUSSD = false;
-            setting.workingUSSD0 = DataBalanceHelper.USSDList;
-            setting.workingUSSD1 = DataBalanceHelper.USSDList;
+            setting.workingUSSD = DataBalanceHelper.USSDList;
 
             settingService.insert(setting);
         }
@@ -491,9 +569,6 @@ public class AppController extends Application {
     }
 
 
-    /**
-     * request updates if not already setup
-     */
     public void requestLocationUpdates(long updateInterval) {
         try {
             Crashlytics.log(Log.DEBUG, TAG, "requestLocationUpdates " + updateInterval);
@@ -536,19 +611,22 @@ public class AppController extends Application {
 
         long fastestUpdateInterval = updateInterval;// / 2;
 
-        mLocationRequest.setInterval(updateInterval);
+        mLocationRequest.setInterval(updateInterval * 2);
 
         // Sets the fastest rate for active location updates. This interval is exact, and your
         // application will never receive updates faster than this value.
         mLocationRequest.setFastestInterval(fastestUpdateInterval);
 
-        mLocationRequest.setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);//ocationRequest.PRIORITY_HIGH_ACCURACY
+        mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);//ocationRequest.PRIORITY_HIGH_ACCURACY
+
 
         // Sets the maximum time when batched location updates are delivered. Updates may be
         // delivered sooner than this interval.
 
         long maxWaitTime = updateInterval * MAX_WAIT_RECORDS;
         mLocationRequest.setMaxWaitTime(maxWaitTime);
+
+        // mLocationRequest.setNumUpdates()
 
         mLocationRequest.setSmallestDisplacement(SMALLEST_DISPLACEMENT_LIMIT);//metres
         return mLocationRequest;
@@ -584,5 +662,31 @@ public class AppController extends Application {
 
     }
 
+
+    void firebaseSetup() {
+        // Get token
+        FirebaseInstanceId.getInstance().getInstanceId()
+                .addOnCompleteListener(new OnCompleteListener<InstanceIdResult>() {
+                    @Override
+                    public void onComplete(@NonNull Task<InstanceIdResult> task) {
+                        if (!task.isSuccessful()) {
+                            //Log.w(TAG, "getInstanceId failed", task.getException());
+                            Crashlytics.logException(task.getException());
+                            return;
+                        }
+                        // Get new Instance ID token
+                        String token = task.getResult().getToken();
+                        Crashlytics.log(Log.DEBUG, TAG, token);
+
+                        User user = getUser();
+                        user.fcmToken = token;
+                        updateUser(user);
+
+
+                    }
+                });
+
+        FirebaseMessaging.getInstance().subscribeToTopic("all");
+    }
 
 }

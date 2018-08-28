@@ -49,7 +49,6 @@ import android.view.Window;
 import android.view.WindowManager;
 
 import com.crashlytics.android.Crashlytics;
-import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 
 import org.goods.living.tech.health.device.R;
@@ -371,17 +370,31 @@ public class Utils {
         }
     }
 
-    public static boolean isGooglePlayServicesAvailable(Activity activity) {
-        GoogleApiAvailability googleApiAvailability = GoogleApiAvailability.getInstance();
-        int status = googleApiAvailability.isGooglePlayServicesAvailable(activity.getApplicationContext());
-        if (status != ConnectionResult.SUCCESS) {
-            if (googleApiAvailability.isUserResolvableError(status)) {
-                googleApiAvailability.getErrorDialog(activity, status, 2404).show();
-            }
-            return false;
-        }
-        return true;
-    }
+    public static void makeGooglePlayServicesAvailable(Activity c) {
+        GoogleApiAvailability apiAvailability = GoogleApiAvailability.getInstance();
+        apiAvailability.makeGooglePlayServicesAvailable(c);
 
+//        int resultCode = apiAvailability.isGooglePlayServicesAvailable(c);
+//        if (resultCode != ConnectionResult.SUCCESS) {
+//
+//            Answers.getInstance().logCustom(new CustomEvent("Missing Correct Google PlayService"));
+//            //.putCustomAttribute("Reason", ""));
+//
+//            // Or you can depend on library classes to handle these errors and show appropriate error message with action in dialog.
+//            if (apiAvailability.isUserResolvableError(resultCode)) {
+//                //  apiAvailability.getErrorDialog(c, resultCode, 2400).show();
+//                apiAvailability.makeGooglePlayServicesAvailable(c);
+//
+//                Answers.getInstance().logCustom(new CustomEvent("Missing Correct Google PlayService")
+//                        .putCustomAttribute("Reason", "Requested update"));
+//            } else {
+//                // Unrecoverable error.
+//                Answers.getInstance().logCustom(new CustomEvent("Missing Correct Google PlayService")
+//                        .putCustomAttribute("Reason", "Unrecoverable error"));
+//            }
+//            return false;
+//        }
+//        return true;
+    }
 
 }

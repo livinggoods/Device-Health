@@ -84,7 +84,8 @@ public class UpgradeActivity extends FragmentActivity {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 //Click button action
-                startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=" + context.getPackageName())));
+                Intent marketIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=" + context.getPackageName()));
+                startActivity(marketIntent);
                 dialog.dismiss();
             }
         });

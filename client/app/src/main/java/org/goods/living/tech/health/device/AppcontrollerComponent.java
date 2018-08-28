@@ -3,18 +3,18 @@ package org.goods.living.tech.health.device;
 import org.goods.living.tech.health.device.UI.MainActivity;
 import org.goods.living.tech.health.device.UI.PermissionActivity;
 import org.goods.living.tech.health.device.UI.RegisterUserFragment;
-import org.goods.living.tech.health.device.UI.UnlockActivity;
+import org.goods.living.tech.health.device.receivers.LocationUpdatesBroadcastReceiver;
+import org.goods.living.tech.health.device.receivers.SmsBroadcastReceiver;
+import org.goods.living.tech.health.device.receivers.USSDBalanceBroadcastReceiver;
+import org.goods.living.tech.health.device.receivers.UpdateBroadcastReceiver;
+import org.goods.living.tech.health.device.services.FirebaseMessageService;
 import org.goods.living.tech.health.device.services.JobSchedulerService;
 import org.goods.living.tech.health.device.services.LocationJobService;
 import org.goods.living.tech.health.device.services.LocationUpdatesIntentService;
 import org.goods.living.tech.health.device.services.RegistrationService;
 import org.goods.living.tech.health.device.services.USSDService;
 import org.goods.living.tech.health.device.utils.DataBalanceHelper;
-import org.goods.living.tech.health.device.utils.LocationUpdatesBroadcastReceiver;
-import org.goods.living.tech.health.device.utils.SmsBroadcastReceiver;
 import org.goods.living.tech.health.device.utils.SyncAdapter;
-import org.goods.living.tech.health.device.utils.USSDBalanceBroadcastReceiver;
-import org.goods.living.tech.health.device.utils.UpdateBroadcastReceiver;
 
 import javax.inject.Singleton;
 
@@ -53,12 +53,12 @@ public interface AppcontrollerComponent extends AndroidInjector<AppController> {
 
     void inject(DataBalanceHelper target);
 
-    void inject(UnlockActivity target);
-
     void inject(SmsBroadcastReceiver target);
 
     void inject(USSDBalanceBroadcastReceiver target);
 
     void inject(UpdateBroadcastReceiver target);
+
+    void inject(FirebaseMessageService target);
 
 }

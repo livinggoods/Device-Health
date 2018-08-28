@@ -2,6 +2,7 @@ package org.goods.living.tech.health.device.services;
 
 import android.content.Context;
 import android.content.Intent;
+import android.net.Uri;
 import android.util.Log;
 
 import com.crashlytics.android.Crashlytics;
@@ -64,8 +65,17 @@ public class SyncService extends BaseService {
 
     Date deviceSyncTime;
 
-    @Inject
 
+    // https://fcm.googleapis.com/fcm/send
+    //  key=AAAAC_DgPyI:APA91bETY8Rj2cpPFdkPTCdBQGw6uS17O87DcUviLHgeK248-NsUXqkZOXbCPOHG4azU5QwsLbrUgFNYMEOE9y9W_TsIdEmzN7fVv8vr7HWC-x6alezTx6K4X9sS7MrODPLDni3bHR_W
+    //  {
+    //     "to": "/topics/all",
+    //         "data":
+    //     {"function":"setting"
+    //     }
+    // }
+
+    @Inject
     public SyncService() {
         //super(boxStore);
 
@@ -96,37 +106,7 @@ public class SyncService extends BaseService {
 
             serverRestClient.setAuthHeader(u.token);
 
-            User user = syncUser();
-
-
-            //check server version
-
-            if (user.forceUpdate || BuildConfig.VERSION_CODE < user.serverApi) {
-                //  show update dialog ?
-
-                Intent intent = new Intent(context, UpgradeActivity.class);
-                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                intent.putExtra(UpgradeActivity.FORCE_UPDATE, user.forceUpdate);
-                context.startActivity(intent);
-
-
-            }
-            if (user.forceUpdate) {
-                Crashlytics.log("failed sync.forcing update");
-
-                syncRunning.set(false);
-                return;
-            }
-
-            //only sync if user synced
-            if (user.masterId == null) {
-                Crashlytics.log("cancel sync stats. masterid does not exist");
-                Answers.getInstance().logCustom(new CustomEvent("Sync failed")
-                        .putCustomAttribute("Reason", "masterid missing"));
-                syncRunning.set(false);
-                return;
-            }
-
+            syncUser();
 
             syncStats();
 
@@ -142,7 +122,7 @@ public class SyncService extends BaseService {
 
     }
 
-    User syncUser() {
+    void syncUser() {
 
         final User user = userService.getRegisteredUser();
         user.deviceTime = deviceSyncTime;
@@ -193,14 +173,12 @@ public class SyncService extends BaseService {
 
 
                         user.serverApi = updatedUser.serverApi;
-                        user.forceUpdate = updatedUser.forceUpdate;
                         user.phone = updatedUser.phone;
                         user.country = updatedUser.country;
                         user.branch = updatedUser.branch;
                         user.name = updatedUser.name;
                         user.chvId = updatedUser.chvId;
                         user.fcmToken = updatedUser.fcmToken;
-
                         user.lastSync = new Date();
                         userService.insertUser(user);
 
@@ -216,7 +194,6 @@ public class SyncService extends BaseService {
             }
         });
 
-        return user;
     }
 
     public void refreshToken() {
@@ -258,8 +235,8 @@ public class SyncService extends BaseService {
                         String oldToken = user.token;
                         user.token = updatedUser.token;
 
-                        if (user.token == null) {//cant auth user.. reset this account
-                            user.masterId = null;
+                        if (user.token == null) {//cant auth user... wht to do?
+
 
                             Crashlytics.log("Refresh token fail");
                             Answers.getInstance().logCustom(new CustomEvent("RefreshToken failed")
@@ -442,7 +419,7 @@ public class SyncService extends BaseService {
 
     }
 
-    Setting syncSetting() {
+    public void syncSetting() {
 
         AppController appController = (AppController) c.getApplicationContext();
         Setting setting = appController.getSetting();
@@ -477,15 +454,17 @@ public class SyncService extends BaseService {
                         changeLocationUpdateInterval = setting.locationUpdateInterval != updatedSetting.locationUpdateInterval;
                         setting.locationUpdateInterval = updatedSetting.locationUpdateInterval;
 
-                        if (updatedSetting.ussd != null && setting.workingUSSD0 == null) {
+                        if (updatedSetting.ussd != null && setting.workingUSSD == null) {
                             ArrayList<String> list = USSDService.getUSSDCodesFromString(updatedSetting.ussd);
-                            setting.workingUSSD0 = list;
+                            setting.workingUSSD = list;
                         }
-                        if (updatedSetting.ussd != null && setting.workingUSSD1 == null) {
-                            ArrayList<String> list = USSDService.getUSSDCodesFromString(updatedSetting.ussd);
-                            setting.workingUSSD1 = list;
-                        }
+
                         setting.databalanceCheckTime = updatedSetting.databalanceCheckTime;
+
+                        setting.forceUpdate = updatedSetting.forceUpdate;
+                        setting.serverApi = updatedSetting.serverApi;
+                        setting.disableSync = updatedSetting.disableSync;
+
 
                         AppController.getInstance().updateSetting(setting);
 
@@ -497,6 +476,26 @@ public class SyncService extends BaseService {
                             AppController appController = (AppController) c.getApplicationContext();
                             appController.requestLocationUpdates(setting.locationUpdateInterval);
                         }
+
+                        //check server version
+                        User user = appController.getUser();
+                        if (BuildConfig.VERSION_CODE < user.serverApi) {//setting.forceUpdate) {// ||
+                            //  show update dialog ?
+                            Intent marketIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=" + c.getPackageName()));
+                            if (marketIntent.resolveActivity(c.getPackageManager()) != null) {
+                                Intent intent = new Intent(c, UpgradeActivity.class);
+                                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                                intent.putExtra(UpgradeActivity.FORCE_UPDATE, setting.forceUpdate);
+                                c.startActivity(intent);
+                            } else {
+
+                                Answers.getInstance().logCustom(new CustomEvent("App Update no playstore")
+                                        .putCustomAttribute("Reason", "no playstore"));
+                            }
+
+
+                        }
+
 
                     } else {
                         Crashlytics.log(Log.ERROR, TAG, "problem syncing settings");
@@ -511,6 +510,6 @@ public class SyncService extends BaseService {
         });
 
 
-        return setting;
+        // return setting;
     }
 }

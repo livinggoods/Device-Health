@@ -15,14 +15,17 @@ import android.util.Log;
 
 import com.crashlytics.android.Crashlytics;
 
+import org.goods.living.tech.health.device.receivers.SmsBroadcastReceiver;
 import org.goods.living.tech.health.device.services.DataBalanceService;
 import org.goods.living.tech.health.device.services.USSDService;
 import org.goods.living.tech.health.device.services.UserService;
 
 import java.lang.reflect.Method;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -32,8 +35,10 @@ import javax.inject.Singleton;
 
 @Singleton
 public class DataBalanceHelper {
+
     public String TAG = this.getClass().getSimpleName();
 
+    public static String balanceExpireryDateFormat = "dd-mm-yyyy";
 
     @Inject
     public DataBalanceHelper() {
@@ -101,6 +106,33 @@ public class DataBalanceHelper {
         }
         return total;
     }
+
+    public Date extractExpiry(String rawText) {
+
+        Date date = null;
+        try {
+
+
+            String[] elements = rawText.split(" ");
+            SimpleDateFormat dateFormat = new SimpleDateFormat(balanceExpireryDateFormat);
+
+            for (String element : elements) {
+                try {
+                    date = dateFormat.parse(element);
+                    Crashlytics.log(Log.DEBUG, TAG, date != null ? date.toString() : null);
+
+                    if (date != null) {
+                        return date;
+                    }
+                } catch (Exception e) {
+                    // Ignore the exception. Move on to next element.
+                }
+            }
+        } catch (Exception e) {
+            Crashlytics.logException(e);
+        }
+        return date;
+    }
 //
 //    public static void sendUSSDDirect(Context c, String ussdFull) {
 //
@@ -146,6 +178,7 @@ public class DataBalanceHelper {
                 public void onUSSDReceived(String raw) {
 
                     bal.balance = extractBalance(raw);
+                    bal.expiryDate = extractExpiry(raw);
                     bal.rawBalance = raw;
 
                     if (timer != null) timer.cancel();
@@ -294,81 +327,7 @@ public class DataBalanceHelper {
         public int port;
         public Double balance;
         public String rawBalance;
-
-    }
-
-    private synchronized void smsNumber(Context c, String ussd, int port, USSDResult USSDResult) {
-
-        //List<Balance> list = new ArrayList<Balance>();
-        Balance bal = new Balance();
-
-        try {
-            if (smsBroadcastReceiver != null)
-                c.unregisterReceiver(smsBroadcastReceiver);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        smsBroadcastReceiver.setListener(new SmsBroadcastReceiver.Listener() {
-            @Override
-            public void onTextReceived(String raw) {
-
-                Crashlytics.log(Log.DEBUG, TAG, "onTextReceived ...");
-
-
-                bal.balance = extractBalance(raw);
-                bal.rawBalance = raw;
-                if (timer != null) timer.cancel();
-                USSDResult.onResult(bal);
-                //     if (bal.balance != null) {
-                setDialTimeComplete();
-
-                //    }
-
-
-            }
-        });
-        IntentFilter iff = new IntentFilter(Telephony.Sms.Intents.SMS_RECEIVED_ACTION);
-        iff.setPriority(2147483647);
-     
-        c.registerReceiver(smsBroadcastReceiver, iff);
-
-
-        SimUtil.sendSMS(c, 0, "450", null, "", null, null);
-
-        Calendar cal = Calendar.getInstance();
-        dialTime = cal.getTimeInMillis();
-
-        new Handler(Looper.getMainLooper()).post(new Runnable() {
-            @Override
-            public void run() {
-                //this runs on the UI thread
-                if (timer != null) timer.cancel();
-                timer = new CountDownTimer(USSD_LIMIT * 1000, 1000) {
-                    @Override
-                    public void onTick(long millisUntilFinished) {
-                        Crashlytics.log(Log.DEBUG, TAG, "2nd dial waiting for ussd " + (millisUntilFinished / 1000));
-
-                    }
-
-                    @Override
-                    public void onFinish() {
-                        Crashlytics.log(Log.DEBUG, TAG, "onFinish dials");
-
-                        Utils.getHandlerThread().post(new Runnable() {
-                            @Override
-                            public void run() {
-                                //this runs on the UI thread
-                                USSDResult.onResult(bal);
-                            }
-                        });
-
-
-                        timer = null;
-                    }
-                };
-                timer.start();
-            }
-        });
+        public Date expiryDate;
 
     }
 
@@ -394,6 +353,7 @@ public class DataBalanceHelper {
 
 
                     bal.balance = extractBalance(raw);
+                    bal.expiryDate = extractExpiry(raw);
                     bal.rawBalance = raw;
                     if (timer != null) timer.cancel();
                     if (USSDResult != null)

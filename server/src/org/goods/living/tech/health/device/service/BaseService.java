@@ -1,7 +1,5 @@
 package org.goods.living.tech.health.device.service;
 
-import java.text.SimpleDateFormat;
-
 import javax.inject.Inject;
 import javax.ws.rs.GET;
 import javax.ws.rs.Produces;
@@ -23,8 +21,6 @@ public class BaseService {
 	Logger logger = LogManager.getLogger(this);
 
 	String serviceMessage = getClass().getSimpleName();
-
-	SimpleDateFormat dateFormat = new SimpleDateFormat("MM-dd-yyyy HH:mm:ss Z");
 
 	@Inject
 	ApplicationParameters applicationParameters;

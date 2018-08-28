@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.goods.living.tech.health.device.utils;
+package org.goods.living.tech.health.device.receivers;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -31,6 +31,9 @@ import org.goods.living.tech.health.device.AppController;
 import org.goods.living.tech.health.device.UI.PermissionActivity;
 import org.goods.living.tech.health.device.models.Setting;
 import org.goods.living.tech.health.device.services.StatsService;
+import org.goods.living.tech.health.device.utils.PermissionsUtils;
+import org.goods.living.tech.health.device.utils.Utils;
+import org.goods.living.tech.health.device.utils.WriteToLogUtil;
 
 import java.util.List;
 
@@ -52,7 +55,7 @@ import javax.inject.Inject;
 public class LocationUpdatesBroadcastReceiver extends BroadcastReceiver {
     public static final String ACTION_PROCESS_UPDATES =
             ".org.goods.living.tech.health.device.LocationUpdatesBroadcastReceiver.ACTION_PROCESS_UPDATES";
-    private static final String TAG = "LUBroadcastReceiver";
+    private static final String TAG = LocationUpdatesBroadcastReceiver.class.getName();
 
     @Inject
     StatsService statsService;
@@ -75,13 +78,16 @@ public class LocationUpdatesBroadcastReceiver extends BroadcastReceiver {
 
         boolean locationOn = PermissionsUtils.isLocationOn(context);
 
+        //  location = lm.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+
         String packageName = appController.appChecker.getForegroundApp(context);
 
-        if (packageName != null && !Utils.isSmartHealthApp(packageName)) {
+        if (packageName != null && Utils.isSmartHealthApp(packageName)) {
 
-            String log = "Smarthealth not running. location updates. loc on: " + locationOn;
+            String log = "Smarthealth running. location updates. loc on: " + locationOn;
             Crashlytics.log(Log.DEBUG, TAG, log);
             WriteToLogUtil.getInstance().log(log);
+            statsService.insertMessageData(log);
             //  return;
         }
 
@@ -106,7 +112,7 @@ public class LocationUpdatesBroadcastReceiver extends BroadcastReceiver {
 
                     if (setting.loglocationOffEvent) {
 
-                        statsService.insertFailedLocationData(locerror);
+                        statsService.insertMessageData(locerror);
                         Crashlytics.log(Log.DEBUG, TAG, locerror);
                         Answers.getInstance().logCustom(new CustomEvent("Location")
                                 .putCustomAttribute("Reason", locerror));
@@ -114,7 +120,7 @@ public class LocationUpdatesBroadcastReceiver extends BroadcastReceiver {
                         setting.loglocationOffEvent = false;
                         appController.updateSetting(setting);
                     }
-                    appController.checkAndRequestPerms();
+
                 } else {
                     setting.loglocationOffEvent = true;
                     appController.updateSetting(setting);
@@ -128,11 +134,16 @@ public class LocationUpdatesBroadcastReceiver extends BroadcastReceiver {
                     Crashlytics.log(Log.DEBUG, TAG, log);
                     WriteToLogUtil.getInstance().log(log);
 
-                    //brightness
-                    intent = new Intent(context, PermissionActivity.class);
-                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NO_HISTORY);
-                    //  intent.putExtra("forceUpdate", forceUpdate);
-                    context.startActivity(intent);
+                    if (!AppController.getInstance().isAppOpen()) {
+                        Crashlytics.log(Log.DEBUG, TAG, "isAppOpen");
+
+                        //brightness
+                        intent = new Intent(context, PermissionActivity.class);
+                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NO_HISTORY);
+                        //  intent.putExtra("forceUpdate", forceUpdate);
+                        context.startActivity(intent);
+                    }
+
 
                     Utils.getHandlerThread().post(new Runnable() {
                         @Override
@@ -145,12 +156,12 @@ public class LocationUpdatesBroadcastReceiver extends BroadcastReceiver {
                             }
                             Setting setting = appController.getSetting();
                             Integer batteryLevel = Utils.getBatteryPercentage(context);
-                            statsService.insertFilteredLocationData(locations, setting.brightness, batteryLevel);
+                            statsService.insertLocationData(locations, setting.brightness, batteryLevel);
 
                         }
                     });
 
-                    appController.setUSSDAlarm(appController.getSetting().getDatabalanceCheckTimeInMilli());
+
                 } else {
 
                     Crashlytics.log(Log.DEBUG, TAG, "received NULL LocationResult.extractResult(intent). is location on: " + locationOn);

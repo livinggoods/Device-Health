@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.goods.living.tech.health.device.utils;
+package org.goods.living.tech.health.device.receivers;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;

@@ -92,10 +92,11 @@ public class ApplicationParameters {
 		return temp;
 	}
 
-	public String getUSSDBalanceCodes() {
+	public String getUSSDBalanceCodes(String network) {
 
 		try {
-			String s = servletContext.getInitParameter("org.goods.living.tech.health.device.USSDBalanceCodes");
+			String s = servletContext
+					.getInitParameter("org.goods.living.tech.health.device.USSDBalanceCodes-" + network);
 			logger.debug(s);
 			return s;
 		} catch (Exception e) {

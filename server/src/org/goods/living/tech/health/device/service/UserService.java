@@ -94,7 +94,6 @@ public class UserService extends BaseService {
 		users = usersJpaController.findByUserNameAndAndroidId(username, androidId);
 		if (users == null) {
 			users = new Users();
-			users.setUpdateInterval(DEFAULT_UPDATE_INTERVAL);
 			users.setUsername(username);
 			users.setPassword(data.has("password") ? data.get("password").asText() : null);
 			users.setAndroidId(androidId);
@@ -161,14 +160,15 @@ public class UserService extends BaseService {
 		o.put("masterId", users.getId());
 		o.put("phone", users.getPhone());
 		o.put("chvId", users.getChvId());
+		o.put("name", users.getName());
+		o.put("branch", users.getBranch());
+		o.put("country", users.getCountry());
 		if (token != null)
 			o.put("token", token);
 		if (clockDrift != null)
 			o.put("clockDrift", clockDrift);
 
-		boolean shouldforceupdate = shouldForceUpdate(username, versionCode);
 		o.put("serverApi", applicationParameters.getServerApi());
-		o.put("forceUpdate", shouldforceupdate);
 
 		Result<JsonNode> result = new Result<JsonNode>(true, "", o);
 		return result;
@@ -232,6 +232,10 @@ public class UserService extends BaseService {
 		boolean shouldforceupdate = shouldForceUpdate(users.getVersionName(), versionCode);
 		o.put("serverApi", applicationParameters.getServerApi());
 		o.put("forceUpdate", shouldforceupdate);
+		o.put("chvId", users.getChvId());
+		o.put("name", users.getName());
+		o.put("branch", users.getBranch());
+		o.put("country", users.getCountry());
 
 		result = new Result<JsonNode>(true, "", o);
 
@@ -333,19 +337,27 @@ public class UserService extends BaseService {
 		JsonNode data = JSonHelper.getJsonNode(incomingData);
 		// String username = data.has("username") ? data.get("username").asText() :
 		// null;
+		String username = data.has("username") ? data.get("username").asText() : null;
+		Integer versionCode = data.has("versionCode") ? data.get("versionCode").asInt() : null;
+		String network = data.has("network") ? data.get("network").asText() : null;
 
-		Users users = getCurrentUser();
+		// Users user = getCurrentUser();
 
 		ObjectNode node = JsonNodeFactory.instance.objectNode();
 
 		node.put("locationUpdateInterval", applicationParameters.getLocationUpdateInterval());// DEFAULT_UPDATE_INTERVAL);
 
 		if (applicationParameters.shouldUpdateUSSDBalanceCodes()) {
-			String ussd = applicationParameters.getUSSDBalanceCodes();
+			String ussd = applicationParameters.getUSSDBalanceCodes(network);
+
 			node.put("ussd", ussd);
 		}
 
 		node.put("databalanceCheckTime", applicationParameters.getDataBalanceCheckTime());
+		boolean shouldforceupdate = shouldForceUpdate(username, versionCode);
+		node.put("serverApi", applicationParameters.getServerApi());
+		node.put("forceUpdate", shouldforceupdate);
+		node.put("disableSync", false);
 
 		Result<JsonNode> result = new Result<JsonNode>(true, "", node);
 		return result;

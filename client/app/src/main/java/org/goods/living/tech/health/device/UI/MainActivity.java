@@ -126,7 +126,7 @@ public class MainActivity extends FragmentActivity implements
 
         balanceTextView = (TextView) findViewById(R.id.balanceTextView);
 
-        balanceTextView.setText(getString(R.string.data_balance, "0", "", ""));
+        balanceTextView.setText(getString(R.string.data_balance, "0", "", "", ""));
 
         intervalTextView = (TextView) findViewById(R.id.intervalTextView);
 
@@ -135,8 +135,8 @@ public class MainActivity extends FragmentActivity implements
 
         // Crashlytics.getInstance().crash(); // Force a crash
 
-        Utils.isGooglePlayServicesAvailable(this);
-        AppController.getInstance().checkAndRequestPerms();
+        Utils.makeGooglePlayServicesAvailable(this);
+
 
     }
 
@@ -154,7 +154,13 @@ public class MainActivity extends FragmentActivity implements
         super.onResume();
         Crashlytics.log(Log.DEBUG, TAG, "onResume ");
         loadData();
+        AppController.getInstance().appOpen(true);
+    }
 
+    @Override
+    protected void onPause() {
+        super.onPause();
+        AppController.getInstance().appOpen(false);
     }
 
 
@@ -223,20 +229,19 @@ public class MainActivity extends FragmentActivity implements
                 registrationService.checkBalanceThroughSMS(c, 0, new RegistrationService.BalanceSuccessCallback() {
                     @Override
                     public void onComplete() {
-                        Utils.dismissProgressDialog();
-                        List<DataBalance> list = dataBalanceService.getLatestRecords(1l);
-                        updateUI(list);
+
+                        new Handler(Looper.getMainLooper()).post(new Runnable() {
+                            @Override
+                            public void run() {
+                                Utils.dismissProgressDialog();
+                                List<DataBalance> list = dataBalanceService.getLatestRecords(1l);
+                                updateUI(list);
+                            }
+                        });
                     }
                 });
 
-                new Handler(Looper.getMainLooper()).post(new Runnable() {
-                    @Override
-                    public void run() {
-                        //this runs on the UI thread
-                        List<DataBalance> list = dataBalanceService.getLatestRecords(1l);
-                        updateUI(list);
-                    }
-                });
+
             }
         });
 
@@ -245,30 +250,16 @@ public class MainActivity extends FragmentActivity implements
 
 
     void updateUI(List<DataBalance> list) {
-        if (timer != null) timer.cancel();
-        timer = new CountDownTimer(DataBalanceHelper.USSD_LIMIT * 1000 + 1000, 1000) {
-            @Override
-            public void onTick(long millisUntilFinished) {
-                Crashlytics.log(Log.DEBUG, TAG, "tick tock ... waiting for ussd " + (millisUntilFinished / 1000));
 
+        Crashlytics.log(Log.DEBUG, TAG, "onFinish checkBalance");
+        Utils.dismissProgressDialog();
+        DataBalance dataBalance = list.size() > 0 ? list.get(0) : null;
+
+        if (dataBalance != null)
+            if (balanceTextView != null) {
+                balanceTextView.setText(getString(R.string.data_balance, dataBalance.sim, dataBalance.balance, dataBalance.expiryDate, dataBalance.balanceMessage));
             }
 
-            @Override
-            public void onFinish() {
-                Crashlytics.log(Log.DEBUG, TAG, "onFinish checkBalance");
-                Utils.dismissProgressDialog();
-                DataBalance dataBalance = list.size() > 0 ? list.get(0) : null;
-                if (dataBalance != null)
-                    if (balanceTextView != null) {
-                        balanceTextView.setText(getString(R.string.data_balance, dataBalance.sim, dataBalance.balance, dataBalance.balanceMessage));
-                    }
-
-                timer = null;
-
-
-            }
-        };
-        timer.start();
     }
 
 
@@ -348,7 +339,7 @@ public class MainActivity extends FragmentActivity implements
         DataBalance dataBalance = l.size() > 0 ? l.get(0) : null;
 
         if (dataBalance != null) {
-            balanceTextView.setText(getString(R.string.data_balance, dataBalance.sim, dataBalance.balance, dataBalance.balanceMessage));
+            balanceTextView.setText(getString(R.string.data_balance, dataBalance.sim, dataBalance.balance, dataBalance.expiryDate, dataBalance.balanceMessage));
         }
 
         Long total = statsService.countRecords();

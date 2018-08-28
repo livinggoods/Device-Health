@@ -6,6 +6,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.TimeZone;
 
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
@@ -30,6 +31,7 @@ import org.goods.living.tech.health.device.service.security.qualifier.Secured;
 import org.goods.living.tech.health.device.service.security.qualifier.UserCategory;
 import org.goods.living.tech.health.device.utility.Constants;
 import org.goods.living.tech.health.device.utility.JSonHelper;
+import org.goods.living.tech.health.device.utility.Utils;
 
 //https://dzone.com/articles/lets-compare-jax-rs-vs-spring-for-rest-endpoints
 
@@ -87,8 +89,9 @@ public class StatsService extends BaseService {
 			stats.setBatteryLevel(j.has("batteryLevel") ? j.get("batteryLevel").asDouble() : null);
 			stats.setBrightness(j.has("brightness") ? j.get("brightness").asDouble() : null);
 			if (j.has("recordedAt")) {
-				SimpleDateFormat dateFormat = new SimpleDateFormat("MM-dd-yyyy HH:mm:ss");
-				Date recordedAt = dateFormat.parse(j.get("recordedAt").asText());
+
+				Date recordedAt = Utils.getDateFromTimeStampWithTimezone(j.get("recordedAt").asText(),
+						TimeZone.getTimeZone(Utils.TIMEZONE_UTC));
 
 				stats.setRecordedAt(recordedAt);
 			}

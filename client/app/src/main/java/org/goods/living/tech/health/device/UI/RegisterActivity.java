@@ -19,11 +19,14 @@ package org.goods.living.tech.health.device.UI;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.FloatRange;
+import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
 
+import com.crashlytics.android.Crashlytics;
 import com.google.android.gms.location.LocationRequest;
 
+import org.goods.living.tech.health.device.AppController;
 import org.goods.living.tech.health.device.R;
 import org.goods.living.tech.health.device.services.DataBalanceService;
 import org.goods.living.tech.health.device.services.StatsService;
@@ -103,6 +106,7 @@ public class RegisterActivity extends MaterialIntroActivity implements RegisterU
                 .title("That's it!")
                 .description("Enable device health autostart in the autostart manager and reboot device\n\nDevice health is ready for use!")
                 .build());
+
     }
 
     @Override
@@ -113,6 +117,19 @@ public class RegisterActivity extends MaterialIntroActivity implements RegisterU
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         //  intent.putExtra("forceUpdate", forceUpdate);
         this.startActivity(intent);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        Crashlytics.log(Log.DEBUG, TAG, "onResume ");
+        AppController.getInstance().appOpen(true);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        AppController.getInstance().appOpen(false);
     }
 
     /**

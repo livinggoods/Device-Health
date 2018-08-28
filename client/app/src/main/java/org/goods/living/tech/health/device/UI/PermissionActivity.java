@@ -99,6 +99,12 @@ public class PermissionActivity extends FragmentActivity {
     }
 
     @Override
+    protected void onDestroy() {
+        PermissionsUtils.dismissAlert();
+        super.onDestroy();
+    }
+
+    @Override
     protected void onResume() {
         super.onResume();
         Crashlytics.log(Log.DEBUG, TAG, "onResume ");
@@ -231,11 +237,15 @@ public class PermissionActivity extends FragmentActivity {
 
     public void minimise() {
 
-        //  Intent intent = new Intent(this, MainActivity.class);
-        //  intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-        //  startActivity(intent);
-        // moveTaskToBack(true);
-        PermissionsUtils.dismissAlert();
-        finish();
+        try {
+            //  Intent intent = new Intent(this, MainActivity.class);
+            //  intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            //  startActivity(intent);
+
+            PermissionsUtils.dismissAlert();
+            finish();//moveTaskToBack(true);// finish();
+        } catch (Exception e) {
+            Crashlytics.logException(e);
+        }
     }
 }

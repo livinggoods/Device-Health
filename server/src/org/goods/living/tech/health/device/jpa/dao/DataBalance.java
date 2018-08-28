@@ -42,7 +42,8 @@ import com.vladmihalcea.hibernate.type.json.JsonNodeBinaryType;
 		@NamedQuery(name = "DataBalance.findByMessage", query = "SELECT d FROM DataBalance d WHERE d.message = :message"),
 		@NamedQuery(name = "DataBalance.findByRecordedAt", query = "SELECT d FROM DataBalance d WHERE d.recordedAt = :recordedAt"),
 		@NamedQuery(name = "DataBalance.findByCreatedAt", query = "SELECT d FROM DataBalance d WHERE d.createdAt = :createdAt"),
-		@NamedQuery(name = "DataBalance.findByUpdatedAt", query = "SELECT d FROM DataBalance d WHERE d.updatedAt = :updatedAt") })
+		@NamedQuery(name = "DataBalance.findByUpdatedAt", query = "SELECT d FROM DataBalance d WHERE d.updatedAt = :updatedAt"),
+		@NamedQuery(name = "DataBalance.findByExpiryDate", query = "SELECT d FROM DataBalance d WHERE d.expiryDate = :expiryDate") })
 @TypeDef(name = "jsonb-node", typeClass = JsonNodeBinaryType.class)
 public class DataBalance implements Serializable {
 
@@ -69,6 +70,11 @@ public class DataBalance implements Serializable {
 	@Column(name = "recorded_at")
 	@Temporal(TemporalType.TIMESTAMP)
 	private Date recordedAt;
+
+	@Column(name = "expiry_date")
+	@Temporal(TemporalType.TIMESTAMP)
+	private Date expiryDate;
+
 	@Basic(optional = false)
 	@Column(name = "created_at")
 	@Temporal(TemporalType.TIMESTAMP)
@@ -138,6 +144,14 @@ public class DataBalance implements Serializable {
 
 	public void setRecordedAt(Date recordedAt) {
 		this.recordedAt = recordedAt;
+	}
+
+	public Date getExpiryDate() {
+		return expiryDate;
+	}
+
+	public void setExpiryDate(Date expiryDate) {
+		this.expiryDate = expiryDate;
 	}
 
 	public Date getCreatedAt() {

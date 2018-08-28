@@ -20,6 +20,7 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -30,6 +31,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
+import android.widget.RadioButton;
 import android.widget.TextView;
 
 import com.crashlytics.android.Crashlytics;
@@ -44,6 +46,7 @@ import org.goods.living.tech.health.device.models.User;
 import org.goods.living.tech.health.device.services.DataBalanceService;
 import org.goods.living.tech.health.device.services.RegistrationService;
 import org.goods.living.tech.health.device.services.StatsService;
+import org.goods.living.tech.health.device.services.SyncService;
 import org.goods.living.tech.health.device.services.UserService;
 import org.goods.living.tech.health.device.utils.SnackbarUtil;
 import org.goods.living.tech.health.device.utils.Utils;
@@ -86,12 +89,18 @@ public class RegisterUserFragment extends SlideFragment {
     @Inject
     RegistrationService registrationService;
 
+    @Inject
+    SyncService syncService;
+
     private Button registerBtn;
     private TextView usernameText;
     private TextView balanceTextView;
     CountryCodePicker ccp;
     AppCompatEditText edtPhoneNumber;
     TextView msgTextView;
+
+    RadioButton radioButton1;
+    RadioButton radioButton2;
 
 
     public interface RegistrationFlow {
@@ -116,9 +125,12 @@ public class RegisterUserFragment extends SlideFragment {
         edtPhoneNumber = (AppCompatEditText) view.findViewById(R.id.phone_number_edt);
         ccp.registerCarrierNumberEditText(edtPhoneNumber);
 
+        radioButton1 = (RadioButton) view.findViewById(R.id.radioButton);
+        radioButton2 = (RadioButton) view.findViewById(R.id.radioButton2);
+
         balanceTextView = (TextView) view.findViewById(R.id.balanceTextView);
 
-        balanceTextView.setText(getString(R.string.data_balance, "0", "", ""));
+        balanceTextView.setText(getString(R.string.data_balance, "0", "", "", ""));
 
 
         loadData();
@@ -192,7 +204,7 @@ public class RegisterUserFragment extends SlideFragment {
 
                         if (dataBalance != null)
                             if (balanceTextView != null) {
-                                balanceTextView.setText(getString(R.string.data_balance, dataBalance.sim, dataBalance.balance, dataBalance.balanceMessage));
+                                balanceTextView.setText(getString(R.string.data_balance, dataBalance.sim, dataBalance.balance, dataBalance.expiryDate, dataBalance.balanceMessage));
                             }
                     }
                 });
@@ -258,7 +270,7 @@ public class RegisterUserFragment extends SlideFragment {
                                 DataBalance dataBalance = l.size() > 0 ? l.get(0) : null;
 
                                 if (dataBalance != null && balanceTextView != null) {
-                                    balanceTextView.setText(getString(R.string.data_balance, dataBalance.sim, dataBalance.balance, dataBalance.balanceMessage));
+                                    balanceTextView.setText(getString(R.string.data_balance, dataBalance.sim, dataBalance.balance, dataBalance.expiryDate, dataBalance.balanceMessage));
                                 }
                             }
                         });
@@ -299,6 +311,19 @@ public class RegisterUserFragment extends SlideFragment {
 
         user.recordedAt = new Date();
         userService.insertUser(user);
+
+        Setting setting = AppController.getInstance().getSetting();
+        setting.simSlot = 0;
+        setting.network = AppController.getInstance().telephonyInfo.networkSIM0;
+        if (radioButton2.isChecked()) {
+            setting.simSlot = 1;
+            setting.network = AppController.getInstance().telephonyInfo.networkSIM1;
+        }
+
+
+        AppController.getInstance().updateSetting(setting);
+
+
         hideKeyboard(this.getActivity());
         SnackbarUtil.showSnack(this.getActivity(), "saving CHV information ... ");
 
@@ -312,25 +337,10 @@ public class RegisterUserFragment extends SlideFragment {
             public void run() {
 
                 User updatedUser = registrationService.register(c);
+
                 if (updatedUser.masterId != null) {
-                    SnackbarUtil.showSnack(c, "CHV record saved. Checking for balance code...");
+                    syncService.syncSetting();
 
-                    //step 2 get ussdcodes
-                    //    registrationService.checkBalanceThroughUSSD(c,0);//will fetch ussdcodes
-                    registrationService.checkBalanceThroughSMS(c, 0, new RegistrationService.BalanceSuccessCallback() {
-                        @Override
-                        public void onComplete() {
-
-                            SnackbarUtil.showSnack(c, "Balance retrieval working. Click next");
-                            loadData();
-
-
-                        }
-                    });//will fetch ussdcodes
-
-
-                } else {
-                    SnackbarUtil.showSnack(c, "Could not save record. Try again");
                 }
 
                 new Handler(Looper.getMainLooper()).post(new Runnable() {
@@ -338,6 +348,15 @@ public class RegisterUserFragment extends SlideFragment {
                     public void run() {
                         //this runs on the UI thread
                         Utils.dismissProgressDialog();
+                        if (updatedUser.masterId != null) {
+                            Intent intent = new Intent(getActivity(), MainActivity.class);
+                            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                            //  intent.putExtra("forceUpdate", forceUpdate);
+                            getActivity().startActivity(intent);
+
+                        }
+
+
                     }
                 });
             }

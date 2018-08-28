@@ -4,6 +4,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.TimeZone;
 
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
@@ -22,13 +23,13 @@ import org.goods.living.tech.health.device.jpa.controllers.MedicJpaController;
 import org.goods.living.tech.health.device.jpa.controllers.UsersJpaController;
 import org.goods.living.tech.health.device.jpa.dao.Branch;
 import org.goods.living.tech.health.device.jpa.dao.DataBalance;
-import org.goods.living.tech.health.device.jpa.dao.MedicUser;
 import org.goods.living.tech.health.device.jpa.dao.Users;
 import org.goods.living.tech.health.device.models.Result;
 import org.goods.living.tech.health.device.service.security.qualifier.Secured;
 import org.goods.living.tech.health.device.service.security.qualifier.UserCategory;
 import org.goods.living.tech.health.device.utility.Constants;
 import org.goods.living.tech.health.device.utility.JSonHelper;
+import org.goods.living.tech.health.device.utility.Utils;
 
 import com.vladmihalcea.hibernate.type.json.internal.JacksonUtil;
 
@@ -89,9 +90,14 @@ public class DatabalanceService extends BaseService {
 			}
 
 			if (j.has("recordedAt")) {
-				Date recordedAt = dateFormat.parse(j.get("recordedAt").asText());
-
-				model.setRecordedAt(recordedAt);
+				Date date = Utils.getDateFromTimeStampWithTimezone(j.get("recordedAt").asText(),
+						TimeZone.getTimeZone(Utils.TIMEZONE_UTC));
+				model.setRecordedAt(date);
+			}
+			if (j.has("expiryDate")) {
+				Date date = Utils.getDateFromTimeStampWithTimezone(j.get("expiryDate").asText(),
+						TimeZone.getTimeZone(Utils.TIMEZONE_UTC));
+				model.setExpiryDate(date);
 			}
 
 			model.setCreatedAt(new Date());
@@ -105,6 +111,7 @@ public class DatabalanceService extends BaseService {
 
 	}
 
+	@Secured(value = UserCategory.USER)
 	@POST
 	// @Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
@@ -112,7 +119,20 @@ public class DatabalanceService extends BaseService {
 	public Result<String> ussdCodes(InputStream incomingData) {
 		logger.debug("ussdCodes");
 
-		String ussd = applicationParameters.getUSSDBalanceCodes();
+		JsonNode data = JSonHelper.getJsonNode(incomingData);
+
+		// if (data.has("setting")) {
+		// JacksonUtil.toJsonNode(); JsonNode entity = new
+		// ObjectMapper().readTree(data.get("deviceInfo").toString());
+		com.fasterxml.jackson.databind.JsonNode settingEntity = JacksonUtil.toJsonNode(data.get("setting").toString());
+
+		String network = settingEntity.get("network").asText();
+
+		// }
+
+		// Users user = getCurrentUser();
+
+		String ussd = applicationParameters.getUSSDBalanceCodes(network);
 
 		Result<String> result = new Result<String>(true, "", ussd);
 		return result;
@@ -123,15 +143,14 @@ public class DatabalanceService extends BaseService {
 	@POST
 	// @Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	@Path(Constants.URL.BRANCHES+""+Constants.URL.FIND)
+	@Path(Constants.URL.BRANCHES + "" + Constants.URL.FIND)
 	public Result<JsonNode> findBranch(InputStream incomingData) throws Exception {
 		logger.debug("findBranches");
 		JsonNode data = JSonHelper.getJsonNode(incomingData);
 
 		String branchName = data.has("branchName") ? data.get("branchName").asText() : null;
 
-		List<Branch> branches = branchName == null ? null
-				: dataBalanceJpaController.findBranchMatching(branchName);
+		List<Branch> branches = branchName == null ? null : dataBalanceJpaController.findBranchMatching(branchName);
 
 		if (branches == null) {
 			Result<JsonNode> result = new Result<JsonNode>(false, "", null);
@@ -156,11 +175,12 @@ public class DatabalanceService extends BaseService {
 		return result;
 
 	}
+
 	@Secured(value = UserCategory.ADMIN)
 	@POST
 	// @Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	@Path(Constants.URL.STATS+""+Constants.URL.FIND)
+	@Path(Constants.URL.STATS + "" + Constants.URL.FIND)
 	public Result<JsonNode> fetchBalances(InputStream incomingData) throws Exception {
 		logger.debug("findStats");
 		JsonNode data = JSonHelper.getJsonNode(incomingData);
@@ -170,7 +190,6 @@ public class DatabalanceService extends BaseService {
 		String operator = data.has("operator") ? data.get("operator").asText() : null;
 		String value = data.has("value") ? data.get("value").asText() : null;
 		String page = data.has("page") ? data.get("page").asText() : null;
-
 
 		List<Object[]> balances = dataBalanceJpaController.fetchBalances(branchName, chvName, operator, value, page);
 
@@ -184,13 +203,13 @@ public class DatabalanceService extends BaseService {
 		ObjectMapper mapper = new ObjectMapper();
 		for (Object[] balance : balances) {
 			ObjectNode root = mapper.createObjectNode();
-			root.put("username", balance[1]!=null?balance[1].toString():null);
-			root.put("name", balance[2]!=null?balance[2].toString():null);
-			root.put("branch", balance[3]!=null?balance[3].toString():null);
-			root.put("version_code", balance[4]!=null?balance[4].toString():null);
-			root.put("balance", balance[5]!=null?balance[5].toString():null);
-			root.put("balance_message", balance[6]!=null?balance[6].toString():null);
-			root.put("date", balance[7]!=null?balance[7].toString():null);
+			root.put("username", balance[1] != null ? balance[1].toString() : null);
+			root.put("name", balance[2] != null ? balance[2].toString() : null);
+			root.put("branch", balance[3] != null ? balance[3].toString() : null);
+			root.put("version_code", balance[4] != null ? balance[4].toString() : null);
+			root.put("balance", balance[5] != null ? balance[5].toString() : null);
+			root.put("balance_message", balance[6] != null ? balance[6].toString() : null);
+			root.put("date", balance[7] != null ? balance[7].toString() : null);
 			results.add(root);
 		}
 
