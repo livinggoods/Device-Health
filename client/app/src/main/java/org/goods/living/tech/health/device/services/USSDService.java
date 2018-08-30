@@ -17,8 +17,6 @@ import org.goods.living.tech.health.device.AppController;
 import org.goods.living.tech.health.device.BuildConfig;
 import org.goods.living.tech.health.device.utils.DataBalanceHelper;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -269,16 +267,16 @@ public class USSDService extends AccessibilityService {
 //
 //    }
 
-    //from comma separated list of codes
-    public static ArrayList<String> getUSSDCodesFromString(String full) {
-
-        if (full == null) {
-            return null;
-        }
-        ArrayList<String> list = new ArrayList<>(Arrays.asList(full.split(",[ ]*")));
-        return list;
-
-    }
+//    //from comma separated list of codes
+//    public static ArrayList<String> getUSSDCodesFromString(String full) {
+//
+//        if (full == null) {
+//            return null;
+//        }
+//        ArrayList<String> list = new ArrayList<>(Arrays.asList(full.split(",[ ]*")));
+//        return list;
+//
+//    }
 
     public interface USSDListener {
         void onUSSDReceived(String raw);

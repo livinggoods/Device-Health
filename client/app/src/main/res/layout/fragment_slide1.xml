@@ -131,16 +131,6 @@
                 android:onClick="onDoRegister"
                 android:text="Register" />
 
-            <Button
-                android:id="@+id/balanceBtn"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="5dp"
-                android:layout_weight="1"
-                android:background="@color/second_slide_buttons"
-                android:onClick="onDoBalance"
-                android:text="Check Data Balance" />
-
         </LinearLayout>
 
 
@@ -149,13 +139,6 @@
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
-
-            <TextView
-                android:id="@+id/balanceTextView"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="@string/data_balance" />
 
         </LinearLayout>
 

@@ -1,8 +1,6 @@
 package org.goods.living.tech.health.device.services;
 
 import android.content.Context;
-import android.content.Intent;
-import android.net.Uri;
 import android.util.Log;
 
 import com.crashlytics.android.Crashlytics;
@@ -11,9 +9,7 @@ import com.crashlytics.android.answers.CustomEvent;
 import com.loopj.android.http.TextHttpResponseHandler;
 
 import org.goods.living.tech.health.device.AppController;
-import org.goods.living.tech.health.device.BuildConfig;
 import org.goods.living.tech.health.device.R;
-import org.goods.living.tech.health.device.UI.UpgradeActivity;
 import org.goods.living.tech.health.device.models.DataBalance;
 import org.goods.living.tech.health.device.models.Setting;
 import org.goods.living.tech.health.device.models.Stats;
@@ -24,7 +20,6 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -237,10 +232,9 @@ public class SyncService extends BaseService {
 
                         if (user.token == null) {//cant auth user... wht to do?
 
-
                             Crashlytics.log("Refresh token fail");
                             Answers.getInstance().logCustom(new CustomEvent("RefreshToken failed")
-                                    .putCustomAttribute("Reason", oldToken));
+                            );
 
                         }
 
@@ -419,97 +413,5 @@ public class SyncService extends BaseService {
 
     }
 
-    public void syncSetting() {
 
-        AppController appController = (AppController) c.getApplicationContext();
-        Setting setting = appController.getSetting();
-        StringEntity entity = new StringEntity(setting.toJSONObject().toString(), "UTF-8");
-        //RequestParams params = new RequestParams(user.toJSONObject());
-        //params.setUseJsonStreamer(true);
-
-        serverRestClient.postSync(Constants.URL.USER_SETTING, entity, new TextHttpResponseHandler() {
-            @Override
-            public void onFailure(int statusCode, Header[] headers, String responseString, Throwable throwable) {
-                Crashlytics.log(Log.DEBUG, TAG, "onFailure " + responseString);
-                Crashlytics.logException(throwable);
-                refreshToken();
-            }
-
-            @Override
-            public void onSuccess(int statusCode, Header[] headers, String responseString) {
-                Crashlytics.log(Log.DEBUG, TAG, "onSuccess " + responseString);
-                try {
-                    JSONObject response = new JSONObject(responseString);
-                    String data = response.toString();
-                    Crashlytics.log(Log.DEBUG, TAG, "Data : " + data);
-
-                    // If the response is JSONObject instead of JSONArray
-                    boolean success = response.has(Constants.STATUS) && response.getBoolean(Constants.STATUS);
-                    String msg = response.has(Constants.MESSAGE) ? response.getString(Constants.MESSAGE) : response.getString(Constants.MESSAGE);
-                    boolean changeLocationUpdateInterval = false;
-                    if (success && response.has(Constants.DATA)) {
-                        Setting updatedSetting = new Setting(response.getJSONObject(Constants.DATA));
-
-
-                        changeLocationUpdateInterval = setting.locationUpdateInterval != updatedSetting.locationUpdateInterval;
-                        setting.locationUpdateInterval = updatedSetting.locationUpdateInterval;
-
-                        if (updatedSetting.ussd != null && setting.workingUSSD == null) {
-                            ArrayList<String> list = USSDService.getUSSDCodesFromString(updatedSetting.ussd);
-                            setting.workingUSSD = list;
-                        }
-
-                        setting.databalanceCheckTime = updatedSetting.databalanceCheckTime;
-
-                        setting.forceUpdate = updatedSetting.forceUpdate;
-                        setting.serverApi = updatedSetting.serverApi;
-                        setting.disableSync = updatedSetting.disableSync;
-
-
-                        AppController.getInstance().updateSetting(setting);
-
-                        Answers.getInstance().logCustom(new CustomEvent("Setting Update").putCustomAttribute("Reason", setting.toJSONObject().toString()));
-
-                        appController.setUSSDAlarm(setting.getDatabalanceCheckTimeInMilli());
-
-                        if (changeLocationUpdateInterval) {
-                            AppController appController = (AppController) c.getApplicationContext();
-                            appController.requestLocationUpdates(setting.locationUpdateInterval);
-                        }
-
-                        //check server version
-                        User user = appController.getUser();
-                        if (BuildConfig.VERSION_CODE < user.serverApi) {//setting.forceUpdate) {// ||
-                            //  show update dialog ?
-                            Intent marketIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=" + c.getPackageName()));
-                            if (marketIntent.resolveActivity(c.getPackageManager()) != null) {
-                                Intent intent = new Intent(c, UpgradeActivity.class);
-                                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                                intent.putExtra(UpgradeActivity.FORCE_UPDATE, setting.forceUpdate);
-                                c.startActivity(intent);
-                            } else {
-
-                                Answers.getInstance().logCustom(new CustomEvent("App Update no playstore")
-                                        .putCustomAttribute("Reason", "no playstore"));
-                            }
-
-
-                        }
-
-
-                    } else {
-                        Crashlytics.log(Log.ERROR, TAG, "problem syncing settings");
-                    }
-
-
-                } catch (JSONException e) {
-                    Log.e(TAG, "", e);
-                    Crashlytics.logException(e);
-                }
-            }
-        });
-
-
-        // return setting;
-    }
 }

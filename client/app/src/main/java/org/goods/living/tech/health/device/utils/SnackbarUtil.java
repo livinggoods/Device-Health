@@ -96,6 +96,15 @@ public class SnackbarUtil {
                 .show();
     }
 
+    public static void showSnackLong(Activity activity, String text) {
+        Snackbar.make(
+                activity.getWindow().getDecorView().getRootView(),//findViewById(R.id.activity_main),
+                text,//R.string.permission_denied_explanation,
+                Snackbar.LENGTH_LONG)
+                .setAction(R.string.settings, null)
+                .show();
+    }
+
     public static void showSnackWithProgress(Activity activity, String text) {
         Snackbar bar = Snackbar.make(activity.getWindow().getDecorView().getRootView(), "processing...\n " + text, Snackbar.LENGTH_INDEFINITE);
         ViewGroup contentLay = (ViewGroup) bar.getView().findViewById(android.support.design.R.id.snackbar_text).getParent();

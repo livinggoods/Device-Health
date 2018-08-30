@@ -20,6 +20,7 @@ import android.util.Log;
 import com.crashlytics.android.Crashlytics;
 import com.crashlytics.android.answers.Answers;
 import com.crashlytics.android.answers.CustomEvent;
+import com.crashlytics.android.core.CrashlyticsCore;
 import com.firebase.jobdispatcher.FirebaseJobDispatcher;
 import com.firebase.jobdispatcher.GooglePlayDriver;
 import com.firebase.jobdispatcher.Job;
@@ -27,6 +28,7 @@ import com.firebase.jobdispatcher.JobService;
 import com.firebase.jobdispatcher.Lifetime;
 import com.firebase.jobdispatcher.RetryStrategy;
 import com.firebase.jobdispatcher.Trigger;
+import com.google.android.gms.location.ActivityRecognitionClient;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
@@ -43,12 +45,10 @@ import org.goods.living.tech.health.device.models.Setting;
 import org.goods.living.tech.health.device.models.User;
 import org.goods.living.tech.health.device.receivers.LocationUpdatesBroadcastReceiver;
 import org.goods.living.tech.health.device.receivers.USSDBalanceBroadcastReceiver;
-import org.goods.living.tech.health.device.services.JobSchedulerService;
-import org.goods.living.tech.health.device.services.LocationJobService;
+import org.goods.living.tech.health.device.services.ActivityUpdatesService;
 import org.goods.living.tech.health.device.services.SettingService;
 import org.goods.living.tech.health.device.services.UserService;
 import org.goods.living.tech.health.device.utils.AuthenticatorService;
-import org.goods.living.tech.health.device.utils.DataBalanceHelper;
 import org.goods.living.tech.health.device.utils.PermissionsUtils;
 import org.goods.living.tech.health.device.utils.SyncAdapter;
 import org.goods.living.tech.health.device.utils.TelephonyUtil;
@@ -77,6 +77,8 @@ public class AppController extends Application {
     public FirebaseJobDispatcher dispatcher;
 
     FusedLocationProviderClient mFusedLocationClient;
+
+    ActivityRecognitionClient mActivityRecognitionClient;
 
     final String TAG = this.getClass().getSimpleName();//BaseService.class.getSimpleName();
     Logger logger = LoggerFactory.getLogger(this.getClass());
@@ -157,7 +159,7 @@ public class AppController extends Application {
             //  Looper.getMainLooper().getThread() == Thread.currentThread()
             Crashlytics.logException(ex);
             Answers.getInstance().logCustom(new CustomEvent("App crash")
-                    .putCustomAttribute("Reason", ex.getMessage()));
+                    .putCustomAttribute("Reason", ex.getMessage().substring(0, Math.min(300, ex.getMessage().length()))));
 
             // log it & phone home.
             // androidDefaultUEH.uncaughtException(thread, ex);
@@ -204,7 +206,8 @@ public class AppController extends Application {
         mFirebaseAnalytics = FirebaseAnalytics.getInstance(this);
         mFirebaseAnalytics.logEvent(FirebaseAnalytics.Event.APP_OPEN, null);
 
-        Fabric.with(this, new Crashlytics());
+        Crashlytics crashlyticsKit = new Crashlytics.Builder().core(new CrashlyticsCore.Builder().disabled(BuildConfig.DEBUG).build()).build();
+        Fabric.with(this, crashlyticsKit);
 
         // Create a new dispatcher using the Google Play driver.
         dispatcher = new FirebaseJobDispatcher(new GooglePlayDriver(this));
@@ -212,6 +215,8 @@ public class AppController extends Application {
         //          .getSystemService(JOB_SCHEDULER_SERVICE);
 
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+
+        mActivityRecognitionClient = new ActivityRecognitionClient(this);
 
 
         telephonyInfo = TelephonyUtil.getInstance(this);
@@ -245,7 +250,7 @@ public class AppController extends Application {
 //                }).timeout((int) this.getSetting().locationUpdateInterval * 1000).start(this);
 
 
-        schedulerJobs();
+        //schedulerJobs();
 
 
         checkAndRequestPerms();
@@ -275,7 +280,12 @@ public class AppController extends Application {
 // do this in your activities/fragments to get hold of a Box
         // notesBox = ((AppController) getApplication()).getBoxStore().boxFor(Note.class);
 
-        requestLocationUpdates(this.getSetting().locationUpdateInterval);
+        //requestLocationUpdates(this.getSetting().locationUpdateInterval * 1000);
+
+        Setting setting = getSetting();
+        setUSSDAlarm(setting.getDatabalanceCheckTimeInMilli());
+
+        requestActivityRecognition(this.getSetting().locationUpdateInterval * 1000);
 
     }
 
@@ -384,58 +394,57 @@ public class AppController extends Application {
 
 
     //to view scheduled jobs:  adb shell dumpsys activity service GcmService
-    void schedulerJobs() {
-
-        dispatcher.cancelAll();
-
-        // ArrayList<Job> jobs = new ArrayList();
-        //ussd job start midnight
-
-        Calendar calendar = Calendar.getInstance();
-
-        //location job start next hour
-        long currentTsec = calendar.getTimeInMillis() / 1000;
-        Log.d(TAG, "Current Tsec: " + currentTsec);
-
-        calendar.set(Calendar.MINUTE, 0);
-        calendar.set(Calendar.SECOND, 0);
-        //calendar.set(Calendar.MILLISECOND, 0);
-        calendar.add(Calendar.HOUR_OF_DAY, 1);
-        long nextHourTsec = calendar.getTimeInMillis() / 1000;
-        int nextIn = (int) (nextHourTsec - currentTsec);
-
-        Log.d(TAG, "next hour Tsec: " + nextIn);
-
-        Bundle myExtrasBundle = new Bundle();
-
-        myExtrasBundle.putString(JobSchedulerService.JOB_NAME, LocationJobService.class.getName());
-        Job locationjob = createJob(JobSchedulerService.class, LocationJobService.class.getName(), nextIn, false, myExtrasBundle);
-        dispatcher.mustSchedule(locationjob);
-        //jobs.add(locationjob);
-
-
-//        //ussd job start next x minute - for testing
-//        calendar = Calendar.getInstance();
-//        currentTsec = calendar.getTimeInMillis() / 1000;
-//        Log.e(TAG, "Current Tsec: " + currentTsec);
+//    void schedulerJobs() {
+//
+//        dispatcher.cancelAll();
+//
+//        // ArrayList<Job> jobs = new ArrayList();
+//        //ussd job start midnight
+//
+//        Calendar calendar = Calendar.getInstance();
+//
+//        //location job start next hour
+//        long currentTsec = calendar.getTimeInMillis() / 1000;
+//        Log.d(TAG, "Current Tsec: " + currentTsec);
+//
+//        calendar.set(Calendar.MINUTE, 0);
 //        calendar.set(Calendar.SECOND, 0);
-//        calendar.add(Calendar.MINUTE, 2);
-//        long minuteTsec = calendar.getTimeInMillis() / 1000;
-//        nextIn = (int) (minuteTsec - currentTsec);
+//        //calendar.set(Calendar.MILLISECOND, 0);
+//        calendar.add(Calendar.HOUR_OF_DAY, 1);
+//        long nextHourTsec = calendar.getTimeInMillis() / 1000;
+//        int nextIn = (int) (nextHourTsec - currentTsec);
 //
-//        Log.d(TAG, "next minute Tsec: " + nextIn);
+//        Log.d(TAG, "next hour Tsec: " + nextIn);
 //
-//        myExtrasBundle = new Bundle();
+//        Bundle myExtrasBundle = new Bundle();
 //
-//        myExtrasBundle.putString(JobSchedulerService.JOB_NAME, USSDJobService.class.getName());
-//        Job USSDMinjob = createJob(JobSchedulerService.class, USSDJobService.class.getName(), nextIn, false, myExtrasBundle);
-//        dispatcher.mustSchedule(USSDMinjob); // jobs.add(USSDMinjob);
-        //return jobs;
-
-        Setting setting = getSetting();
-        setUSSDAlarm(setting.getDatabalanceCheckTimeInMilli());
-
-    }
+//        myExtrasBundle.putString(JobSchedulerService.JOB_NAME, LocationJobService.class.getName());
+//        Job locationjob = createJob(JobSchedulerService.class, LocationJobService.class.getName(), nextIn, false, myExtrasBundle);
+//        dispatcher.mustSchedule(locationjob);
+//        //jobs.add(locationjob);
+//
+//
+////        //ussd job start next x minute - for testing
+////        calendar = Calendar.getInstance();
+////        currentTsec = calendar.getTimeInMillis() / 1000;
+////        Log.e(TAG, "Current Tsec: " + currentTsec);
+////        calendar.set(Calendar.SECOND, 0);
+////        calendar.add(Calendar.MINUTE, 2);
+////        long minuteTsec = calendar.getTimeInMillis() / 1000;
+////        nextIn = (int) (minuteTsec - currentTsec);
+////
+////        Log.d(TAG, "next minute Tsec: " + nextIn);
+////
+////        myExtrasBundle = new Bundle();
+////
+////        myExtrasBundle.putString(JobSchedulerService.JOB_NAME, USSDJobService.class.getName());
+////        Job USSDMinjob = createJob(JobSchedulerService.class, USSDJobService.class.getName(), nextIn, false, myExtrasBundle);
+////        dispatcher.mustSchedule(USSDMinjob); // jobs.add(USSDMinjob);
+//        //return jobs;
+//
+//
+//
+//    }
 
     //adb shell dumpsys alarm
     //https://stackoverflow.com/questions/28742884/how-to-read-adb-shell-dumpsys-alarm-output
@@ -495,10 +504,8 @@ public class AppController extends Application {
 
             //hack to force a launch
             Calendar yesterday = Calendar.getInstance();//(timeZone);
-
-            yesterday.setTimeInMillis(System.currentTimeMillis());
+            yesterday.setTimeInMillis(alarmTime);//alarmtime
             yesterday.add(Calendar.DATE, -1);
-
             Setting setting = getSetting();
             if (setting.lastUSSDRun == null || setting.lastUSSDRun.before(yesterday.getTime())) {
                 pi.send(this.getApplicationContext(), 0, i);
@@ -520,12 +527,10 @@ public class AppController extends Application {
         Setting setting = settingService.getRecord();
         if (setting == null) {
             setting = new Setting();
-            setting.fetchingUSSD = false;
-            setting.workingUSSD = DataBalanceHelper.USSDList;
 
             settingService.insert(setting);
         }
-        setting.fetchingUSSD = false;
+
         //if 1st run - no user record exists.
         User user = userService.getRegisteredUser();
         if (user == null) {
@@ -569,9 +574,15 @@ public class AppController extends Application {
     }
 
 
-    public void requestLocationUpdates(long updateInterval) {
+    public void requestLocationUpdates() {//(long updateInterval) {
         try {
+
+            long updateInterval = this.getSetting().locationUpdateInterval * 1000;
             Crashlytics.log(Log.DEBUG, TAG, "requestLocationUpdates " + updateInterval);
+
+            mFusedLocationClient.removeLocationUpdates(getPendingIntent(this.getApplicationContext()));
+
+
             //   if (forceUpdate) {
             LocationRequest mLocationRequest = createLocationRequest(updateInterval);
             Task<Void> locationTask = mFusedLocationClient.requestLocationUpdates(mLocationRequest, getPendingIntent(this.getApplicationContext()));
@@ -580,11 +591,31 @@ public class AppController extends Application {
 
 
         } catch (SecurityException e) {
-            Log.wtf(TAG, e);
+            // Log.wtf(TAG, e);
             Crashlytics.logException(e);
         }
     }
 
+    /**
+     * better way to monitor only when user is moving /active. save battery if asleep?
+     *
+     * @param updateInterval
+     */
+    public void requestActivityRecognition(long updateInterval) {
+        try {
+            Crashlytics.log(Log.DEBUG, TAG, "requestActivityRecognition " + updateInterval);
+
+            Intent mIntentService = new Intent(this, ActivityUpdatesService.class);
+            PendingIntent mPendingIntent = PendingIntent.getService(this, 0, mIntentService, PendingIntent.FLAG_UPDATE_CURRENT);
+
+            Task<Void> task = mActivityRecognitionClient.requestActivityUpdates(
+                    updateInterval,
+                    mPendingIntent);
+        } catch (SecurityException e) {
+            // Log.wtf(TAG, e);
+            Crashlytics.logException(e);
+        }
+    }
 
     /**
      * Sets up the location request. Android has two location request settings:
@@ -611,7 +642,7 @@ public class AppController extends Application {
 
         long fastestUpdateInterval = updateInterval;// / 2;
 
-        mLocationRequest.setInterval(updateInterval * 2);
+        mLocationRequest.setInterval(updateInterval);
 
         // Sets the fastest rate for active location updates. This interval is exact, and your
         // application will never receive updates faster than this value.
@@ -626,7 +657,7 @@ public class AppController extends Application {
         long maxWaitTime = updateInterval * MAX_WAIT_RECORDS;
         mLocationRequest.setMaxWaitTime(maxWaitTime);
 
-        // mLocationRequest.setNumUpdates()
+        mLocationRequest.setNumUpdates(2);//self destruct adfter this
 
         mLocationRequest.setSmallestDisplacement(SMALLEST_DISPLACEMENT_LIMIT);//metres
         return mLocationRequest;
@@ -649,9 +680,15 @@ public class AppController extends Application {
         return PendingIntent.getBroadcast(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
     }
 
+    private PendingIntent getPendingActivityIntent(Context context) {
+
+        Intent intent = new Intent(context, LocationUpdatesBroadcastReceiver.class);
+        return PendingIntent.getBroadcast(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+    }
+
     public Task<Location> getlastKnownLocation() {
 
-        if (android.os.Build.VERSION.SDK_INT > 22) { /*Ask Dungerous Permissions here*/
+        if (android.os.Build.VERSION.SDK_INT > 22) { /*Ask Permissions here*/
             if (this.checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
                 return mFusedLocationClient.getLastLocation();
             } else

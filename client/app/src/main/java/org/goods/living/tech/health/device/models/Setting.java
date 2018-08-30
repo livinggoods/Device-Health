@@ -18,7 +18,6 @@ import java.util.GregorianCalendar;
 import java.util.List;
 import java.util.TimeZone;
 
-import io.objectbox.annotation.Convert;
 import io.objectbox.annotation.Entity;
 import io.objectbox.annotation.Id;
 import io.objectbox.converter.PropertyConverter;
@@ -51,10 +50,8 @@ public class Setting extends BaseModel {
     public int simSlot;
 
     // "
-    @Convert(converter = StringListConverter.class, dbType = String.class)
-    public List<String> workingUSSD;
-
-    public boolean fetchingUSSD;
+    //  @Convert(converter = StringListConverter.class, dbType = String.class)
+    // public List<String> workingUSSD;
 
     public Setting() {
 
@@ -101,9 +98,6 @@ public class Setting extends BaseModel {
             if (databalanceCheckTime != null)
                 JSONObject.put("databalanceCheckTime", databalanceCheckTime);
             if (ussd != null) JSONObject.put("ussd", ussd);
-            if (workingUSSD != null) JSONObject.put("workingUSSD", workingUSSD);
-
-            JSONObject.put("fetchingUSSD", fetchingUSSD);
 
             JSONObject.put("simSlot", simSlot);
             JSONObject.put("network", network);
@@ -172,12 +166,25 @@ public class Setting extends BaseModel {
 
         try {
 
-            SimpleDateFormat df = new SimpleDateFormat("HH:mm");
+            SimpleDateFormat df = new SimpleDateFormat("HH:mm a"); //a for 24hr
             Date d1 = df.parse(databalanceCheckTime);//df.parse( "23:30");
-            Calendar c1 = GregorianCalendar.getInstance();
-            c1.setTime(d1);
-            System.out.println(c1.getTimeInMillis());
-            return c1.getTimeInMillis();
+
+            GregorianCalendar timepoint = new GregorianCalendar();
+            timepoint.setTime(d1);
+            int hours = timepoint.get(Calendar.HOUR_OF_DAY);
+            int minutes = timepoint.get(Calendar.MINUTE);
+
+            Calendar calendar = Calendar.getInstance();//(timeZone);
+
+            calendar.setTime(d1);//calendar.setTimeInMillis(System.currentTimeMillis());
+            calendar.set(Calendar.HOUR_OF_DAY, hours);
+            calendar.set(Calendar.MINUTE, minutes);
+            calendar.set(Calendar.SECOND, 0);
+            calendar.set(Calendar.MILLISECOND, 0);
+
+
+            Crashlytics.log(Log.DEBUG, this.getClass().getSimpleName(), "DatabalanceCheckTime " + calendar.getTime());
+            return calendar.getTimeInMillis();
 
         } catch (Exception e) {
             e.printStackTrace();

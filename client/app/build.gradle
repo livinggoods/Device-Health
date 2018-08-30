@@ -17,7 +17,7 @@ apply plugin: 'io.fabric'
 
 ext.versionMajor = 1
 ext.versionMinor = 1
-ext.versionPatch = 15
+ext.versionPatch = 16
 ext.versionClassifier = null
 ext.isSnapshot = true
 ext.minimumSdkVersion = 19
@@ -104,7 +104,7 @@ dependencies {
     implementation 'com.google.android.gms:play-services-gcm:15.0.1'
     implementation 'com.google.firebase:firebase-core:15.0.0'
     implementation 'com.firebase:firebase-jobdispatcher:0.8.5'
-    implementation('com.crashlytics.sdk.android:crashlytics:2.9.4@aar') {
+    compile('com.crashlytics.sdk.android:crashlytics:2.9.5@aar') {
         transitive = true;
     }
 

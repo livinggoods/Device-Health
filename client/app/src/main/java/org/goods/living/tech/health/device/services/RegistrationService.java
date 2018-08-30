@@ -2,6 +2,8 @@ package org.goods.living.tech.health.device.services;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
+import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.util.Log;
 
@@ -11,7 +13,9 @@ import com.crashlytics.android.answers.CustomEvent;
 import com.loopj.android.http.TextHttpResponseHandler;
 
 import org.goods.living.tech.health.device.AppController;
+import org.goods.living.tech.health.device.BuildConfig;
 import org.goods.living.tech.health.device.R;
+import org.goods.living.tech.health.device.UI.UpgradeActivity;
 import org.goods.living.tech.health.device.models.Setting;
 import org.goods.living.tech.health.device.models.User;
 import org.goods.living.tech.health.device.utils.Constants;
@@ -21,9 +25,7 @@ import org.goods.living.tech.health.device.utils.SnackbarUtil;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -129,7 +131,7 @@ public class RegistrationService extends BaseService {
                         Answers.getInstance().logCustom(new CustomEvent("User Registration fail")
                                 .putCustomAttribute("Reason", "username: " + user.username + " msg: " + msg));
 
-                        SnackbarUtil.showSnack(c, msg);
+                        SnackbarUtil.showSnackLong(c, msg);
                     }
 
                 } catch (JSONException e) {
@@ -141,20 +143,12 @@ public class RegistrationService extends BaseService {
         return user;
     }
 
-    public List<String> getUSSDCodes() {
+    public String getUSSDCodes() {
 
         final User user = userService.getRegisteredUser();
-
         Setting setting = AppController.getInstance().getSetting();
+        Crashlytics.log(Log.DEBUG, TAG, "getUSSDCodes");
 
-        Crashlytics.log(Log.DEBUG, TAG, "fetchingUSSD: " + setting.fetchingUSSD);
-
-        if (setting.fetchingUSSD) {
-
-            setting.fetchingUSSD = false;
-            AppController.getInstance().updateSetting(setting);
-            return setting.workingUSSD;
-        }
 
         //  String  deviceSyncTimeStr = Utils.getStringTimeStampWithTimezoneFromDate(deviceSyncTime, TimeZone.getTimeZone(Utils.TIMEZONE_UTC));
 
@@ -167,11 +161,6 @@ public class RegistrationService extends BaseService {
             public void onFailure(int statusCode, Header[] headers, String responseString, Throwable throwable) {
                 Crashlytics.log(Log.DEBUG, TAG, responseString);
                 Crashlytics.logException(throwable);
-
-                //TODO: remove
-                Setting setting = AppController.getInstance().getSetting();
-                setting.fetchingUSSD = false;
-                AppController.getInstance().updateSetting(setting);
             }
 
             @Override
@@ -184,40 +173,32 @@ public class RegistrationService extends BaseService {
                     boolean success = response.has(Constants.STATUS) && response.getBoolean(Constants.STATUS);
                     String msg = response.has(Constants.MESSAGE) ? response.getString(Constants.MESSAGE) : response.getString(Constants.MESSAGE);
                     if (success && response.has(Constants.DATA)) {
-                        String ussdList = response.getString(Constants.DATA);
-                        Answers.getInstance().logCustom(new CustomEvent("Ussd Update").putCustomAttribute("ussdList", ussdList));
+                        String ussd = response.getString(Constants.DATA);
+                        Answers.getInstance().logCustom(new CustomEvent("Ussd Update").putCustomAttribute("ussd", ussd));
 
-                        ArrayList<String> list = USSDService.getUSSDCodesFromString(ussdList);
+                        //ArrayList<String> list = USSDService.getUSSDCodesFromString(ussdList);
 
                         Setting setting = AppController.getInstance().getSetting();
-                        setting.workingUSSD = list;
+                        setting.ussd = ussd;
                         AppController.getInstance().updateSetting(setting);
 
                     } else {
                         Crashlytics.log(Log.ERROR, TAG, "problem fetching ussd");
                     }
 
-                    Setting setting = AppController.getInstance().getSetting();
-                    setting.fetchingUSSD = false;
-                    AppController.getInstance().updateSetting(setting);
 
                 } catch (JSONException e) {
                     Log.e(TAG, "", e);
                     Crashlytics.logException(e);
-                    Setting setting = AppController.getInstance().getSetting();
-                    setting.fetchingUSSD = false;
-                    AppController.getInstance().updateSetting(setting);
                 }
             }
         });
         setting = AppController.getInstance().getSetting();
-
-
-        return setting.workingUSSD;
+        return setting.ussd;
     }
 
     public void checkBalanceThroughSMS(
-            Context c, int portz, BalanceSuccessCallback balanceSuccessCallback) {
+            Context c, BalanceSuccessCallback balanceSuccessCallback) {
 
         Crashlytics.log(Log.DEBUG, TAG, "checkBalanceThroughSMS");
 
@@ -225,67 +206,163 @@ public class RegistrationService extends BaseService {
 
         AppController appController = ((AppController) c.getApplicationContext());
         appController.telephonyInfo.loadInfo();
-        if (portz == 0 && appController.telephonyInfo.networkSIM0 == null) {
+        if (setting.simSlot == 0 && appController.telephonyInfo.networkSIM0 == null) {
             //no sim in 1 try 2
             Crashlytics.log(Log.DEBUG, TAG, "no sim in port 1");
-            return;
+            setting.simSlot = 1;
+            AppController.getInstance().updateSetting(setting);
         }
-        if (portz == 1 && appController.telephonyInfo.networkSIM1 == null) {
+        if (setting.simSlot == 1 && appController.telephonyInfo.networkSIM1 == null) {
             //no sim in 2
             Crashlytics.log(Log.DEBUG, TAG, "no sim in port 2");
+            if (balanceSuccessCallback != null) {
+                balanceSuccessCallback.onComplete();
+            }
             return;
         }
 
-        List<String> ussdlist = setting.workingUSSD;
-        final int port = portz;
+        if (setting.ussd == null) {
+            Crashlytics.log(Log.DEBUG, TAG, "no workingUSSD");
 
-        String ussd = (ussdlist != null && ussdlist.size() > 0) ? ussdlist.get(0) : null;
-        if (ussd != null) {
+            String ussd = getUSSDCodes();//try fetch new codes
+            if (ussd != null) {
+                //fetched ussd?
+                checkBalanceThroughSMS(c, balanceSuccessCallback);
+            } else {
+                //failed completely
+                Crashlytics.log(Log.DEBUG, TAG, "no workingUSSD completely");
+                if (balanceSuccessCallback != null) {
+                    balanceSuccessCallback.onComplete();
+                }
+
+            }
+
+            return;
+        }
+
+        JSONObject telephoneData = setting.simSlot == 0 ? appController.telephonyInfo.telephoneDataSIM0 : appController.telephonyInfo.telephoneDataSIM1;
 
 
-            dataBalanceHelper.USSDtoSMSNumber(c, ussd, port, new DataBalanceHelper.USSDResult() {
-                @Override
-                public void onResult(@NonNull DataBalanceHelper.Balance bal) {
+        dataBalanceHelper.USSDtoSMSNumber(c, setting.ussd, setting.simSlot, new DataBalanceHelper.USSDResult() {
+            @Override
+            public void onResult(@NonNull DataBalanceHelper.Balance bal) {
 
-                    if (bal.rawBalance != null) { //this method works there is sim? sms feedback is good sign
+                if (bal.rawBalance != null) { //this method works there is sim? sms feedback is good sign
+
+                    Crashlytics.log(Log.DEBUG, TAG, "saving balance ...");
+                    // String sim = TelephonyUtil.getSimSerial(c);
+                    dataBalanceService.insert(bal, setting.simSlot, telephoneData);
+
+                    if (balanceSuccessCallback != null) {
+                        balanceSuccessCallback.onComplete();
+                    }
+                } else {
+
+                    setting.ussd = null;
+                    AppController.getInstance().updateSetting(setting);
+                    //failed completely
+                    dataBalanceService.insert(bal, setting.simSlot, telephoneData);
+
+                    if (balanceSuccessCallback != null) {
+                        balanceSuccessCallback.onComplete();
+                    }
+                }
+            }
+        });
+
+    }
+
+    public void syncSetting(Context context) {
+
+        AppController appController = (AppController) context.getApplicationContext();
+        Setting setting = appController.getSetting();
+        StringEntity entity = new StringEntity(setting.toJSONObject().toString(), "UTF-8");
+        //RequestParams params = new RequestParams(user.toJSONObject());
+        //params.setUseJsonStreamer(true);
+
+        serverRestClient.postSync(Constants.URL.USER_SETTING, entity, new TextHttpResponseHandler() {
+            @Override
+            public void onFailure(int statusCode, Header[] headers, String responseString, Throwable throwable) {
+                Crashlytics.log(Log.DEBUG, TAG, "onFailure " + responseString);
+                Crashlytics.logException(throwable);
+
+            }
+
+            @Override
+            public void onSuccess(int statusCode, Header[] headers, String responseString) {
+                Crashlytics.log(Log.DEBUG, TAG, "onSuccess " + responseString);
+                try {
+                    JSONObject response = new JSONObject(responseString);
+                    String data = response.toString();
+                    Crashlytics.log(Log.DEBUG, TAG, "Data : " + data);
+
+                    // If the response is JSONObject instead of JSONArray
+                    boolean success = response.has(Constants.STATUS) && response.getBoolean(Constants.STATUS);
+                    String msg = response.has(Constants.MESSAGE) ? response.getString(Constants.MESSAGE) : response.getString(Constants.MESSAGE);
+                    boolean changeLocationUpdateInterval = false;
+                    if (success && response.has(Constants.DATA)) {
+                        Setting updatedSetting = new Setting(response.getJSONObject(Constants.DATA));
 
 
-                        Crashlytics.log(Log.DEBUG, TAG, "saving balance ...");
-                        // String sim = TelephonyUtil.getSimSerial(c);
+                        changeLocationUpdateInterval = setting.locationUpdateInterval != updatedSetting.locationUpdateInterval;
+                        setting.locationUpdateInterval = updatedSetting.locationUpdateInterval;
 
-                        JSONObject telephoneData = appController.telephonyInfo.telephoneDataSIM0;
-                        if (port == 1)
-                            telephoneData = appController.telephonyInfo.telephoneDataSIM1;
-                        dataBalanceService.insert(bal, port, telephoneData);
-
-                        if (balanceSuccessCallback != null) {
-                            balanceSuccessCallback.onComplete();
+                        if (updatedSetting.ussd != null) {
+                            setting.ussd = updatedSetting.ussd;
                         }
-                    } else {
 
-                        ussdlist.remove(ussd);
+                        setting.databalanceCheckTime = updatedSetting.databalanceCheckTime;
+
+                        setting.forceUpdate = updatedSetting.forceUpdate;
+                        setting.serverApi = updatedSetting.serverApi;
+                        setting.disableSync = updatedSetting.disableSync;
+
+
                         AppController.getInstance().updateSetting(setting);
 
-                        if (ussdlist.size() > 0) { //try again
-                            Crashlytics.log(Log.DEBUG, TAG, "trying again balance check ...");
+                        Answers.getInstance().logCustom(new CustomEvent("Setting Update").putCustomAttribute("Reason", setting.toJSONObject().toString()));
 
-                            checkBalanceThroughSMS(c, port, balanceSuccessCallback);
+                        appController.setUSSDAlarm(setting.getDatabalanceCheckTimeInMilli());
+
+                        if (changeLocationUpdateInterval) {
+                            AppController appController = (AppController) context.getApplicationContext();
+                            appController.requestActivityRecognition(setting.locationUpdateInterval * 1000);
                         }
+
+                        //check server version
+                        User user = appController.getUser();
+                        if (BuildConfig.VERSION_CODE < user.serverApi) {//setting.forceUpdate) {// ||
+                            //  show update dialog ?
+                            Intent marketIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=" + context.getPackageName()));
+                            if (marketIntent.resolveActivity(context.getPackageManager()) != null) {
+                                Intent intent = new Intent(context, UpgradeActivity.class);
+                                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                                intent.putExtra(UpgradeActivity.FORCE_UPDATE, setting.forceUpdate);
+                                context.startActivity(intent);
+                            } else {
+
+                                Answers.getInstance().logCustom(new CustomEvent("App Update no playstore")
+                                        .putCustomAttribute("Reason", "no playstore"));
+                            }
+
+
+                        }
+
+
+                    } else {
+                        Crashlytics.log(Log.ERROR, TAG, "problem syncing settings");
                     }
 
 
+                } catch (JSONException e) {
+                    Log.e(TAG, "", e);
+                    Crashlytics.logException(e);
                 }
-            });
+            }
+        });
 
 
-        } else { //refetch list from server
-            getUSSDCodes();
-
-        }
-
-        if (balanceSuccessCallback != null) {
-            balanceSuccessCallback.onComplete();
-        }
+        return;
     }
 
     public interface BalanceSuccessCallback {

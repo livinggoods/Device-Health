@@ -52,6 +52,8 @@ import javax.inject.Inject;
  * {@link com.google.android.gms.location.LocationRequest} when the app is no longer in the
  * foreground.
  */
+
+//https://developer.android.com/guide/topics/location/battery#understand
 public class LocationUpdatesBroadcastReceiver extends BroadcastReceiver {
     public static final String ACTION_PROCESS_UPDATES =
             ".org.goods.living.tech.health.device.LocationUpdatesBroadcastReceiver.ACTION_PROCESS_UPDATES";
@@ -59,6 +61,7 @@ public class LocationUpdatesBroadcastReceiver extends BroadcastReceiver {
 
     @Inject
     StatsService statsService;
+
 
     public static String locerror = "location turned off";
 

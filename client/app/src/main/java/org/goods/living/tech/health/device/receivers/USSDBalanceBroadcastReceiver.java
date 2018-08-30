@@ -116,11 +116,10 @@ public class USSDBalanceBroadcastReceiver extends BroadcastReceiver {
                         .putCustomAttribute("Reason", ""));
 
                 //  registrationService.checkBalanceThroughUSSD(c);
+                //   if (setting.lastUSSDRun == null || setting.lastUSSDRun.before(yesterday.getTime())) {
+                registrationService.checkBalanceThroughSMS(appController.getApplicationContext(), null);
 
-                if (setting.lastUSSDRun == null || setting.lastUSSDRun.before(yesterday.getTime())) {
-                    registrationService.checkBalanceThroughSMS(appController.getApplicationContext(), setting.simSlot, null);
-
-                }
+                //    }
 
 
             }

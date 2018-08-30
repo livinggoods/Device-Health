@@ -28,6 +28,9 @@ public class FirebaseMessageService extends FirebaseMessagingService {
 
     @Inject
     SyncService syncService;
+    @Inject
+    RegistrationService registrationService;
+
 
     Logger logger = LoggerFactory.getLogger(this.getClass());
 
@@ -64,7 +67,7 @@ public class FirebaseMessageService extends FirebaseMessagingService {
             switch (function) {
                 case "setting":
                     //startService(new Intent(this, LService.class));
-                    syncService.syncSetting();
+                    registrationService.syncSetting(this);
                     break;
 
                 case "sync":
@@ -75,7 +78,7 @@ public class FirebaseMessageService extends FirebaseMessagingService {
                     SyncAdapter.performSync();
                     break;
                 case "location":
-                    appController.requestLocationUpdates(appController.getSetting().locationUpdateInterval);
+                    appController.requestActivityRecognition(appController.getSetting().locationUpdateInterval * 1000);
                     break;
                 case "databalance":
                     Intent i = new Intent(this.getApplicationContext(), USSDBalanceBroadcastReceiver.class);

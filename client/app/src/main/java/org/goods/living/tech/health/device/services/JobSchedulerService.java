@@ -1,11 +1,9 @@
 package org.goods.living.tech.health.device.services;
 
 import android.content.Context;
-import android.os.Bundle;
 import android.util.Log;
 
 import com.crashlytics.android.Crashlytics;
-import com.firebase.jobdispatcher.Job;
 import com.firebase.jobdispatcher.JobParameters;
 
 import org.goods.living.tech.health.device.AppController;
@@ -40,9 +38,9 @@ public class JobSchedulerService extends com.firebase.jobdispatcher.JobService {
 
                 AppController appController = (AppController) c.getApplicationContext();
 
-                if (jobToStart.equals(LocationJobService.class.getName())) {
-                    AppController.getInstance().dispatcher.mustSchedule(createLocationJob(job.getExtras()));
-                }
+//                if (jobToStart.equals(LocationJobService.class.getName())) {
+//                    AppController.getInstance().dispatcher.mustSchedule(createLocationJob(job.getExtras()));
+//                }
 
 
                 jobFinished(job, false);
@@ -62,12 +60,12 @@ public class JobSchedulerService extends com.firebase.jobdispatcher.JobService {
         return false; // Answers the question: "Should this job be retried?"
     }
 
-    Job createLocationJob(Bundle myExtrasBundle) {
-
-        Job job = AppController.getInstance().createJob(LocationJobService.class, LocationJobService.class.getName(), LocationJobService.runEverySeconds, true, myExtrasBundle);
-
-        return job;
-    }
+//    Job createLocationJob(Bundle myExtrasBundle) {
+//
+//        Job job = AppController.getInstance().createJob(LocationJobService.class, LocationJobService.class.getName(), LocationJobService.runEverySeconds, true, myExtrasBundle);
+//
+//        return job;
+//    }
 
 
 }

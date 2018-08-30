@@ -7,6 +7,7 @@ import org.goods.living.tech.health.device.receivers.LocationUpdatesBroadcastRec
 import org.goods.living.tech.health.device.receivers.SmsBroadcastReceiver;
 import org.goods.living.tech.health.device.receivers.USSDBalanceBroadcastReceiver;
 import org.goods.living.tech.health.device.receivers.UpdateBroadcastReceiver;
+import org.goods.living.tech.health.device.services.ActivityUpdatesService;
 import org.goods.living.tech.health.device.services.FirebaseMessageService;
 import org.goods.living.tech.health.device.services.JobSchedulerService;
 import org.goods.living.tech.health.device.services.LocationJobService;
@@ -60,5 +61,7 @@ public interface AppcontrollerComponent extends AndroidInjector<AppController> {
     void inject(UpdateBroadcastReceiver target);
 
     void inject(FirebaseMessageService target);
+
+    void inject(ActivityUpdatesService target);
 
 }

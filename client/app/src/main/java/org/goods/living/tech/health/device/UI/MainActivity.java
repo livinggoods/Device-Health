@@ -226,7 +226,7 @@ public class MainActivity extends FragmentActivity implements
 
 
                 //    registrationService.checkBalanceThroughUSSD(c,0);
-                registrationService.checkBalanceThroughSMS(c, 0, new RegistrationService.BalanceSuccessCallback() {
+                registrationService.checkBalanceThroughSMS(c, new RegistrationService.BalanceSuccessCallback() {
                     @Override
                     public void onComplete() {
 

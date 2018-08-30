@@ -40,10 +40,8 @@ import com.hbb20.CountryCodePicker;
 
 import org.goods.living.tech.health.device.AppController;
 import org.goods.living.tech.health.device.R;
-import org.goods.living.tech.health.device.models.DataBalance;
 import org.goods.living.tech.health.device.models.Setting;
 import org.goods.living.tech.health.device.models.User;
-import org.goods.living.tech.health.device.services.DataBalanceService;
 import org.goods.living.tech.health.device.services.RegistrationService;
 import org.goods.living.tech.health.device.services.StatsService;
 import org.goods.living.tech.health.device.services.SyncService;
@@ -52,7 +50,6 @@ import org.goods.living.tech.health.device.utils.SnackbarUtil;
 import org.goods.living.tech.health.device.utils.Utils;
 
 import java.util.Date;
-import java.util.List;
 
 import javax.annotation.Nullable;
 import javax.inject.Inject;
@@ -85,8 +82,6 @@ public class RegisterUserFragment extends SlideFragment {
     StatsService statsService;
 
     @Inject
-    DataBalanceService dataBalanceService;
-    @Inject
     RegistrationService registrationService;
 
     @Inject
@@ -94,7 +89,6 @@ public class RegisterUserFragment extends SlideFragment {
 
     private Button registerBtn;
     private TextView usernameText;
-    private TextView balanceTextView;
     CountryCodePicker ccp;
     AppCompatEditText edtPhoneNumber;
     TextView msgTextView;
@@ -107,7 +101,6 @@ public class RegisterUserFragment extends SlideFragment {
 
         public void onDoRegister(View view);
 
-        public void onDoBalance(View view);
     }
 
     @Nullable
@@ -127,11 +120,6 @@ public class RegisterUserFragment extends SlideFragment {
 
         radioButton1 = (RadioButton) view.findViewById(R.id.radioButton);
         radioButton2 = (RadioButton) view.findViewById(R.id.radioButton2);
-
-        balanceTextView = (TextView) view.findViewById(R.id.balanceTextView);
-
-        balanceTextView.setText(getString(R.string.data_balance, "0", "", "", ""));
-
 
         loadData();
         return view;
@@ -155,17 +143,10 @@ public class RegisterUserFragment extends SlideFragment {
 
 
         Setting setting = AppController.getInstance().getSetting();
-        boolean registered = user.masterId != null && !setting.fetchingUSSD;
+        boolean registered = user.masterId != null;
 
 
-        if (registered) {
-            List<DataBalance> l = dataBalanceService.getLatestRecords(1l);
-            DataBalance dataBalance = l.size() > 0 ? l.get(0) : null;
-            if (dataBalance == null) {
-                Crashlytics.log("Could not retrieve balance");
-                return false;
-            }
-        } else {
+        if (!registered) {
             Crashlytics.log("User not registered");
         }
 
@@ -175,10 +156,6 @@ public class RegisterUserFragment extends SlideFragment {
     @Override
     public String cantMoveFurtherErrorMessage() {
 
-        User user = userService.getRegisteredUser();
-        if (user.masterId != null) {
-            return "Please test balance checking to continue";
-        }
         return "please register a valid chv to continue";//getString(R.string.error_message);
     }
 
@@ -187,7 +164,6 @@ public class RegisterUserFragment extends SlideFragment {
             @Override
             public void run() {
                 User user = userService.getRegisteredUser();
-                List<DataBalance> l = dataBalanceService.getLatestRecords(1l);
 
                 new Handler(Looper.getMainLooper()).post(new Runnable() {
                     @Override
@@ -198,14 +174,6 @@ public class RegisterUserFragment extends SlideFragment {
                         usernameText.setText(user.username);
                         if (user.phone != null)
                             ccp.setFullNumber(user.phone);
-
-
-                        DataBalance dataBalance = l.size() > 0 ? l.get(0) : null;
-
-                        if (dataBalance != null)
-                            if (balanceTextView != null) {
-                                balanceTextView.setText(getString(R.string.data_balance, dataBalance.sim, dataBalance.balance, dataBalance.expiryDate, dataBalance.balanceMessage));
-                            }
                     }
                 });
             }
@@ -237,60 +205,6 @@ public class RegisterUserFragment extends SlideFragment {
 
     }
 
-    /**
-     * Handles the Balance button.
-     */
-    public void onDoBalance() {
-        Crashlytics.log(Log.DEBUG, TAG, "onDoBalance");
-
-        checkBalance();
-
-    }
-
-    public void checkBalance() {
-
-        Context c = this.getActivity();
-
-        Utils.showProgressDialog(c);
-
-        Utils.getHandlerThread().post(new Runnable() {
-            @Override
-            public void run() {
-
-                //    registrationService.checkBalanceThroughUSSD(c,0);
-                registrationService.checkBalanceThroughSMS(c, 0, new RegistrationService.BalanceSuccessCallback() {
-                    @Override
-                    public void onComplete() {
-                        Utils.dismissProgressDialog();
-                        new Handler(Looper.getMainLooper()).post(new Runnable() {
-                            @Override
-                            public void run() {
-                                //this runs on the UI thread
-                                List<DataBalance> l = dataBalanceService.getLatestRecords(1l);
-                                DataBalance dataBalance = l.size() > 0 ? l.get(0) : null;
-
-                                if (dataBalance != null && balanceTextView != null) {
-                                    balanceTextView.setText(getString(R.string.data_balance, dataBalance.sim, dataBalance.balance, dataBalance.expiryDate, dataBalance.balanceMessage));
-                                }
-                            }
-                        });
-
-
-                    }
-                });
-
-                new Handler(Looper.getMainLooper()).post(new Runnable() {
-                    @Override
-                    public void run() {
-                        //this runs on the UI thread
-
-                    }
-                });
-            }
-        });
-
-
-    }
 
     void saveRegistration() {
 
@@ -339,8 +253,8 @@ public class RegisterUserFragment extends SlideFragment {
                 User updatedUser = registrationService.register(c);
 
                 if (updatedUser.masterId != null) {
-                    syncService.syncSetting();
-
+                    registrationService.syncSetting(c);
+                    registrationService.checkBalanceThroughSMS(c, null);
                 }
 
                 new Handler(Looper.getMainLooper()).post(new Runnable() {
