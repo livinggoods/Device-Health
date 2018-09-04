@@ -6,7 +6,6 @@
 package org.goods.living.tech.health.device.jpa.controllers;
 
 import java.io.Serializable;
-import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -26,13 +25,13 @@ import org.goods.living.tech.health.device.jpa.dao.Stats;
 import org.goods.living.tech.health.device.jpa.dao.Users;
 
 public class StatsJpaController implements Serializable {
-	public static float timeRangeLimitConstant= 6000;
+	public static float timeRangeLimitConstant = 6000;
 
 	public StatsJpaController(EntityManagerFactory emf) {
 		this.emf = emf;
 	}
-	Logger logger = LogManager.getLogger();
 
+	Logger logger = LogManager.getLogger();
 
 	private EntityManagerFactory emf = null;
 
@@ -174,43 +173,48 @@ public class StatsJpaController implements Serializable {
 	}
 
 	public List<Stats> fetchStats(String userId, Date from, Date to) {
-		long fromDate=from.getTime();
-		long toDate=to.getTime();
+		long fromDate = from.getTime();
+		long toDate = to.getTime();
 		EntityManager em = getEntityManager();
 		try {
 			// CriteriaBuilder cb = em.getCriteriaBuilder();
 			// CriteriaQuery<Stats> q = cb.//createQuery(Stats.class);
 			// Root<Stats> c = q.from(Stats.class);
 
-			List<Stats> statistics = em.createQuery(
-					"SELECT s from Stats s WHERE s.userId.id = :userId and s.recordedAt >= :fromDate and " +
-							"s.recordedAt <= :toDate").setParameter("userId", userId)
-					.setParameter("fromDate", fromDate).setParameter("toDate", toDate).getResultList();
+			List<Stats> statistics = em
+					.createQuery("SELECT s from Stats s WHERE s.userId.id = :userId and s.recordedAt >= :fromDate and "
+							+ "s.recordedAt <= :toDate")
+					.setParameter("userId", userId).setParameter("fromDate", fromDate).setParameter("toDate", toDate)
+					.getResultList();
 			return statistics;
 
 		} finally {
 			em.close();
 		}
 	}
+
 	public ChvActivity fetchLocationStatistics(String uuid, ChvActivity activity) {
-		long timestamp=activity.getReportedDate().getTime()/1000;
+		long timestamp = activity.getReportedDate().getTime() / 1000;
 
 		EntityManager em = getEntityManager();
 		try {
 
 			List<Object[]> statistics = em.createQuery(
-					"SELECT s.latitude as latitude, s.longitude as longitude, s.recordedAt as recorded_time," +
-							" abs(extract(epoch from s.recordedAt)  - cast(:timestamp as float)) as absoluteValue from " +
-							"Stats s LEFT JOIN Users u ON (u.id=s.userId) WHERE u.chvId= :uuid ORDER BY abs(extract(epoch " +
-							"from s.recordedAt)  - cast(:timestamp as float)) ASC").setMaxResults(1).setParameter("uuid", uuid).setParameter("timestamp", timestamp).getResultList();
-			HashMap<String, String> coordinates= new HashMap<>();
+					"SELECT s.latitude as latitude, s.longitude as longitude, s.recordedAt as recorded_time,"
+							+ " abs(extract(epoch from s.recordedAt)  - cast(:timestamp as float)) as absoluteValue,u.androidId as androidId from "
+							+ "Stats s LEFT JOIN Users u ON (u.id=s.userId) WHERE u.chvId= :uuid ORDER BY abs(extract(epoch "
+							+ "from s.recordedAt)  - cast(:timestamp as float)) ASC")
+					.setMaxResults(1).setParameter("uuid", uuid).setParameter("timestamp", timestamp).getResultList();
+			HashMap<String, String> coordinates = new HashMap<>();
 
-		//Add restriction on max and min timings
+			// Add restriction on max and min timings
 
-			if(!statistics.isEmpty()){
-				if((Float)statistics.get(0)[3]<timeRangeLimitConstant){
-					activity.setLongitude((Double)statistics.get(0)[1]);
-					activity.setLatitude((Double)statistics.get(0)[0]);
+			if (!statistics.isEmpty()) {
+				if ((Float) statistics.get(0)[3] < timeRangeLimitConstant) {
+					activity.setLongitude((Double) statistics.get(0)[1]);
+					activity.setLatitude((Double) statistics.get(0)[0]);
+					activity.setAndroidId((String) statistics.get(0)[4]);
+
 				}
 
 			}

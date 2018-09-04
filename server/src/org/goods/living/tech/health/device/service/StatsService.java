@@ -156,6 +156,7 @@ public class StatsService extends BaseService {
 			root.put("client", activityWithStats.getClientName());
 			root.put("medicCoordinates", activityWithStats.getMedicCoordinates().toJSONString());
 			root.put("activityId", activityWithStats.getActivityId());
+			root.put("androidId", activityWithStats.getAndroidId());
 			results.add(root);
 		}
 

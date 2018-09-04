@@ -33,7 +33,6 @@ import android.content.pm.PackageInfo;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.location.Location;
-import android.net.Uri;
 import android.os.BatteryManager;
 import android.os.Build;
 import android.os.Handler;
@@ -76,6 +75,7 @@ public class Utils {
     public final static String TIMEZONE_UTC = "UTC";
 
     public final static String SMARTHEALTH = "livinggoods";//org.medicmobile.webapp.mobile.livinggoodskenya
+    public final static String DEVICEHEALTH = "goods.living";
 
     static ProgressDialog progressDialog;
 
@@ -270,6 +270,11 @@ public class Utils {
         return packageName.contains(SMARTHEALTH);
     }
 
+    public static boolean isDeviceHealthApp(String packageName) {
+        if (packageName == null) return false;
+        return packageName.contains(DEVICEHEALTH);
+    }
+
 
     public static boolean isForeground(Context ctx, String myPackage) {
 
@@ -336,39 +341,17 @@ public class Utils {
 
     }
 
-    public static void turnGPSOn(Context context) {
-        try {
-            String provider = Settings.Secure.getString(context.getContentResolver(), Settings.Secure.LOCATION_PROVIDERS_ALLOWED);
+//    public static void turnGPSOn(Context context) {
+//        try {
+//            Intent intent = new Intent("android.location.GPS_ENABLED_CHANGE");
+//            intent.putExtra("enabled", true);
+//            context.sendBroadcast(intent);
+//        } catch (Exception e) {
+//            Crashlytics.logException(e);
+//
+//        }
+//    }
 
-            if (!provider.contains("gps")) { //if gps is disabled
-                final Intent poke = new Intent();
-                poke.setClassName("com.android.settings", "com.android.settings.widget.SettingsAppWidgetProvider");
-                poke.addCategory(Intent.CATEGORY_ALTERNATIVE);
-                poke.setData(Uri.parse("3"));
-                context.sendBroadcast(poke);
-            }
-        } catch (Exception e) {
-            Crashlytics.logException(e);
-
-        }
-    }
-
-    public static void turnGPSOff(Context context) {
-        try {
-            String provider = Settings.Secure.getString(context.getContentResolver(), Settings.Secure.LOCATION_PROVIDERS_ALLOWED);
-
-            if (provider.contains("gps")) { //if gps is enabled
-                final Intent poke = new Intent();
-                poke.setClassName("com.android.settings", "com.android.settings.widget.SettingsAppWidgetProvider");
-                poke.addCategory(Intent.CATEGORY_ALTERNATIVE);
-                poke.setData(Uri.parse("3"));
-                context.sendBroadcast(poke);
-            }
-        } catch (Exception e) {
-            Crashlytics.logException(e);
-
-        }
-    }
 
     public static void makeGooglePlayServicesAvailable(Activity c) {
         GoogleApiAvailability apiAvailability = GoogleApiAvailability.getInstance();

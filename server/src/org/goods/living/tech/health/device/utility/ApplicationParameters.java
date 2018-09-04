@@ -92,7 +92,7 @@ public class ApplicationParameters {
 		return temp;
 	}
 
-	public String getUSSDBalanceCodes(String network) {
+	public String getUSSDBalanceCode(String network) {
 
 		try {
 			String s = servletContext

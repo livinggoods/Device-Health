@@ -79,7 +79,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     app:ccp_autoDetectCountry="true"
-                    app:ccp_countryPreference="UG,KE"
+                    app:ccp_countryPreference="UG,KE,TZ,US"
                     app:ccp_rememberLastSelection="true" />
 
                 <android.support.v7.widget.AppCompatEditText

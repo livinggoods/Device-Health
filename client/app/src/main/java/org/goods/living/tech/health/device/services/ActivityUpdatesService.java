@@ -53,7 +53,7 @@ public class ActivityUpdatesService extends IntentService {
     int[] act = getActivities();
     List<Integer> monitoredActivities;
 
-    int THRESHHOLD_CONFIDENCE = 50;
+    int THRESHHOLD_CONFIDENCE = 30;
 
     {
         monitoredActivities = new ArrayList<>(act.length);
@@ -96,7 +96,7 @@ public class ActivityUpdatesService extends IntentService {
             //broadcastActivity(activity);
             // DetectedActivity.IN_VEHICLE;
 
-            if (activity.getConfidence() > THRESHHOLD_CONFIDENCE && monitoredActivities.contains(activity.getType())) {//hoping they r ordered by priority
+            if (activity.getConfidence() > THRESHHOLD_CONFIDENCE) {//&& monitoredActivities.contains(activity.getType())) {//hoping they r ordered by priority
                 Crashlytics.log(Log.DEBUG, TAG, "Detected priority activity: " + activityName(detectedActivities.get(0).getType()) + " " + detectedActivities.get(0).getType() + ", " + detectedActivities.get(0).getConfidence());
                 movement = true;//break to ignore loop?
             }
@@ -108,6 +108,7 @@ public class ActivityUpdatesService extends IntentService {
             Crashlytics.log(Log.DEBUG, TAG, "Launching Location listener");
 
             appController.requestLocationUpdates();
+
         }
 
 

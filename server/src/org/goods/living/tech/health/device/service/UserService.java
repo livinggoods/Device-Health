@@ -80,6 +80,7 @@ public class UserService extends BaseService {
 		String country = data.has("country") ? data.get("country").asText() : null;
 		String token = data.has("token") ? data.get("token").asText() : null;
 		String fcmToken = data.has("fcmToken") ? data.get("fcmToken").asText() : null;
+		String phone = data.has("phone") ? data.get("phone").asText() : null;
 
 		Date deviceTime = Utils.getDateFromTimeStampWithTimezone(deviceTimeStr,
 				TimeZone.getTimeZone(Utils.TIMEZONE_UTC));// at sync/toJSONObject time set this - we can use it to get
@@ -99,6 +100,7 @@ public class UserService extends BaseService {
 			users.setAndroidId(androidId);
 			users.setCountry(country);
 			users.setFcmToken(fcmToken);
+			users.setPhone(phone);
 
 			// set chvId - retrieve from medic
 			MedicUser mu = medicJpaController.findByUsername(country, username);
@@ -110,7 +112,6 @@ public class UserService extends BaseService {
 			}
 
 			users.setChvId(mu == null ? null : mu.getUuid());
-			users.setPhone(data.has("phone") ? data.get("phone").asText() : null);
 			users.setBranch(mu.getBranch());
 			users.setName(mu.getName());
 
@@ -348,7 +349,7 @@ public class UserService extends BaseService {
 		node.put("locationUpdateInterval", applicationParameters.getLocationUpdateInterval());// DEFAULT_UPDATE_INTERVAL);
 
 		if (applicationParameters.shouldUpdateUSSDBalanceCodes()) {
-			String ussd = applicationParameters.getUSSDBalanceCodes(network);
+			String ussd = applicationParameters.getUSSDBalanceCode(network);
 
 			node.put("ussd", ussd);
 		}

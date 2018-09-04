@@ -73,7 +73,7 @@ public class DataBalanceHelper {
 
     long dialTime;
 
-    public static final int USSD_LIMIT = 30;//in seconds
+    public static final int USSD_LIMIT = 20;//in seconds
 
     CountDownTimer timer;
 
@@ -319,7 +319,7 @@ public class DataBalanceHelper {
                             Crashlytics.log(Log.DEBUG, TAG, "waiting for ussd " + (millisUntilFinished / 1000));
 
                             if (dialTimeComplete()) {
-                                Crashlytics.log(Log.DEBUG, TAG, "udssd complete. Closing timer");
+                                Crashlytics.log(Log.DEBUG, TAG, "ussd complete. Closing timer");
                                 timer.cancel();
                             }
                         }
@@ -331,7 +331,7 @@ public class DataBalanceHelper {
                             Utils.getHandlerThread().post(new Runnable() {
                                 @Override
                                 public void run() {
-                                    //this runs on the UI thread
+
                                     USSDResult.onResult(bal);
                                 }
                             });

@@ -1,13 +1,13 @@
 package org.goods.living.tech.health.device;
 
-import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.AlarmManager;
 import android.app.Application;
 import android.app.PendingIntent;
+import android.content.ComponentCallbacks2;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
-import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Build;
 import android.os.Bundle;
@@ -32,7 +32,11 @@ import com.google.android.gms.location.ActivityRecognitionClient;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.LocationSettingsRequest;
+import com.google.android.gms.location.LocationSettingsResponse;
+import com.google.android.gms.location.SettingsClient;
 import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.analytics.FirebaseAnalytics;
 import com.google.firebase.iid.FirebaseInstanceId;
@@ -59,6 +63,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Calendar;
 import java.util.Date;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import javax.inject.Inject;
@@ -94,10 +99,12 @@ public class AppController extends Application {
 
     Intent restartServiceIntent;
 
-    boolean appOpen;
 
+    Location location;
 
-    private static final long MAX_WAIT_RECORDS = 10; // Every x items
+    public static boolean inBackground = true;
+
+    private static final long MAX_WAIT_RECORDS = 4; // Every x items
 
     private static final long SMALLEST_DISPLACEMENT_LIMIT = 5; //metres
 
@@ -115,13 +122,6 @@ public class AppController extends Application {
         return instance;
     }
 
-    public void appOpen(boolean open) {
-        this.appOpen = open;
-    }
-
-    public boolean isAppOpen() {
-        return appOpen;
-    }
 
     public AppcontrollerComponent getComponent() {
         return component;
@@ -147,6 +147,16 @@ public class AppController extends Application {
 
     }
 
+
+    @Override
+    public void onTrimMemory(final int level) {
+        super.onTrimMemory(level);
+        if (level == ComponentCallbacks2.TRIM_MEMORY_UI_HIDDEN) { // Works for Activity
+            // Get called every-time when application went to background.
+        } else if (level == ComponentCallbacks2.TRIM_MEMORY_COMPLETE) { // Works for FragmentActivty
+        }
+        inBackground = true;
+    }
 
     public FirebaseAnalytics getFirebaseAnalytics() {
         return mFirebaseAnalytics;
@@ -216,6 +226,7 @@ public class AppController extends Application {
 
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
 
+
         mActivityRecognitionClient = new ActivityRecognitionClient(this);
 
 
@@ -227,30 +238,6 @@ public class AppController extends Application {
 
 
         Context c = this;
-//        appChecker
-//                .whenAny(new AppChecker.Listener() {
-//                    @Override
-//                    public void onForeground(String packageName) {
-//                        // do something
-//                        Crashlytics.log(Log.DEBUG, TAG, "foreground " + packageName);
-//
-//                        if (Utils.isSmartHealthApp(packageName)) {
-//                            Crashlytics.log(Log.DEBUG, TAG, "foreground Smarthealth: " + packageName);
-//                            Answers.getInstance().logCustom(new CustomEvent("Smarthealth foreground")
-//                                    .putCustomAttribute("Reason", ""));
-//                            Utils.turnGPSOn(c);
-//                        }
-//                        requestLocationUpdates(getSetting().locationUpdateInterval);
-//                        //      Location l = getlastKnownLocation().getResult();
-//                        //     if (l != null) {
-//                        //         Crashlytics.log(Log.DEBUG, TAG, l.toString());
-//                        //      }
-//
-//                    }
-//                }).timeout((int) this.getSetting().locationUpdateInterval * 1000).start(this);
-
-
-        //schedulerJobs();
 
 
         checkAndRequestPerms();
@@ -285,7 +272,7 @@ public class AppController extends Application {
         Setting setting = getSetting();
         setUSSDAlarm(setting.getDatabalanceCheckTimeInMilli());
 
-        requestActivityRecognition(this.getSetting().locationUpdateInterval * 1000);
+        requestActivityRecognition(setting.locationUpdateInterval * 1000);
 
     }
 
@@ -573,27 +560,101 @@ public class AppController extends Application {
         Crashlytics.log(Log.DEBUG, TAG, "App launch");
     }
 
-
+    @SuppressLint("MissingPermission")
     public void requestLocationUpdates() {//(long updateInterval) {
+        CountDownLatch latch = new CountDownLatch(1);
         try {
 
-            long updateInterval = this.getSetting().locationUpdateInterval * 1000;
+            long updateInterval = this.getSetting().locationUpdateInterval / 2 * 1000;
             Crashlytics.log(Log.DEBUG, TAG, "requestLocationUpdates " + updateInterval);
 
-            mFusedLocationClient.removeLocationUpdates(getPendingIntent(this.getApplicationContext()));
+            // mFusedLocationClient.removeLocationUpdates(getPendingIntent(this.getApplicationContext()));
 
 
             //   if (forceUpdate) {
             LocationRequest mLocationRequest = createLocationRequest(updateInterval);
-            Task<Void> locationTask = mFusedLocationClient.requestLocationUpdates(mLocationRequest, getPendingIntent(this.getApplicationContext()));
+            LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder();
+            builder.addLocationRequest(mLocationRequest);
+            builder.build();
+// ...
+
+            SettingsClient client = LocationServices.getSettingsClient(this);
+            Task<LocationSettingsResponse> task = client.checkLocationSettings(builder.build());
+
+            task.addOnCompleteListener(new OnCompleteListener() {
+                @Override
+                public void onComplete(@NonNull Task task) {
+                    Crashlytics.log(Log.DEBUG, TAG, task.toString());
+                    try {
+
+                        Task<Void> locationTask = mFusedLocationClient.requestLocationUpdates(mLocationRequest, getPendingIntent(getApplicationContext()));
+
+                    } catch (Exception e) {
+                        // Log.wtf(TAG, e);
+                        Crashlytics.logException(e);
+                    } finally {
+                        latch.countDown();
+                    }
+                }
+            }).addOnFailureListener(new OnFailureListener() {
+                @Override
+                public void onFailure(@NonNull Exception e) {
+                    Crashlytics.logException(e);
+                    try {
+                    } catch (Exception ee) {
+                        // Log.wtf(TAG, e);
+                        Crashlytics.logException(ee);
+                    } finally {
+                        latch.countDown();
+                    }
+                }
+            });
+
             //Log.d(TAG, "locationTask " + locationTask.isSuccessful());
             //  }
 
-
-        } catch (SecurityException e) {
+            latch.await();
+        } catch (Exception e) {
             // Log.wtf(TAG, e);
             Crashlytics.logException(e);
         }
+    }
+
+    @SuppressLint("MissingPermission")
+    public Location getLastLocation() {
+        try {
+            requestLocationUpdates();
+            Task<Location> task = mFusedLocationClient.getLastLocation();
+            CountDownLatch latch = new CountDownLatch(1);
+            //     CyclicBarrier barrier = new CyclicBarrier(1);
+
+            Utils.getHandlerThread().post(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        Thread.sleep(2000);
+                        //  Task<Location> task2 = mFusedLocationClient.getLastLocation();
+                        // Thread.sleep(2000);
+                        location = task.isComplete() ? task.getResult() : null;
+                    } catch (Exception e) {
+                        System.err.println("Worker thread inrerrupted");
+                    } finally {
+                        latch.countDown();
+                    }
+                }
+            });
+            // wait for the threads to be done
+            //   barrier.await();
+            latch.await();
+            System.out.println("== End == ");
+            return location;
+        } catch (Exception e) {
+            System.err.println("Starting interrupted");
+            location = null;
+            return location;
+        }
+
+
     }
 
     /**
@@ -630,7 +691,7 @@ public class AppController extends Application {
      * These settings are appropriate for mapping applications that show real-time location
      * updates.
      */
-    private LocationRequest createLocationRequest(long updateInterval) {
+    public LocationRequest createLocationRequest(long updateInterval) {
         LocationRequest mLocationRequest = new LocationRequest();
 
         // Sets the desired interval for active location updates. This interval is
@@ -657,7 +718,7 @@ public class AppController extends Application {
         long maxWaitTime = updateInterval * MAX_WAIT_RECORDS;
         mLocationRequest.setMaxWaitTime(maxWaitTime);
 
-        mLocationRequest.setNumUpdates(2);//self destruct adfter this
+        mLocationRequest.setNumUpdates(2);//self destruct after this
 
         mLocationRequest.setSmallestDisplacement(SMALLEST_DISPLACEMENT_LIMIT);//metres
         return mLocationRequest;
@@ -685,20 +746,6 @@ public class AppController extends Application {
         Intent intent = new Intent(context, LocationUpdatesBroadcastReceiver.class);
         return PendingIntent.getBroadcast(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
     }
-
-    public Task<Location> getlastKnownLocation() {
-
-        if (android.os.Build.VERSION.SDK_INT > 22) { /*Ask Permissions here*/
-            if (this.checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-                return mFusedLocationClient.getLastLocation();
-            } else
-                return null;
-        } else {
-            return mFusedLocationClient.getLastLocation();
-        }
-
-    }
-
 
     void firebaseSetup() {
         // Get token

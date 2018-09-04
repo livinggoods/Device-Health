@@ -199,77 +199,87 @@ public class RegistrationService extends BaseService {
 
     public void checkBalanceThroughSMS(
             Context c, BalanceSuccessCallback balanceSuccessCallback) {
+        try {
+            Crashlytics.log(Log.DEBUG, TAG, "checkBalanceThroughSMS");
 
-        Crashlytics.log(Log.DEBUG, TAG, "checkBalanceThroughSMS");
+            Setting setting = AppController.getInstance().getSetting();
 
-        Setting setting = AppController.getInstance().getSetting();
-
-        AppController appController = ((AppController) c.getApplicationContext());
-        appController.telephonyInfo.loadInfo();
-        if (setting.simSlot == 0 && appController.telephonyInfo.networkSIM0 == null) {
-            //no sim in 1 try 2
-            Crashlytics.log(Log.DEBUG, TAG, "no sim in port 1");
-            setting.simSlot = 1;
-            AppController.getInstance().updateSetting(setting);
-        }
-        if (setting.simSlot == 1 && appController.telephonyInfo.networkSIM1 == null) {
-            //no sim in 2
-            Crashlytics.log(Log.DEBUG, TAG, "no sim in port 2");
-            if (balanceSuccessCallback != null) {
-                balanceSuccessCallback.onComplete();
+            if (setting.simSlot == null) {
+                Crashlytics.log(Log.DEBUG, TAG, "no simSlot selected");//should register first
+                if (balanceSuccessCallback != null) balanceSuccessCallback.onComplete();
+                return;
             }
-            return;
-        }
 
-        if (setting.ussd == null) {
-            Crashlytics.log(Log.DEBUG, TAG, "no workingUSSD");
-
-            String ussd = getUSSDCodes();//try fetch new codes
-            if (ussd != null) {
-                //fetched ussd?
-                checkBalanceThroughSMS(c, balanceSuccessCallback);
-            } else {
-                //failed completely
-                Crashlytics.log(Log.DEBUG, TAG, "no workingUSSD completely");
+            AppController appController = ((AppController) c.getApplicationContext());
+            appController.telephonyInfo.loadInfo();
+            if (setting.simSlot == 0 && appController.telephonyInfo.networkSIM0 == null) {
+                //no sim in 1 try 2
+                Crashlytics.log(Log.DEBUG, TAG, "no sim in port 1");
+                setting.simSlot = 1;
+                AppController.getInstance().updateSetting(setting);
+            }
+            if (setting.simSlot == 1 && appController.telephonyInfo.networkSIM1 == null) {
+                //no sim in 2
+                Crashlytics.log(Log.DEBUG, TAG, "no sim in port 2");
                 if (balanceSuccessCallback != null) {
                     balanceSuccessCallback.onComplete();
                 }
-
+                return;
             }
 
-            return;
-        }
+            if (setting.ussd == null) {
+                Crashlytics.log(Log.DEBUG, TAG, "no workingUSSD");
 
-        JSONObject telephoneData = setting.simSlot == 0 ? appController.telephonyInfo.telephoneDataSIM0 : appController.telephonyInfo.telephoneDataSIM1;
-
-
-        dataBalanceHelper.USSDtoSMSNumber(c, setting.ussd, setting.simSlot, new DataBalanceHelper.USSDResult() {
-            @Override
-            public void onResult(@NonNull DataBalanceHelper.Balance bal) {
-
-                if (bal.rawBalance != null) { //this method works there is sim? sms feedback is good sign
-
-                    Crashlytics.log(Log.DEBUG, TAG, "saving balance ...");
-                    // String sim = TelephonyUtil.getSimSerial(c);
-                    dataBalanceService.insert(bal, setting.simSlot, telephoneData);
-
+                String ussd = getUSSDCodes();//try fetch new codes
+                if (ussd != null) {
+                    //fetched ussd?
+                    checkBalanceThroughSMS(c, balanceSuccessCallback);
+                } else {
+                    //failed completely
+                    Crashlytics.log(Log.DEBUG, TAG, "no workingUSSD completely");
                     if (balanceSuccessCallback != null) {
                         balanceSuccessCallback.onComplete();
                     }
-                } else {
 
-                    setting.ussd = null;
-                    AppController.getInstance().updateSetting(setting);
-                    //failed completely
-                    dataBalanceService.insert(bal, setting.simSlot, telephoneData);
+                }
+                if (balanceSuccessCallback != null) balanceSuccessCallback.onComplete();
+                return;
+            }
 
-                    if (balanceSuccessCallback != null) {
-                        balanceSuccessCallback.onComplete();
+            JSONObject telephoneData = setting.simSlot == 0 ? appController.telephonyInfo.telephoneDataSIM0 : appController.telephonyInfo.telephoneDataSIM1;
+
+
+            dataBalanceHelper.USSDtoSMSNumber(c, setting.ussd, setting.simSlot, new DataBalanceHelper.USSDResult() {
+                @Override
+                public void onResult(@NonNull DataBalanceHelper.Balance bal) {
+
+                    if (bal.rawBalance != null) { //this method works there is sim? sms feedback is good sign
+
+                        Crashlytics.log(Log.DEBUG, TAG, "saving balance ...");
+                        // String sim = TelephonyUtil.getSimSerial(c);
+                        dataBalanceService.insert(bal, setting.simSlot, telephoneData);
+
+                        if (balanceSuccessCallback != null) {
+                            balanceSuccessCallback.onComplete();
+                        }
+                    } else {
+
+                        setting.ussd = null;
+                        AppController.getInstance().updateSetting(setting);
+                        //failed completely
+                        dataBalanceService.insertErrorMessage("could not fetch balance", setting.simSlot, telephoneData);
+                        Answers.getInstance().logCustom(new CustomEvent("DataBalance").putCustomAttribute("Reason", "could not fetch balance"));
+
+                        if (balanceSuccessCallback != null) {
+                            balanceSuccessCallback.onComplete();
+                        }
                     }
                 }
-            }
-        });
-
+            });
+        } catch (Exception e) {
+            Crashlytics.logException(e);
+            if (balanceSuccessCallback != null) balanceSuccessCallback.onComplete();
+        }
     }
 
     public void syncSetting(Context context) {

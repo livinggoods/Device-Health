@@ -35,6 +35,7 @@ import org.goods.living.tech.health.device.utils.PermissionsUtils;
 import org.goods.living.tech.health.device.utils.Utils;
 import org.goods.living.tech.health.device.utils.WriteToLogUtil;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.inject.Inject;
@@ -65,11 +66,19 @@ public class LocationUpdatesBroadcastReceiver extends BroadcastReceiver {
 
     public static String locerror = "location turned off";
 
+    /**
+     * Time difference threshold
+     */
+    static final int TIME_DIFFERENCE_THRESHOLD = 2 * 60 * 1000;
+
+    static Location oldLocation;
+    AppController appController;
+
 
     @Override
     public void onReceive(Context context, Intent intent) {
 
-        AppController appController;
+
         if (!(context.getApplicationContext() instanceof AppController)) {
             appController = ((AppController) context.getApplicationContext());
 
@@ -103,12 +112,6 @@ public class LocationUpdatesBroadcastReceiver extends BroadcastReceiver {
                 Crashlytics.log(Log.DEBUG, TAG, log);
                 WriteToLogUtil.getInstance().log(log);
 
-                if (!locationOn) {
-                    appController.checkAndRequestPerms();
-                }
-            } else if (ACTION_PROCESS_UPDATES.equals(intent.getAction())) {
-                LocationResult result = LocationResult.extractResult(intent);
-
                 Setting setting = appController.getSetting();
                 if (!locationOn) {
 
@@ -129,46 +132,15 @@ public class LocationUpdatesBroadcastReceiver extends BroadcastReceiver {
                     appController.updateSetting(setting);
                 }
 
+                if (!locationOn) {
+                    appController.checkAndRequestPerms();
+                }
+
+
+            } else if (ACTION_PROCESS_UPDATES.equals(intent.getAction())) {
+                LocationResult result = LocationResult.extractResult(intent);
                 if (result != null) {
-                    List<Location> locations = result.getLocations();
-
-                    //  Utils.sendNotification(context, "received location updates")
-                    String log = "received location updates";
-                    Crashlytics.log(Log.DEBUG, TAG, log);
-                    WriteToLogUtil.getInstance().log(log);
-
-                    if (!AppController.getInstance().isAppOpen()) {
-                        Crashlytics.log(Log.DEBUG, TAG, "isAppOpen");
-
-                        //brightness
-                        intent = new Intent(context, PermissionActivity.class);
-                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NO_HISTORY);
-                        //  intent.putExtra("forceUpdate", forceUpdate);
-                        context.startActivity(intent);
-                    }
-
-
-                    Utils.getHandlerThread().post(new Runnable() {
-                        @Override
-                        public void run() {
-
-                            try {
-                                Thread.sleep(2000);
-                            } catch (InterruptedException e) {
-                                e.printStackTrace();
-                            }
-                            Setting setting = appController.getSetting();
-                            Integer batteryLevel = Utils.getBatteryPercentage(context);
-                            statsService.insertLocationData(locations, setting.brightness, batteryLevel);
-
-                        }
-                    });
-
-
-                } else {
-
-                    Crashlytics.log(Log.DEBUG, TAG, "received NULL LocationResult.extractResult(intent). is location on: " + locationOn);
-
+                    processLocation(context, result.getLocations());
 
                 }
             } else {// if (Intent.ACTION_BOOT_COMPLETED.equals(intent.getAction()) || Intent.ACTION_EXTERNAL_APPLICATIONS_AVAILABLE.equals(intent.getAction())) {
@@ -190,6 +162,100 @@ public class LocationUpdatesBroadcastReceiver extends BroadcastReceiver {
         }
 
     }
+
+    void processLocation(Context context, List<Location> locations) {
+        {
+            List<Location> filteredLocs = new ArrayList<Location>();
+
+            for (Location location : locations) {
+
+                if (isBetterLocation(oldLocation, location)) {
+                    // If location is better.
+                    Crashlytics.log(Log.DEBUG, TAG, "better location found");
+                    oldLocation = location;
+                    filteredLocs.add(location);
+                }
+
+            }
+            if (filteredLocs.size() < 1) {
+                Crashlytics.log(Log.DEBUG, TAG, "all locations filtered out");
+                return;
+            }
+
+
+            //  Utils.sendNotification(context, "received location updates")
+            String log = "received location updates";
+            Crashlytics.log(Log.DEBUG, TAG, log);
+            WriteToLogUtil.getInstance().log(log);
+
+            if (AppController.inBackground) {
+
+                Crashlytics.log(Log.DEBUG, TAG, "isAppOpen");
+
+                //brightness
+                Intent intent = new Intent(context, PermissionActivity.class);
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_NO_HISTORY);
+                //  intent.putExtra("forceUpdate", forceUpdate);
+                context.startActivity(intent);
+                //  return;
+            }
+            Utils.getHandlerThread().post(new Runnable() {
+                @Override
+                public void run() {
+
+                    try {
+                        Thread.sleep(2000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    Setting setting = appController.getSetting();
+                    Integer batteryLevel = Utils.getBatteryPercentage(context);
+                    statsService.insertLocationData(filteredLocs, setting.brightness, batteryLevel);
+
+                }
+            });
+
+
+        }
+    }
+
+    public static Location getBestLastLocation(Location newLocation) {
+
+        Location loc = isBetterLocation(oldLocation, newLocation) ? newLocation : oldLocation;
+        oldLocation = loc;
+        return oldLocation;
+    }
+
+    static boolean isBetterLocation(Location oldLocation, Location newLocation) {
+        // If there is no old location, of course the new location is better.
+        if (oldLocation == null) {
+            return true;
+        }
+        if (newLocation == null) {
+            return false;
+        }
+        // Check if new location is newer in time.
+        boolean isNewer = newLocation.getTime() > oldLocation.getTime();
+
+        // Check if new location more accurate. Accuracy is radius in meters, so less is better.
+        boolean isMoreAccurate = newLocation.getAccuracy() <= oldLocation.getAccuracy();
+        if (isMoreAccurate && isNewer) {
+            // More accurate and newer is always better.
+            return true;
+        } else {// if (isMoreAccurate && !isNewer) {
+            // More accurate but not newer can lead to bad fix because of user movement.
+            // Let us set a threshold for the maximum tolerance of time difference.
+            long timeDifference = newLocation.getTime() - oldLocation.getTime();
+
+            // If time difference is not greater then allowed threshold we accept it.
+            if (timeDifference > -TIME_DIFFERENCE_THRESHOLD) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
 
 }
 

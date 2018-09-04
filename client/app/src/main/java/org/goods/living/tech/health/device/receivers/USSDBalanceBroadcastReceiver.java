@@ -97,10 +97,6 @@ public class USSDBalanceBroadcastReceiver extends BroadcastReceiver {
 
                 User user = appController.getUser();
 
-                if (AppController.getInstance().isAppOpen()) {
-                    Crashlytics.log(Log.DEBUG, TAG, "isAppOpen");
-                    return;
-                }
 
                 Calendar yesterday = Calendar.getInstance();//(timeZone);
 

@@ -123,13 +123,15 @@ public class RegisterActivity extends MaterialIntroActivity implements RegisterU
     protected void onResume() {
         super.onResume();
         Crashlytics.log(Log.DEBUG, TAG, "onResume ");
-        AppController.getInstance().appOpen(true);
+        AppController.inBackground = false;
+
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        AppController.getInstance().appOpen(false);
+        Crashlytics.log(Log.DEBUG, TAG, "onPause");
+
     }
 
     /**

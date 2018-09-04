@@ -126,6 +126,30 @@ public class DataBalanceService extends BaseService {
         }
     }
 
+    public boolean insertErrorMessage(String msg, Integer sim, JSONObject telephoneData) {
+        try {
+
+            DataBalance model = new DataBalance();
+            // model.balance = bal.balance;
+            //  model.expiryDate = bal.expiryDate;
+            //  model.balanceMessage = bal.rawBalance;
+            model.message = msg;
+            model.sim = sim;
+            model.info = telephoneData;
+            model.recordedAt = new Date();
+            model.createdAt = model.recordedAt;
+
+            box.put(model);
+
+
+            return true;
+        } catch (Exception e) {
+            Crashlytics.logException(e);
+            return false;
+        }
+    }
+
+
     public boolean insertRecords(DataBalance record) {
 
         try {

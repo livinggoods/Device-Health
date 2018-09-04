@@ -5,89 +5,98 @@
  */
 package org.goods.living.tech.health.device.jpa.dao;
 
-import org.json.simple.JSONObject;
-
 import java.io.Serializable;
 import java.util.Date;
+
+import org.json.simple.JSONObject;
 
 /**
  * @author kevinkorir
  */
 public class ChvActivity implements Serializable {
 
-    private static final long serialVersionUID = 1L;
+	private static final long serialVersionUID = 1L;
 
-    private String chvUuid;
-    private String activityId;
-    private String activityType;
-    private Double latitude;
-    private Double longitude;
-    private String clientName;
-    private Date reportedDate;
-    private JSONObject medicCoordinates;
+	private String chvUuid;
+	private String activityId;
+	private String activityType;
+	private Double latitude;
+	private Double longitude;
+	private String clientName;
+	private Date reportedDate;
+	private JSONObject medicCoordinates;
+	private String androidId;
 
-    public JSONObject getMedicCoordinates() {
-        return medicCoordinates;
-    }
+	public String getAndroidId() {
+		return androidId;
+	}
 
-    public void setMedicCoordinates(JSONObject medicCoordinates) {
-        this.medicCoordinates = medicCoordinates;
-    }
+	public void setAndroidId(String androidId) {
+		this.androidId = androidId;
+	}
 
-    public String getClientName() {
-        return clientName;
-    }
+	public JSONObject getMedicCoordinates() {
+		return medicCoordinates;
+	}
 
-    public void setClientName(String clientName) {
-        this.clientName = clientName;
-    }
+	public void setMedicCoordinates(JSONObject medicCoordinates) {
+		this.medicCoordinates = medicCoordinates;
+	}
 
-    public Double getLatitude() {
-        return latitude;
-    }
+	public String getClientName() {
+		return clientName;
+	}
 
-    public void setLatitude(Double latitude) {
-        this.latitude = latitude;
-    }
+	public void setClientName(String clientName) {
+		this.clientName = clientName;
+	}
 
-    public Double getLongitude() {
-        return longitude;
-    }
+	public Double getLatitude() {
+		return latitude;
+	}
 
-    public void setLongitude(Double longitude) {
-        this.longitude = longitude;
-    }
+	public void setLatitude(Double latitude) {
+		this.latitude = latitude;
+	}
 
-    public Date getReportedDate() {
-        return reportedDate;
-    }
+	public Double getLongitude() {
+		return longitude;
+	}
 
-    public void setReportedDate(Date reportedDate) {
-        this.reportedDate = reportedDate;
-    }
+	public void setLongitude(Double longitude) {
+		this.longitude = longitude;
+	}
 
-    public String getActivityType() {
-        return activityType;
-    }
+	public Date getReportedDate() {
+		return reportedDate;
+	}
 
-    public void setActivityType(String activityType) {
-        this.activityType = activityType;
-    }
+	public void setReportedDate(Date reportedDate) {
+		this.reportedDate = reportedDate;
+	}
 
-    public String getActivityId() {
-        return activityId;
-    }
+	public String getActivityType() {
+		return activityType;
+	}
 
-    public void setActivityId(String activityId) {
-        this.activityId = activityId;
-    }
+	public void setActivityType(String activityType) {
+		this.activityType = activityType;
+	}
 
-    public String getChvUuid() {
-        return chvUuid;
-    }
+	public String getActivityId() {
+		return activityId;
+	}
 
-    public void setChvUuid(String chvUuid) {
-        this.chvUuid = chvUuid;
-    }
+	public void setActivityId(String activityId) {
+		this.activityId = activityId;
+	}
+
+	public String getChvUuid() {
+		return chvUuid;
+	}
+
+	public void setChvUuid(String chvUuid) {
+		this.chvUuid = chvUuid;
+	}
 
 }

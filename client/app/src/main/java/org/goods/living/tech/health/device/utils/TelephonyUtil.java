@@ -83,7 +83,7 @@ public class TelephonyUtil {
 
                     // results.add(key.getName() + " " + sim);
                     telephoneDataSIM0.put(key.getName(), sim0);
-                    Crashlytics.log(Log.DEBUG, TAG, key.getName() + " " + sim0);
+                    Crashlytics.log(Log.DEBUG, TAG, "sim0: " + key.getName() + " " + sim0);
 
 //                    if (key.getName().toLowerCase().contains("operator") && !sim1.trim().isEmpty()) {
 //                        telephoneDataSIM1.put("simPresent", true);
@@ -93,7 +93,7 @@ public class TelephonyUtil {
                 if (sim1 != null) {
 
                     telephoneDataSIM1.put(key.getName(), sim1);
-                    Crashlytics.log(Log.DEBUG, TAG, key.getName() + " " + sim1);
+                    Crashlytics.log(Log.DEBUG, TAG, "sim1: " + key.getName() + " " + sim1);
 
 //                    if (key.getName().toLowerCase().contains("operator") && !sim1.trim().isEmpty()) {
 //                        telephoneDataSIM1.put("simPresent", true);
@@ -130,6 +130,8 @@ public class TelephonyUtil {
 
             this.networkSIM0 = (sim0 != null && !sim0.trim().isEmpty()) ? sim0.trim() : null;
             this.networkSIM1 = (sim1 != null && !sim1.trim().isEmpty()) ? sim1.trim() : null;
+
+            //  boolean roaming = telephony.isNetworkRoaming();
             //    break;
             //   }
             //      }
@@ -215,7 +217,7 @@ public class TelephonyUtil {
                 // Annotation[] annotations = parameterAnnotations[i];
                 //      Class<?> parameterClazz = parameterTypes[i];
                 //   }
-                if (methods[idx].getName().startsWith("get") && parameterCount == 1) {
+                if ((methods[idx].getName().startsWith("get") && parameterCount == 1) || (methods[idx].getName().startsWith("is") && parameterCount == 1)) {
                     Class<?> parameterClazz = parameterTypes[0];
 
                     if (parameterClazz.isPrimitive()) {//Number.class.isAssignableFrom(parameterClazz.getDeclaringClass())) {//parameterClazz.isPrimitive() ||

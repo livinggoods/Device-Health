@@ -132,7 +132,7 @@ public class DatabalanceService extends BaseService {
 
 		// Users user = getCurrentUser();
 
-		String ussd = applicationParameters.getUSSDBalanceCodes(network);
+		String ussd = applicationParameters.getUSSDBalanceCode(network);
 
 		Result<String> result = new Result<String>(true, "", ussd);
 		return result;
@@ -205,11 +205,12 @@ public class DatabalanceService extends BaseService {
 			ObjectNode root = mapper.createObjectNode();
 			root.put("username", balance[1] != null ? balance[1].toString() : null);
 			root.put("name", balance[2] != null ? balance[2].toString() : null);
-			root.put("branch", balance[3] != null ? balance[3].toString() : null);
-			root.put("version_code", balance[4] != null ? balance[4].toString() : null);
-			root.put("balance", balance[5] != null ? balance[5].toString() : null);
-			root.put("balance_message", balance[6] != null ? balance[6].toString() : null);
-			root.put("date", balance[7] != null ? balance[7].toString() : null);
+			root.put("androidId", balance[3] != null ? balance[3].toString() : null);
+			root.put("branch", balance[4] != null ? balance[4].toString() : null);
+			root.put("version_code", balance[5] != null ? balance[5].toString() : null);
+			root.put("balance", balance[6] != null ? balance[6].toString() : null);
+			root.put("balance_message", balance[7] != null ? balance[7].toString() : null);
+			root.put("date", balance[8] != null ? balance[8].toString() : null);
 			results.add(root);
 		}
 

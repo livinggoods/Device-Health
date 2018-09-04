@@ -254,25 +254,32 @@ public class RegisterUserFragment extends SlideFragment {
 
                 if (updatedUser.masterId != null) {
                     registrationService.syncSetting(c);
-                    registrationService.checkBalanceThroughSMS(c, null);
+                    registrationService.checkBalanceThroughSMS(c, new RegistrationService.BalanceSuccessCallback() {
+                        @Override
+                        public void onComplete() {
+
+                            new Handler(Looper.getMainLooper()).post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    try {
+                                        Utils.dismissProgressDialog();
+                                        if (updatedUser.masterId != null) {
+                                            Intent intent = new Intent(getActivity(), MainActivity.class);
+                                            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                                            //  intent.putExtra("forceUpdate", forceUpdate);
+                                            getActivity().startActivity(intent);
+
+                                        }
+                                    } catch (Exception e) {
+                                        Crashlytics.logException(e);
+
+                                    }
+                                }
+                            });
+                        }
+                    });
                 }
 
-                new Handler(Looper.getMainLooper()).post(new Runnable() {
-                    @Override
-                    public void run() {
-                        //this runs on the UI thread
-                        Utils.dismissProgressDialog();
-                        if (updatedUser.masterId != null) {
-                            Intent intent = new Intent(getActivity(), MainActivity.class);
-                            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                            //  intent.putExtra("forceUpdate", forceUpdate);
-                            getActivity().startActivity(intent);
-
-                        }
-
-
-                    }
-                });
             }
         });
 

@@ -16,11 +16,9 @@ import javax.persistence.Query;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Root;
 
-import org.codehaus.jackson.JsonNode;
 import org.goods.living.tech.health.device.jpa.controllers.exceptions.NonexistentEntityException;
 import org.goods.living.tech.health.device.jpa.dao.Branch;
 import org.goods.living.tech.health.device.jpa.dao.DataBalance;
-import org.goods.living.tech.health.device.jpa.dao.MedicUser;
 import org.goods.living.tech.health.device.jpa.dao.Users;
 
 /**
@@ -42,6 +40,7 @@ public class DataBalanceJpaController implements Serializable {
 	public EntityManager getEntityManager() {
 		return emf.createEntityManager();
 	}
+
 	public EntityManager getEntityManagerUG() {
 		return emfUG.createEntityManager();
 	}
@@ -182,18 +181,19 @@ public class DataBalanceJpaController implements Serializable {
 			em.close();
 		}
 	}
+
 	public List<Branch> findBranchMatching(String name) {
 
 		EntityManager em = getEntityManager();
 		try {
 
-			List<String> list = em.createNativeQuery("SELECT * FROM events.branches  WHERE branch " +
-					"ILIKE :name").setParameter("name", "%"+name+"%").getResultList();
+			List<String> list = em.createNativeQuery("SELECT * FROM events.branches  WHERE branch " + "ILIKE :name")
+					.setParameter("name", "%" + name + "%").getResultList();
 			List<Branch> branches = new ArrayList<>();
 			for (String obj : list) {
-				if(obj!=null){
+				if (obj != null) {
 					Branch b = new Branch();
-					b.setName( obj);
+					b.setName(obj);
 					branches.add(b);
 				}
 			}
@@ -205,23 +205,26 @@ public class DataBalanceJpaController implements Serializable {
 		}
 
 	}
-	public List<Object[]> fetchBalances(String branchName, String chvName, String operator, String value, String page ) {
-		final Integer perPage= 20;
+
+	public List<Object[]> fetchBalances(String branchName, String chvName, String operator, String value, String page) {
+		final Integer perPage = 20;
 		EntityManager em = getEntityManager();
-		Integer pageNumber=page==""?1:Integer.parseInt(page);
-		String userWhere=chvName!=""?" where  name ILIKE '%"+chvName+ "%' ":" where true";
-		String branchWhere=branchName!=""?" and branch = '"+branchName+ "' ":"";
-		String comparisonOperator=null;
-		if(operator=="less_than") comparisonOperator="<";
-		else if( operator=="equal_to") comparisonOperator= "=";
-		String valueWhere=value!=""?" and balance "+ operator+" '"+value+ "' ":"";
-		String query="Select * from (SELECT u.id, u.username,u.name, u.branch, u.version_code, b.balance, b.balance_message, b.recorded_at FROM events.users " +
-				"u left join (SELECT DISTINCT ON (b.user_id) b.* FROM events.data_balance b " +
-				"ORDER BY b.user_id, b.recorded_at DESC) as b on u.id=b.user_id ) as c " + userWhere + branchWhere + valueWhere;
+		Integer pageNumber = page == "" ? 1 : Integer.parseInt(page);
+		String userWhere = chvName != "" ? " where  name ILIKE '%" + chvName + "%' " : " where true";
+		String branchWhere = branchName != "" ? " and branch = '" + branchName + "' " : "";
+		String comparisonOperator = null;
+		if (operator == "less_than")
+			comparisonOperator = "<";
+		else if (operator == "equal_to")
+			comparisonOperator = "=";
+		String valueWhere = value != "" ? " and balance " + operator + " '" + value + "' " : "";
+		String query = "Select * from (SELECT u.id, u.username,u.name,u.androidId, u.branch, u.version_code, b.balance, b.balance_message, b.recorded_at FROM events.users "
+				+ "u left join (SELECT DISTINCT ON (b.user_id) b.* FROM events.data_balance b "
+				+ "ORDER BY b.user_id, b.recorded_at DESC) as b on u.id=b.user_id ) as c " + userWhere + branchWhere
+				+ valueWhere;
 		try {
 
-			List<Object[]> balances = em.createNativeQuery(query).setMaxResults(perPage)
-					.getResultList();
+			List<Object[]> balances = em.createNativeQuery(query).setMaxResults(perPage).getResultList();
 
 			return balances;
 		} catch (Exception e) {

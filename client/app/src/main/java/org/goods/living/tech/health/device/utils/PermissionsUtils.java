@@ -141,7 +141,11 @@ public class PermissionsUtils {
                 Answers.getInstance().logCustom(new CustomEvent("Missing Permissions")
                         .putCustomAttribute("Reason", "location"));
                 requestSettingPermissionsWithDialog(context, android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS, "Location", null);
-                requestSettingPermissionsWithDialog(context, android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS, "Location", null);
+
+//                LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder();
+//                builder.addLocationRequest(AppController.getInstance().createLocationRequest(300));
+//                builder.build();
+
                 return false;
             }
 
@@ -163,9 +167,6 @@ public class PermissionsUtils {
 //
 //                return false;
 //            }
-
-
-            ;
 
 
         } catch (Exception e) {

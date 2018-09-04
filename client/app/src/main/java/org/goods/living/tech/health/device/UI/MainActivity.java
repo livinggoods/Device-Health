@@ -16,6 +16,7 @@
 
 package org.goods.living.tech.health.device.UI;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -34,7 +35,6 @@ import android.widget.TextView;
 
 import com.crashlytics.android.Crashlytics;
 import com.google.android.gms.location.LocationRequest;
-import com.google.android.gms.tasks.OnSuccessListener;
 
 import org.goods.living.tech.health.device.AppController;
 import org.goods.living.tech.health.device.R;
@@ -42,11 +42,13 @@ import org.goods.living.tech.health.device.models.DataBalance;
 import org.goods.living.tech.health.device.models.Setting;
 import org.goods.living.tech.health.device.models.Stats;
 import org.goods.living.tech.health.device.models.User;
+import org.goods.living.tech.health.device.receivers.LocationUpdatesBroadcastReceiver;
 import org.goods.living.tech.health.device.services.DataBalanceService;
 import org.goods.living.tech.health.device.services.RegistrationService;
 import org.goods.living.tech.health.device.services.StatsService;
 import org.goods.living.tech.health.device.services.UserService;
 import org.goods.living.tech.health.device.utils.DataBalanceHelper;
+import org.goods.living.tech.health.device.utils.PermissionsUtils;
 import org.goods.living.tech.health.device.utils.SnackbarUtil;
 import org.goods.living.tech.health.device.utils.SyncAdapter;
 import org.goods.living.tech.health.device.utils.Utils;
@@ -152,15 +154,17 @@ public class MainActivity extends FragmentActivity implements
     @Override
     protected void onResume() {
         super.onResume();
-        Crashlytics.log(Log.DEBUG, TAG, "onResume ");
+        Crashlytics.log(Log.DEBUG, TAG, "onResume");
+        AppController.inBackground = false;
         loadData();
-        AppController.getInstance().appOpen(true);
+
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        AppController.getInstance().appOpen(false);
+        Crashlytics.log(Log.DEBUG, TAG, "onPause");
+
     }
 
 
@@ -233,9 +237,14 @@ public class MainActivity extends FragmentActivity implements
                         new Handler(Looper.getMainLooper()).post(new Runnable() {
                             @Override
                             public void run() {
-                                Utils.dismissProgressDialog();
-                                List<DataBalance> list = dataBalanceService.getLatestRecords(1l);
-                                updateUI(list);
+                                try {
+                                    Utils.dismissProgressDialog();
+                                    List<DataBalance> list = dataBalanceService.getLatestRecords(1l);
+                                    updateUI(list);
+                                } catch (Exception e) {
+                                    Crashlytics.logException(e);
+
+                                }
                             }
                         });
                     }
@@ -268,16 +277,34 @@ public class MainActivity extends FragmentActivity implements
      */
     public void checkLocation(View view) {
 
-        try {
-            Context c = this;
+        Activity c = this;
 
-            Utils.showProgressDialog(this);
+        boolean locationOn = PermissionsUtils.isLocationOn(c);
 
-            AppController appController = (AppController) c.getApplicationContext();
-            appController.getlastKnownLocation()
-                    .addOnSuccessListener(this, new OnSuccessListener<Location>() {
+
+        if (!locationOn) {
+            Utils.dismissProgressDialog();
+            SnackbarUtil.showSnack(c, "First Enable Location on device");
+            return;
+        }
+
+        Utils.showProgressDialog(this);
+
+        Utils.getHandlerThread().post(new Runnable() {
+            @Override
+            public void run() {
+                try {
+
+                    AppController appController = (AppController) c.getApplicationContext();
+                    Location loc = appController.getLastLocation();
+
+                    Location location = LocationUpdatesBroadcastReceiver.getBestLastLocation(loc);
+
+                    new Handler(Looper.getMainLooper()).post(new Runnable() {
                         @Override
-                        public void onSuccess(Location location) {
+                        public void run() {
+                            Utils.dismissProgressDialog();
+
                             // Got last known location. In some rare situations this can be null.
                             if (location != null) {
                                 // Logic to handle location object
@@ -294,20 +321,26 @@ public class MainActivity extends FragmentActivity implements
                                 setting.brightness = bright != null ? bright.doubleValue() : null;
                                 AppController.getInstance().updateSetting(setting);
 
+
                                 Integer batteryLevel = Utils.getBatteryPercentage(c);
                                 statsService.insertLocation(location, setting.brightness, batteryLevel);
                                 loadData();
 
+                            } else {
+                                SnackbarUtil.showSnack(c, "Could not get location");
                             }
-                            Utils.dismissProgressDialog();
                         }
                     });
 
-        } catch (Exception e) {
-            Log.e(TAG, "", e);
-            Crashlytics.logException(e);
-            Utils.dismissProgressDialog();
-        }
+                } catch (Exception e) {
+                    Log.e(TAG, "", e);
+                    Crashlytics.logException(e);
+                    Utils.dismissProgressDialog();
+                }
+
+            }
+        });
+
     }
 
     /**
@@ -320,9 +353,10 @@ public class MainActivity extends FragmentActivity implements
 
     void loadData() {
 
-
+        Setting setting = AppController.getInstance().getSetting();
         User user = userService.getRegisteredUser();
-        if (user.masterId == null) {
+
+        if (user.masterId == null || setting.simSlot == null) {
             // enableSettingsEdit();
             Intent intent = new Intent(this, RegisterActivity.class);
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);

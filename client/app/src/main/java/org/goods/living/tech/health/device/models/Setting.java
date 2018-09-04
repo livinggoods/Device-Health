@@ -47,7 +47,7 @@ public class Setting extends BaseModel {
 
     public String network;
 
-    public int simSlot;
+    public Integer simSlot;
 
     // "
     //  @Convert(converter = StringListConverter.class, dbType = String.class)
@@ -166,7 +166,7 @@ public class Setting extends BaseModel {
 
         try {
 
-            SimpleDateFormat df = new SimpleDateFormat("HH:mm a"); //a for 24hr
+            SimpleDateFormat df = new SimpleDateFormat("H:mm"); //a for 24hr
             Date d1 = df.parse(databalanceCheckTime);//df.parse( "23:30");
 
             GregorianCalendar timepoint = new GregorianCalendar();
@@ -176,7 +176,7 @@ public class Setting extends BaseModel {
 
             Calendar calendar = Calendar.getInstance();//(timeZone);
 
-            calendar.setTime(d1);//calendar.setTimeInMillis(System.currentTimeMillis());
+            calendar.setTimeInMillis(System.currentTimeMillis());
             calendar.set(Calendar.HOUR_OF_DAY, hours);
             calendar.set(Calendar.MINUTE, minutes);
             calendar.set(Calendar.SECOND, 0);
