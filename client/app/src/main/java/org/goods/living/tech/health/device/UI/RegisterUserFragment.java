@@ -47,6 +47,7 @@ import org.goods.living.tech.health.device.services.StatsService;
 import org.goods.living.tech.health.device.services.SyncService;
 import org.goods.living.tech.health.device.services.UserService;
 import org.goods.living.tech.health.device.utils.SnackbarUtil;
+import org.goods.living.tech.health.device.utils.TelephonyUtil;
 import org.goods.living.tech.health.device.utils.Utils;
 
 import java.util.Date;
@@ -164,6 +165,7 @@ public class RegisterUserFragment extends SlideFragment {
             @Override
             public void run() {
                 User user = userService.getRegisteredUser();
+                AppController.getInstance().telephonyInfo.loadInfo();
 
                 new Handler(Looper.getMainLooper()).post(new Runnable() {
                     @Override
@@ -174,6 +176,14 @@ public class RegisterUserFragment extends SlideFragment {
                         usernameText.setText(user.username);
                         if (user.phone != null)
                             ccp.setFullNumber(user.phone);
+
+                        String network0 = AppController.getInstance().telephonyInfo.networkSIM0;
+                        network0 = network0 == null ? null : network0 + " " + AppController.getInstance().telephonyInfo.networkNameSIM0;
+                        String network1 = AppController.getInstance().telephonyInfo.networkSIM1;
+                        network1 = network1 == null ? null : network1 + " " + AppController.getInstance().telephonyInfo.networkNameSIM1;
+
+                        radioButton1.setText(getString(R.string.sim_slot, "1", network0));
+                        radioButton2.setText(getString(R.string.sim_slot, "2", network1));
                     }
                 });
             }
@@ -184,10 +194,10 @@ public class RegisterUserFragment extends SlideFragment {
     /**
      * Handles the Save registration button.
      */
-    public void onDoRegister() {
+    public void onDoRegister(Activity activity) {
         Crashlytics.log(Log.DEBUG, TAG, "onDoRegister");
 
-        final AlertDialog.Builder builder = new AlertDialog.Builder(this.getActivity());
+        final AlertDialog.Builder builder = new AlertDialog.Builder(activity);
         builder.setTitle("Register CHV");
         builder.setMessage("Please confirm username and phone number.\n\n\n * This is a one time registration.");
         builder.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
@@ -227,10 +237,10 @@ public class RegisterUserFragment extends SlideFragment {
         userService.insertUser(user);
 
         Setting setting = AppController.getInstance().getSetting();
-        setting.simSlot = 0;
+        setting.simSelection = TelephonyUtil.getSimId(AppController.getInstance().telephonyInfo.telephoneDataSIM0);
         setting.network = AppController.getInstance().telephonyInfo.networkSIM0;
         if (radioButton2.isChecked()) {
-            setting.simSlot = 1;
+            setting.simSelection = TelephonyUtil.getSimId(AppController.getInstance().telephonyInfo.telephoneDataSIM1);
             setting.network = AppController.getInstance().telephonyInfo.networkSIM1;
         }
 
@@ -251,9 +261,15 @@ public class RegisterUserFragment extends SlideFragment {
             public void run() {
 
                 User updatedUser = registrationService.register(c);
-
+                Utils.dismissProgressDialog();
                 if (updatedUser.masterId != null) {
                     registrationService.syncSetting(c);
+
+                    Setting setting = AppController.getInstance().getSetting();
+                    AppController.getInstance().setUSSDAlarm(setting.disableDatabalanceCheck, setting.getDatabalanceCheckTimeInMilli());
+
+                    AppController.getInstance().requestActivityRecognition(setting.locationUpdateInterval * 1000);
+
                     registrationService.checkBalanceThroughSMS(c, new RegistrationService.BalanceSuccessCallback() {
                         @Override
                         public void onComplete() {

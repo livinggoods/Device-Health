@@ -19,7 +19,6 @@ package org.goods.living.tech.health.device.utils;
 
 //import android.app.NotificationChannel;
 
-import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -48,7 +47,6 @@ import android.view.Window;
 import android.view.WindowManager;
 
 import com.crashlytics.android.Crashlytics;
-import com.google.android.gms.common.GoogleApiAvailability;
 
 import org.goods.living.tech.health.device.R;
 import org.goods.living.tech.health.device.UI.MainActivity;
@@ -313,6 +311,31 @@ public class Utils {
         }
     }
 
+    public static Double getBatteryCapacity(Context c) {
+        Object mPowerProfile_ = null;
+
+        final String POWER_PROFILE_CLASS = "com.android.internal.os.PowerProfile";
+
+        try {
+            mPowerProfile_ = Class.forName(POWER_PROFILE_CLASS)
+                    .getConstructor(Context.class).newInstance(c);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        try {
+            double batteryCapacity = (Double) Class
+                    .forName(POWER_PROFILE_CLASS)//mah
+                    .getMethod("getAveragePower", java.lang.String.class)
+                    .invoke(mPowerProfile_, "battery.capacity");
+            return batteryCapacity;
+        } catch (Exception e) {
+            Crashlytics.logException(e);
+            return null;
+        }
+    }
+
+
     public static Float getBrightness(Context context, Window window) {
 
         try {
@@ -353,10 +376,10 @@ public class Utils {
 //    }
 
 
-    public static void makeGooglePlayServicesAvailable(Activity c) {
-        GoogleApiAvailability apiAvailability = GoogleApiAvailability.getInstance();
-        apiAvailability.makeGooglePlayServicesAvailable(c);
-
+//    public static void makeGooglePlayServicesAvailable(Activity c) {
+//        GoogleApiAvailability apiAvailability = GoogleApiAvailability.getInstance();
+//        apiAvailability.makeGooglePlayServicesAvailable(c);
+//
 //        int resultCode = apiAvailability.isGooglePlayServicesAvailable(c);
 //        if (resultCode != ConnectionResult.SUCCESS) {
 //
@@ -378,6 +401,6 @@ public class Utils {
 //            return false;
 //        }
 //        return true;
-    }
+//    }
 
 }

@@ -88,7 +88,7 @@ public class SyncService extends BaseService {
             }
             final User u = userService.getRegisteredUser();
             //only sync after username is registered on device, else just collect data
-            if (u.masterId == null) {
+            if (u == null || u.masterId == null) {
                 Crashlytics.log("cancel sync. masterid not registered on device yet");
                 Answers.getInstance().logCustom(new CustomEvent("Sync failed")
                         .putCustomAttribute("Reason", "masterId missing"));

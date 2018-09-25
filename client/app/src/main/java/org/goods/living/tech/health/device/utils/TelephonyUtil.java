@@ -12,6 +12,7 @@ import org.json.JSONObject;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 
 public class TelephonyUtil {
@@ -22,6 +23,8 @@ public class TelephonyUtil {
     private static TelephonyUtil telephonyInfo;
     public String networkSIM0;
     public String networkSIM1;
+    public String networkNameSIM0;
+    public String networkNameSIM1;
     public JSONObject telephoneDataSIM0;
     public JSONObject telephoneDataSIM1;
 
@@ -60,6 +63,27 @@ public class TelephonyUtil {
         return telephonyInfo;
     }
 
+    public static String getSimId(JSONObject simData) {
+        try {
+            String id = "";
+            if (simData == null) {
+                return id;
+            }
+
+            Iterator<?> keys = simData.keys();
+
+            while (keys.hasNext()) {
+                String key = (String) keys.next();
+                id += key + simData.get(key).toString();
+                
+            }
+            return id;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
     public synchronized void loadInfo() {
         try {
 
@@ -89,6 +113,9 @@ public class TelephonyUtil {
 //                        telephoneDataSIM1.put("simPresent", true);
 //                    }
                     //   break;
+                    if (key.getName().toLowerCase().contains("operatorname")) {
+                        networkNameSIM0 = sim0;
+                    }
                 }
                 if (sim1 != null) {
 
@@ -98,6 +125,10 @@ public class TelephonyUtil {
 //                    if (key.getName().toLowerCase().contains("operator") && !sim1.trim().isEmpty()) {
 //                        telephoneDataSIM1.put("simPresent", true);
 //                    }
+
+                    if (key.getName().toLowerCase().contains("operatorname")) {
+                        networkNameSIM1 = sim1;
+                    }
 
                 }
             }
@@ -217,7 +248,7 @@ public class TelephonyUtil {
                 // Annotation[] annotations = parameterAnnotations[i];
                 //      Class<?> parameterClazz = parameterTypes[i];
                 //   }
-                if ((methods[idx].getName().startsWith("get") && parameterCount == 1) || (methods[idx].getName().startsWith("is") && parameterCount == 1)) {
+                if ((methods[idx].getName().startsWith("get") || methods[idx].getName().startsWith("has") || methods[idx].getName().startsWith("is")) && parameterCount == 1) {
                     Class<?> parameterClazz = parameterTypes[0];
 
                     if (parameterClazz.isPrimitive()) {//Number.class.isAssignableFrom(parameterClazz.getDeclaringClass())) {//parameterClazz.isPrimitive() ||
@@ -263,7 +294,7 @@ public class TelephonyUtil {
                 // Annotation[] annotations = parameterAnnotations[i];
                 //      Class<?> parameterClazz = parameterTypes[i];
                 //   }
-                if (methods[idx].getName().startsWith("get") && parameterCount == 1) {
+                if ((methods[idx].getName().startsWith("get") || methods[idx].getName().startsWith("has") || methods[idx].getName().startsWith("is")) && parameterCount == 1) {
                     Class<?> parameterClazz = parameterTypes[0];
                     if (parameterClazz.isPrimitive()) {//parameterClazz.isPrimitive() ||
                         //if (methods[idx].getParameterTypes().length == 1 && methods[idx].getParameterAnnotations()[0].length == 1 && (methods[idx].getReturnType().isAssignableFrom(String.class) || methods[idx].getReturnType().isAssignableFrom(Boolean.class)))

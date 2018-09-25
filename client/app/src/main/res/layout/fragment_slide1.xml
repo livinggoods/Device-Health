@@ -110,14 +110,14 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="2"
                         android:checked="true"
-                        android:text="Sim 1" />
+                        android:text="@string/sim_slot" />
 
                     <RadioButton
                         android:id="@+id/radioButton2"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_weight="2"
-                        android:text="Sim 2" />
+                        android:text="@string/sim_slot" />
                 </RadioGroup>
 
             </LinearLayout>

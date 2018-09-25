@@ -1,16 +1,20 @@
 package org.goods.living.tech.health.device;
 
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.app.AlarmManager;
 import android.app.Application;
 import android.app.PendingIntent;
 import android.content.ComponentCallbacks2;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentSender;
 import android.content.pm.ApplicationInfo;
 import android.location.Location;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.os.StrictMode;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
@@ -28,16 +32,16 @@ import com.firebase.jobdispatcher.JobService;
 import com.firebase.jobdispatcher.Lifetime;
 import com.firebase.jobdispatcher.RetryStrategy;
 import com.firebase.jobdispatcher.Trigger;
+import com.google.android.gms.common.api.ResolvableApiException;
 import com.google.android.gms.location.ActivityRecognitionClient;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.LocationSettingsRequest;
 import com.google.android.gms.location.LocationSettingsResponse;
-import com.google.android.gms.location.SettingsClient;
 import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.Task;
+import com.google.android.gms.tasks.Tasks;
 import com.google.firebase.analytics.FirebaseAnalytics;
 import com.google.firebase.iid.FirebaseInstanceId;
 import com.google.firebase.iid.InstanceIdResult;
@@ -45,6 +49,7 @@ import com.google.firebase.messaging.FirebaseMessaging;
 import com.rvalerio.fgchecker.AppChecker;
 
 import org.goods.living.tech.health.device.UI.MainActivity;
+import org.goods.living.tech.health.device.UI.PermissionActivity;
 import org.goods.living.tech.health.device.models.Setting;
 import org.goods.living.tech.health.device.models.User;
 import org.goods.living.tech.health.device.receivers.LocationUpdatesBroadcastReceiver;
@@ -63,7 +68,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Calendar;
 import java.util.Date;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import javax.inject.Inject;
@@ -158,10 +162,10 @@ public class AppController extends Application {
         inBackground = true;
     }
 
+
     public FirebaseAnalytics getFirebaseAnalytics() {
         return mFirebaseAnalytics;
     }
-
 
     Thread.UncaughtExceptionHandler handler = new Thread.UncaughtExceptionHandler() {
         public void uncaughtException(Thread thread, Throwable ex) {
@@ -186,6 +190,7 @@ public class AppController extends Application {
 
     @Override
     public void onCreate() {
+        instance = this;
         boolean isDebug = ((this.getApplicationInfo().flags &
                 ApplicationInfo.FLAG_DEBUGGABLE) != 0);
 
@@ -236,12 +241,7 @@ public class AppController extends Application {
         // String packageName = appChecker.getForegroundApp(context);
         createUserOnFirstRun();
 
-
-        Context c = this;
-
-
         checkAndRequestPerms();
-
 
         // Create your sync account
         AuthenticatorService.createSyncAccount(this);
@@ -270,8 +270,7 @@ public class AppController extends Application {
         //requestLocationUpdates(this.getSetting().locationUpdateInterval * 1000);
 
         Setting setting = getSetting();
-        setUSSDAlarm(setting.getDatabalanceCheckTimeInMilli());
-
+        setUSSDAlarm(setting.disableDatabalanceCheck, setting.getDatabalanceCheckTimeInMilli());
         requestActivityRecognition(setting.locationUpdateInterval * 1000);
 
     }
@@ -285,13 +284,33 @@ public class AppController extends Application {
 
     }
 
-    public boolean checkAndRequestPerms() {
-        if (PermissionsUtils.checkAllPermissionsGrantedAndRequestIfNot(this)) {
-            if (PermissionsUtils.checkAllSettingPermissionsGrantedAndRequestIfNot(this)) {
-                return true;
+    public void checkAndRequestPerms() {
+
+        Context c = this;
+        new Handler(Looper.getMainLooper()).post(new Runnable() {
+            @Override
+            public void run() {
+                try {
+
+                    if (PermissionsUtils.checkAllPermissionsGrantedAndRequestIfNot(c)) {
+                        if (!PermissionsUtils.isLocationOn(c)) {
+
+                            Intent intent = new Intent(c, PermissionActivity.class);
+                            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);//| Intent.FLAG_ACTIVITY_NO_HISTORY
+                            //  intent.putExtra("forceUpdate", forceUpdate);
+                            c.startActivity(intent);
+
+                        }
+                        ;
+
+                    }
+
+                } catch (Exception e) {
+                    Crashlytics.logException(e);
+                }
             }
-        }
-        return false;
+        });
+
     }
 
     public JSONObject deviceInfo() {
@@ -326,6 +345,10 @@ public class AppController extends Application {
                 JSONObject.put("networkSIM1", telephonyInfo.networkSIM1);
                 JSONObject.put("telephoneDataSIM1", telephonyInfo.telephoneDataSIM1);
             }
+
+            Double batteryCapacity = Utils.getBatteryCapacity(this);
+            if (batteryCapacity != null)
+                JSONObject.put("batteryCapacity", batteryCapacity);
 
             s = Utils.getInstalledApps(this);
             JSONObject.put("apps", s);
@@ -435,7 +458,7 @@ public class AppController extends Application {
 
     //adb shell dumpsys alarm
     //https://stackoverflow.com/questions/28742884/how-to-read-adb-shell-dumpsys-alarm-output
-    public void setUSSDAlarm(Long alarmTime) {
+    public void setUSSDAlarm(boolean disableDatabalanceCheck, Long alarmTime) {
 
         try {
 
@@ -482,26 +505,24 @@ public class AppController extends Application {
                 Crashlytics.logException(e);
             }
 
-            if (Build.VERSION.SDK_INT >= 23) {
-                am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP,
-                        alarmTime, pi);
-            } else if (Build.VERSION.SDK_INT >= 19) {
-                am.setExact(AlarmManager.RTC_WAKEUP, alarmTime, pi);
-            }// else {am.set(AlarmManager.RTC_WAKEUP,alarmTime, pi); }
+            if (!disableDatabalanceCheck) {
+                if (Build.VERSION.SDK_INT >= 23) {
+                    am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP,
+                            alarmTime, pi);
+                } else if (Build.VERSION.SDK_INT >= 19) {
+                    am.setExact(AlarmManager.RTC_WAKEUP, alarmTime, pi);
+                }// else {am.set(AlarmManager.RTC_WAKEUP,alarmTime, pi); }
 
-            //hack to force a launch
-            Calendar yesterday = Calendar.getInstance();//(timeZone);
-            yesterday.setTimeInMillis(alarmTime);//alarmtime
-            yesterday.add(Calendar.DATE, -1);
-            Setting setting = getSetting();
-            if (setting.lastUSSDRun == null || setting.lastUSSDRun.before(yesterday.getTime())) {
-                pi.send(this.getApplicationContext(), 0, i);
-                yesterday.add(Calendar.DATE, 1);
-                setting.lastUSSDRun = Calendar.getInstance().getTime();
-                updateSetting(setting);
+                //hack to force a launch
+                Calendar yesterday = Calendar.getInstance();//(timeZone);
+                yesterday.setTimeInMillis(alarmTime);//alarmtime
+                yesterday.add(Calendar.DATE, -1);
+                Setting setting = getSetting();
+                if (setting.lastUSSDRun == null || setting.lastUSSDRun.before(yesterday.getTime())) {
+                    pi.send(this.getApplicationContext(), 0, i);
+                }
+
             }
-
-
             Crashlytics.log(Log.DEBUG, TAG, "Alarm set: " + new Date(alarmTime));
         } catch (Exception e) {
             Crashlytics.log(Log.DEBUG, TAG, e.getMessage());
@@ -531,6 +552,8 @@ public class AppController extends Application {
                 Crashlytics.log("created user");
             } else {
                 Crashlytics.log("error creating user information");
+                //should crash app
+                throw new RuntimeException("unable to create user");
             }
         }
 
@@ -561,62 +584,62 @@ public class AppController extends Application {
     }
 
     @SuppressLint("MissingPermission")
-    public void requestLocationUpdates() {//(long updateInterval) {
-        CountDownLatch latch = new CountDownLatch(1);
+    public void requestLocationUpdates() {
         try {
+            long updateInterval = this.getSetting().locationUpdateInterval / 1 * 1000;
+            Crashlytics.log(Log.DEBUG, TAG, "requestLocationUpdates " + updateInterval);
+            LocationRequest mLocationRequest = createLocationRequest(updateInterval);
+            Task<Void> locationTask = mFusedLocationClient.requestLocationUpdates(mLocationRequest, getPendingIntent(getApplicationContext()));
 
-            long updateInterval = this.getSetting().locationUpdateInterval / 2 * 1000;
+        } catch (Exception ee) {
+            // Log.wtf(TAG, e);
+            Crashlytics.logException(ee);
+        }
+    }
+
+    public void requestLocationUpdates(Activity c) {//(long updateInterval) {
+
+        try {
+            long updateInterval = this.getSetting().locationUpdateInterval / 1 * 1000;
             Crashlytics.log(Log.DEBUG, TAG, "requestLocationUpdates " + updateInterval);
 
-            // mFusedLocationClient.removeLocationUpdates(getPendingIntent(this.getApplicationContext()));
+            mFusedLocationClient.removeLocationUpdates(getPendingIntent(this.getApplicationContext()));
 
-
-            //   if (forceUpdate) {
             LocationRequest mLocationRequest = createLocationRequest(updateInterval);
-            LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder();
-            builder.addLocationRequest(mLocationRequest);
-            builder.build();
-// ...
+            LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder()
+                    .addLocationRequest(mLocationRequest);
+            //.addLocationRequest(mLocationRequestBalancedPowerAccuracy);
+            // builder.setNeedBle(true);
 
-            SettingsClient client = LocationServices.getSettingsClient(this);
-            Task<LocationSettingsResponse> task = client.checkLocationSettings(builder.build());
+            Task<LocationSettingsResponse> task =
+                    LocationServices.getSettingsClient(this).checkLocationSettings(builder.build());
 
-            task.addOnCompleteListener(new OnCompleteListener() {
-                @Override
-                public void onComplete(@NonNull Task task) {
-                    Crashlytics.log(Log.DEBUG, TAG, task.toString());
-                    try {
 
-                        Task<Void> locationTask = mFusedLocationClient.requestLocationUpdates(mLocationRequest, getPendingIntent(getApplicationContext()));
+            // Block on a task and get the result synchronously. This is generally done
+            // when executing a task inside a separately managed background thread. Doing this
+            // on the main (UI) thread can cause your application to become unresponsive.
+            LocationSettingsResponse response = Tasks.await(task);
+            //   latch.countDown();
+            //latch.await();
+            // All location settings are satisfied. The client can initialize location
+            // requests here.
+            requestLocationUpdates();
 
-                    } catch (Exception e) {
-                        // Log.wtf(TAG, e);
-                        Crashlytics.logException(e);
-                    } finally {
-                        latch.countDown();
-                    }
-                }
-            }).addOnFailureListener(new OnFailureListener() {
-                @Override
-                public void onFailure(@NonNull Exception e) {
-                    Crashlytics.logException(e);
-                    try {
-                    } catch (Exception ee) {
-                        // Log.wtf(TAG, e);
-                        Crashlytics.logException(ee);
-                    } finally {
-                        latch.countDown();
-                    }
-                }
-            });
-
-            //Log.d(TAG, "locationTask " + locationTask.isSuccessful());
-            //  }
-
-            latch.await();
         } catch (Exception e) {
-            // Log.wtf(TAG, e);
             Crashlytics.logException(e);
+            try {
+                // Cast to a resolvable exception.
+                ResolvableApiException resolvable = (ResolvableApiException) e.getCause();
+                // Show the dialog by calling startResolutionForResult(),
+                // and check the result in onActivityResult().
+                resolvable.startResolutionForResult(c, 1);
+            } catch (IntentSender.SendIntentException ee) {
+                // Ignore the error.
+            } catch (Exception ee) {
+                // Log.wtf(TAG, e);
+                Crashlytics.logException(ee);
+            }
+
         }
     }
 
@@ -625,36 +648,19 @@ public class AppController extends Application {
         try {
             requestLocationUpdates();
             Task<Location> task = mFusedLocationClient.getLastLocation();
-            CountDownLatch latch = new CountDownLatch(1);
+            //CountDownLatch latch = new CountDownLatch(1);
             //     CyclicBarrier barrier = new CyclicBarrier(1);
-
-            Utils.getHandlerThread().post(new Runnable() {
-                @Override
-                public void run() {
-                    try {
-                        Thread.sleep(2000);
-                        //  Task<Location> task2 = mFusedLocationClient.getLastLocation();
-                        // Thread.sleep(2000);
-                        location = task.isComplete() ? task.getResult() : null;
-                    } catch (Exception e) {
-                        System.err.println("Worker thread inrerrupted");
-                    } finally {
-                        latch.countDown();
-                    }
-                }
-            });
-            // wait for the threads to be done
-            //   barrier.await();
-            latch.await();
-            System.out.println("== End == ");
+            // Block on a task and get the result synchronously. This is generally done
+            // when executing a task inside a separately managed background thread. Doing this
+            // on the main (UI) thread can cause your application to become unresponsive.
+            Location location = Tasks.await(task);
+            //   latch.countDown();
+            //latch.await();
             return location;
         } catch (Exception e) {
-            System.err.println("Starting interrupted");
-            location = null;
-            return location;
+            Crashlytics.logException(e);
+            return null;
         }
-
-
     }
 
     /**

@@ -29,7 +29,6 @@ import com.crashlytics.android.answers.CustomEvent;
 
 import org.goods.living.tech.health.device.AppController;
 import org.goods.living.tech.health.device.models.Setting;
-import org.goods.living.tech.health.device.models.User;
 import org.goods.living.tech.health.device.services.DataBalanceService;
 import org.goods.living.tech.health.device.services.RegistrationService;
 import org.goods.living.tech.health.device.services.UserService;
@@ -95,15 +94,10 @@ public class USSDBalanceBroadcastReceiver extends BroadcastReceiver {
             public void run() {
                 Crashlytics.log(Log.DEBUG, TAG, "USSDJobService thread ...");
 
-                User user = appController.getUser();
-
-
-                Calendar yesterday = Calendar.getInstance();//(timeZone);
-
-                yesterday.setTimeInMillis(System.currentTimeMillis());
-                yesterday.add(Calendar.DATE, -1);
-
                 Setting setting = AppController.getInstance().getSetting();
+                setting.lastUSSDRun = Calendar.getInstance().getTime();
+                AppController.getInstance().updateSetting(setting);
+
 
                 // if (PermissionsUtils.checkAllPermissionsGrantedAndRequestIfNot(appController.getApplicationContext())) {
                 // User user = userService.getRegisteredUser();

@@ -107,6 +107,32 @@
                     android:orientation="horizontal">
 
                     <TextView
+
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:editable="false"
+                        android:gravity="center_vertical"
+                        android:text="Android Id" />
+
+                    <TextView
+                        android:id="@+id/androidIdText"
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:editable="false"
+                        android:ems="10"
+                        android:hint="AndroidId"
+                        android:inputType="text"
+                        android:singleLine="true" />
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <TextView
                         android:id="@+id/phonetextView"
                         android:layout_width="141dp"
                         android:layout_height="match_parent"
@@ -212,29 +238,35 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content" />
 
-                <TextView
-                    android:id="@+id/update"
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="@dimen/default_margin"
-                    android:text="Locations"
-                    android:textSize="@dimen/text_large" />
+                    android:orientation="horizontal">
 
+                    <TextView
+                        android:id="@+id/update"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="@dimen/default_margin"
+                        android:text="Locations"
+                        android:textSize="@dimen/text_large" />
+
+                    <TextView
+                        android:id="@+id/syncTextView"
+                        android:paddingLeft="5sp"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/sync_data" />
+                </LinearLayout>
 
                 <TextView
                     android:id="@+id/intervalTextView"
                     android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="0"
                     android:gravity="center_vertical"
                     android:text="@string/locationupdate_interval" />
-
-                <TextView
-                    android:id="@+id/syncTextView"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="@string/sync_data" />
-
 
                 <ScrollView
                     android:layout_width="match_parent"

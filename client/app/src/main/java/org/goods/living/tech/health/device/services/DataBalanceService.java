@@ -104,14 +104,14 @@ public class DataBalanceService extends BaseService {
 
     }
 
-    public boolean insert(DataBalanceHelper.Balance bal, Integer sim, JSONObject telephoneData) {
+    public boolean insert(DataBalanceHelper.Balance bal, String simSelection, JSONObject telephoneData) {
         try {
 
             DataBalance model = new DataBalance();
             model.balance = bal.balance;
             model.expiryDate = bal.expiryDate;
             model.balanceMessage = bal.rawBalance;
-            model.sim = sim;
+            model.simSelection = simSelection;
             model.info = telephoneData;
             model.recordedAt = new Date();
             model.createdAt = model.recordedAt;
@@ -126,7 +126,7 @@ public class DataBalanceService extends BaseService {
         }
     }
 
-    public boolean insertErrorMessage(String msg, Integer sim, JSONObject telephoneData) {
+    public boolean insertErrorMessage(String msg, String simSelection, JSONObject telephoneData) {
         try {
 
             DataBalance model = new DataBalance();
@@ -134,7 +134,7 @@ public class DataBalanceService extends BaseService {
             //  model.expiryDate = bal.expiryDate;
             //  model.balanceMessage = bal.rawBalance;
             model.message = msg;
-            model.sim = sim;
+            model.simSelection = simSelection;
             model.info = telephoneData;
             model.recordedAt = new Date();
             model.createdAt = model.recordedAt;

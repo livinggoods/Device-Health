@@ -354,6 +354,7 @@ public class UserService extends BaseService {
 			node.put("ussd", ussd);
 		}
 
+		node.put("disableDatabalanceCheck", applicationParameters.getDisableDatabalanceCheck());
 		node.put("databalanceCheckTime", applicationParameters.getDataBalanceCheckTime());
 		boolean shouldforceupdate = shouldForceUpdate(username, versionCode);
 		node.put("serverApi", applicationParameters.getServerApi());

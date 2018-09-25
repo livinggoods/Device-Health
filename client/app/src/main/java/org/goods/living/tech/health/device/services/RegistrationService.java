@@ -22,6 +22,7 @@ import org.goods.living.tech.health.device.utils.Constants;
 import org.goods.living.tech.health.device.utils.DataBalanceHelper;
 import org.goods.living.tech.health.device.utils.ServerRestClient;
 import org.goods.living.tech.health.device.utils.SnackbarUtil;
+import org.goods.living.tech.health.device.utils.TelephonyUtil;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -204,7 +205,9 @@ public class RegistrationService extends BaseService {
 
             Setting setting = AppController.getInstance().getSetting();
 
-            if (setting.simSlot == null) {
+            Integer simSlot = null;
+
+            if (setting.simSelection == null) {
                 Crashlytics.log(Log.DEBUG, TAG, "no simSlot selected");//should register first
                 if (balanceSuccessCallback != null) balanceSuccessCallback.onComplete();
                 return;
@@ -212,15 +215,27 @@ public class RegistrationService extends BaseService {
 
             AppController appController = ((AppController) c.getApplicationContext());
             appController.telephonyInfo.loadInfo();
-            if (setting.simSlot == 0 && appController.telephonyInfo.networkSIM0 == null) {
+
+            //TODO determine simSlot from simSelection
+
+            JSONObject telephoneData;// = simSlot == 0 ? appController.telephonyInfo.telephoneDataSIM0 : appController.telephonyInfo.telephoneDataSIM1;
+            AppController.getInstance().telephonyInfo.loadInfo();
+            String simId1 = TelephonyUtil.getSimId(AppController.getInstance().telephonyInfo.telephoneDataSIM0);
+            String simId2 = TelephonyUtil.getSimId(AppController.getInstance().telephonyInfo.telephoneDataSIM1);
+
+            if (appController.telephonyInfo.networkSIM0 != null && setting.simSelection.equals(simId1)) {
                 //no sim in 1 try 2
-                Crashlytics.log(Log.DEBUG, TAG, "no sim in port 1");
-                setting.simSlot = 1;
-                AppController.getInstance().updateSetting(setting);
-            }
-            if (setting.simSlot == 1 && appController.telephonyInfo.networkSIM1 == null) {
+                Crashlytics.log(Log.DEBUG, TAG, "sim in port 0");
+                simSlot = 0;
+                telephoneData = appController.telephonyInfo.telephoneDataSIM0;
+            } else if (appController.telephonyInfo.networkSIM1 != null && setting.simSelection.equals(simId2)) {
+                //no sim in 1 try 2
+                Crashlytics.log(Log.DEBUG, TAG, "sim in port 1");
+                simSlot = 1;
+                telephoneData = appController.telephonyInfo.telephoneDataSIM1;
+            } else {
                 //no sim in 2
-                Crashlytics.log(Log.DEBUG, TAG, "no sim in port 2");
+                Crashlytics.log(Log.DEBUG, TAG, "no sim in either port");
                 if (balanceSuccessCallback != null) {
                     balanceSuccessCallback.onComplete();
                 }
@@ -246,10 +261,7 @@ public class RegistrationService extends BaseService {
                 return;
             }
 
-            JSONObject telephoneData = setting.simSlot == 0 ? appController.telephonyInfo.telephoneDataSIM0 : appController.telephonyInfo.telephoneDataSIM1;
-
-
-            dataBalanceHelper.USSDtoSMSNumber(c, setting.ussd, setting.simSlot, new DataBalanceHelper.USSDResult() {
+            dataBalanceHelper.USSDtoSMSNumber(c, setting.ussd, simSlot, new DataBalanceHelper.USSDResult() {
                 @Override
                 public void onResult(@NonNull DataBalanceHelper.Balance bal) {
 
@@ -257,7 +269,7 @@ public class RegistrationService extends BaseService {
 
                         Crashlytics.log(Log.DEBUG, TAG, "saving balance ...");
                         // String sim = TelephonyUtil.getSimSerial(c);
-                        dataBalanceService.insert(bal, setting.simSlot, telephoneData);
+                        dataBalanceService.insert(bal, setting.simSelection, telephoneData);
 
                         if (balanceSuccessCallback != null) {
                             balanceSuccessCallback.onComplete();
@@ -267,7 +279,7 @@ public class RegistrationService extends BaseService {
                         setting.ussd = null;
                         AppController.getInstance().updateSetting(setting);
                         //failed completely
-                        dataBalanceService.insertErrorMessage("could not fetch balance", setting.simSlot, telephoneData);
+                        dataBalanceService.insertErrorMessage("could not fetch balance", setting.simSelection, telephoneData);
                         Answers.getInstance().logCustom(new CustomEvent("DataBalance").putCustomAttribute("Reason", "could not fetch balance"));
 
                         if (balanceSuccessCallback != null) {
@@ -322,6 +334,7 @@ public class RegistrationService extends BaseService {
                         }
 
                         setting.databalanceCheckTime = updatedSetting.databalanceCheckTime;
+                        setting.disableDatabalanceCheck = updatedSetting.disableDatabalanceCheck;
 
                         setting.forceUpdate = updatedSetting.forceUpdate;
                         setting.serverApi = updatedSetting.serverApi;
@@ -332,7 +345,7 @@ public class RegistrationService extends BaseService {
 
                         Answers.getInstance().logCustom(new CustomEvent("Setting Update").putCustomAttribute("Reason", setting.toJSONObject().toString()));
 
-                        appController.setUSSDAlarm(setting.getDatabalanceCheckTimeInMilli());
+                        appController.setUSSDAlarm(setting.disableDatabalanceCheck, setting.getDatabalanceCheckTimeInMilli());
 
                         if (changeLocationUpdateInterval) {
                             AppController appController = (AppController) context.getApplicationContext();

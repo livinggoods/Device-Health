@@ -132,6 +132,19 @@ public class ApplicationParameters {
 
 	}
 
+	public Boolean getDisableDatabalanceCheck() {
+
+		try {
+			String s = servletContext.getInitParameter("org.goods.living.tech.health.device.disableDatabalanceCheck");
+			logger.debug(s);
+			return new Boolean(s);
+		} catch (Exception e) {
+			logger.error(e);
+			return null;
+		}
+
+	}
+
 	public String getEmail() {
 
 		try {

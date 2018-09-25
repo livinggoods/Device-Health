@@ -21,6 +21,7 @@ import org.goods.living.tech.health.device.services.USSDService;
 import org.goods.living.tech.health.device.services.UserService;
 
 import java.lang.reflect.Method;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -38,7 +39,6 @@ public class DataBalanceHelper {
 
     public String TAG = this.getClass().getSimpleName();
 
-    public static String balanceExpireryDateFormat = "dd-mm-yyyy";
 
     @Inject
     public DataBalanceHelper() {
@@ -73,7 +73,7 @@ public class DataBalanceHelper {
 
     long dialTime;
 
-    public static final int USSD_LIMIT = 20;//in seconds
+    public static final int USSD_LIMIT = 30;//in seconds
 
     CountDownTimer timer;
 
@@ -109,29 +109,25 @@ public class DataBalanceHelper {
 
     public Date extractExpiry(String rawText) {
 
-        Date date = null;
-        try {
+        List<SimpleDateFormat> knownPatterns = new ArrayList<SimpleDateFormat>();
+        knownPatterns.add(new SimpleDateFormat("dd-mm-yyyy"));
+        knownPatterns.add(new SimpleDateFormat("dd/mm/yyyy"));
+        knownPatterns.add(new SimpleDateFormat("dd.mm.yyyy"));
 
+        String[] elements = rawText.split(" ");
 
-            String[] elements = rawText.split(" ");
-            SimpleDateFormat dateFormat = new SimpleDateFormat(balanceExpireryDateFormat);
+        for (SimpleDateFormat pattern : knownPatterns) {
 
             for (String element : elements) {
                 try {
-                    date = dateFormat.parse(element);
-                    Crashlytics.log(Log.DEBUG, TAG, date != null ? date.toString() : null);
-
-                    if (date != null) {
-                        return date;
-                    }
-                } catch (Exception e) {
-                    // Ignore the exception. Move on to next element.
+                    return new Date(pattern.parse(element).getTime());
+                } catch (ParseException pe) {
+                    // Loop on
                 }
             }
-        } catch (Exception e) {
-            Crashlytics.logException(e);
+
         }
-        return date;
+        return null;
     }
 //
 //    public static void sendUSSDDirect(Context c, String ussdFull) {
@@ -348,6 +344,8 @@ public class DataBalanceHelper {
         } catch (Exception e) {
             // Log.e(TAG, e.toString());
             Crashlytics.logException(e);
+            if (USSDResult != null)
+                USSDResult.onResult(new Balance());
 
         }
     }

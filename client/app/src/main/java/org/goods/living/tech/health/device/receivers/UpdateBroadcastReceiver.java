@@ -62,22 +62,27 @@ public class UpdateBroadcastReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
 
-        AppController appController;
-        if (!(context.getApplicationContext() instanceof AppController)) {
-            appController = ((AppController) context.getApplicationContext());
+        try {
+            AppController appController;
+            if (!(context.getApplicationContext() instanceof AppController)) {
+                appController = ((AppController) context.getApplicationContext());
 
-        } else {
-            appController = AppController.getInstance();
+            } else {
+                appController = AppController.getInstance();
+
+            }
+            appController.getComponent().inject(this);
+            Crashlytics.log(Log.DEBUG, TAG, "UpdateBroadcastReceiver");
+
+
+            Answers.getInstance().logCustom(new CustomEvent("Update Installed")
+                    .putCustomAttribute("Reason", ""));
+
+            registrationService.syncSetting(appController);
+        } catch (Exception e) {
+            Crashlytics.logException(e);
 
         }
-        appController.getComponent().inject(this);
-        Crashlytics.log(Log.DEBUG, TAG, "UpdateBroadcastReceiver");
-
-
-        Answers.getInstance().logCustom(new CustomEvent("Update Installed")
-                .putCustomAttribute("Reason", ""));
-
-        // appController.setUSSDAlarm();
     }
 
 

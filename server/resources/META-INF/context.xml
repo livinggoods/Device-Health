@@ -38,7 +38,7 @@
 	<Parameter name="org.goods.living.tech.health.device.jwt.token.life"
 		value="31536000" /> <!-- 1 year -->
 	<Parameter name="org.goods.living.tech.health.device.api"
-		value="10115" />
+		value="10117" />
 	<Parameter name="org.goods.living.tech.health.device.locationUpdateInterval"
 		value="300" />
 	<Parameter name="org.goods.living.tech.health.device.updateUSSDBalanceCodes"
@@ -50,7 +50,9 @@
 		<Parameter name="org.goods.living.tech.health.device.USSDBalanceCodes-64110"
 		value="*150*1*4*1#" />
 		<Parameter name="org.goods.living.tech.health.device.USSDBalanceCodes-64101"
-		value="*175*4#" />
+		value="*175*4#" />	
+		<Parameter name="org.goods.living.tech.health.device.disableDatabalanceCheck"
+		value="false" />	
 		<Parameter name="org.goods.living.tech.health.device.dataBalanceCheckTime"
 		value="07:00" />
 	<!--<Parameter name="org.goods.living.tech.health.url"-->

@@ -103,6 +103,8 @@ public class MainActivity extends FragmentActivity implements
 
     private TextView mLocationUpdatesResultView;
 
+    private TextView androidIdText;
+
     CountDownTimer timer;
 
 
@@ -115,12 +117,14 @@ public class MainActivity extends FragmentActivity implements
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        //  ((AppController) this.getApplicationContext()).getComponent().inject(this);
         AppController.getInstance().getComponent().inject(this);
 
         mLocationUpdatesResultView = (TextView) findViewById(R.id.location_updates_result);
         usernameText = (TextView) findViewById(R.id.usernameText);
         nameText = (TextView) findViewById(R.id.nameText);
         phoneText = (TextView) findViewById(R.id.phone_number);
+        androidIdText = (TextView) findViewById(R.id.androidIdText);
 
 
         syncTextView = (TextView) findViewById(R.id.syncTextView);
@@ -137,9 +141,11 @@ public class MainActivity extends FragmentActivity implements
 
         // Crashlytics.getInstance().crash(); // Force a crash
 
-        Utils.makeGooglePlayServicesAvailable(this);
+        // Utils.makeGooglePlayServicesAvailable(this);
 
 
+        // ((AppController) this.getApplicationContext()).requestLocationUpdates(this);
+        AppController.getInstance().requestLocationUpdates(this);
     }
 
     @Override
@@ -147,7 +153,6 @@ public class MainActivity extends FragmentActivity implements
         super.onStart();
         PreferenceManager.getDefaultSharedPreferences(this)
                 .registerOnSharedPreferenceChangeListener(this);
-
 
     }
 
@@ -266,7 +271,7 @@ public class MainActivity extends FragmentActivity implements
 
         if (dataBalance != null)
             if (balanceTextView != null) {
-                balanceTextView.setText(getString(R.string.data_balance, dataBalance.sim, dataBalance.balance, dataBalance.expiryDate, dataBalance.balanceMessage));
+                balanceTextView.setText(getString(R.string.data_balance, dataBalance.balance, dataBalance.expiryDate, dataBalance.balanceMessage));
             }
 
     }
@@ -279,6 +284,7 @@ public class MainActivity extends FragmentActivity implements
 
         Activity c = this;
 
+        AppController.getInstance().requestActivityRecognition(AppController.getInstance().getSetting().locationUpdateInterval * 1000);
         boolean locationOn = PermissionsUtils.isLocationOn(c);
 
 
@@ -295,7 +301,8 @@ public class MainActivity extends FragmentActivity implements
             public void run() {
                 try {
 
-                    AppController appController = (AppController) c.getApplicationContext();
+                    AppController appController = AppController.getInstance();
+
                     Location loc = appController.getLastLocation();
 
                     Location location = LocationUpdatesBroadcastReceiver.getBestLastLocation(loc);
@@ -304,32 +311,37 @@ public class MainActivity extends FragmentActivity implements
                         @Override
                         public void run() {
                             Utils.dismissProgressDialog();
+                            try {
+                                // Got last known location. In some rare situations this can be null.
+                                if (location != null) {
+                                    // Logic to handle location object
+                                    String result = "Current Location Latitude is " +
+                                            location.getLatitude() + "\n" +
+                                            "Current location Longitude is " + location.getLongitude()
+                                            + "Time " + new Date(location.getTime());
 
-                            // Got last known location. In some rare situations this can be null.
-                            if (location != null) {
-                                // Logic to handle location object
-                                String result = "Current Location Latitude is " +
-                                        location.getLatitude() + "\n" +
-                                        "Current location Longitude is " + location.getLongitude()
-                                        + "Time " + new Date(location.getTime());
+                                    Crashlytics.log(Log.DEBUG, TAG, result);
 
-                                Crashlytics.log(Log.DEBUG, TAG, result);
+                                    Float bright = Utils.getBrightness(c, getWindow());
 
-                                Float bright = Utils.getBrightness(c, getWindow());
-
-                                Setting setting = AppController.getInstance().getSetting();
-                                setting.brightness = bright != null ? bright.doubleValue() : null;
-                                AppController.getInstance().updateSetting(setting);
+                                    Setting setting = AppController.getInstance().getSetting();
+                                    setting.brightness = bright != null ? bright.doubleValue() : null;
+                                    AppController.getInstance().updateSetting(setting);
 
 
-                                Integer batteryLevel = Utils.getBatteryPercentage(c);
-                                statsService.insertLocation(location, setting.brightness, batteryLevel);
-                                loadData();
+                                    Integer batteryLevel = Utils.getBatteryPercentage(c);
+                                    statsService.insertLocation(location, setting.brightness, batteryLevel);
+                                    loadData();
 
-                            } else {
-                                SnackbarUtil.showSnack(c, "Could not get location");
+                                } else {
+                                    SnackbarUtil.showSnack(c, "Could not get location");
+
+                                }
+                            } catch (Exception e) {
+                                Crashlytics.logException(e);
                             }
                         }
+
                     });
 
                 } catch (Exception e) {
@@ -356,7 +368,7 @@ public class MainActivity extends FragmentActivity implements
         Setting setting = AppController.getInstance().getSetting();
         User user = userService.getRegisteredUser();
 
-        if (user.masterId == null || setting.simSlot == null) {
+        if (user.masterId == null || setting.simSelection == null) {
             // enableSettingsEdit();
             Intent intent = new Intent(this, RegisterActivity.class);
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
@@ -368,12 +380,13 @@ public class MainActivity extends FragmentActivity implements
         usernameText.setText(user == null ? null : user.username);
         nameText.setText(user == null ? null : user.name);
         phoneText.setText(user == null ? null : user.phone);
+        androidIdText.setText(user == null ? null : user.androidId);
 
         List<DataBalance> l = dataBalanceService.getLatestRecords(1l);
         DataBalance dataBalance = l.size() > 0 ? l.get(0) : null;
 
         if (dataBalance != null) {
-            balanceTextView.setText(getString(R.string.data_balance, dataBalance.sim, dataBalance.balance, dataBalance.expiryDate, dataBalance.balanceMessage));
+            balanceTextView.setText(getString(R.string.data_balance, dataBalance.balance, dataBalance.expiryDate, dataBalance.balanceMessage));
         }
 
         Long total = statsService.countRecords();
@@ -386,9 +399,8 @@ public class MainActivity extends FragmentActivity implements
 
         //load latest locs
         List<Stats> list = statsService.getLatestRecords(50l);
-        long count = statsService.getStatsCount();
-        String data = "count :" + count + " \n" +
-                "";
+        // long count = statsService.getStatsCount();
+        String data = "";
         for (Stats stats : list) {
             data += "" + DateFormat.format("MM/dd h:m:s", stats.recordedAt); //new Date(TimeinMilliSeccond)
             data += " lat: " + stats.latitude;

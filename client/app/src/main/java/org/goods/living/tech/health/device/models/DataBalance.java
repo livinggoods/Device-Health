@@ -26,7 +26,7 @@ public class DataBalance extends BaseModel {
     public String message;
     public Date expiryDate;
 
-    public Integer sim;
+    public String simSelection;
 
     @Convert(converter = JSonObjectConverter.class, dbType = String.class)
     public JSONObject info;
@@ -51,7 +51,7 @@ public class DataBalance extends BaseModel {
             }
 
             if (info != null) JSONObject.put("info", info);
-            if (sim != null) JSONObject.put("sim", sim);
+            if (simSelection != null) JSONObject.put("simSelection", simSelection);
             if (expiryDate != null) {
                 String formattedDate = Utils.getStringTimeStampWithTimezoneFromDate(expiryDate, TimeZone.getTimeZone(Utils.TIMEZONE_UTC));
                 JSONObject.put("expiryDate", formattedDate);

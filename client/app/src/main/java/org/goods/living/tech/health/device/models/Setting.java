@@ -42,12 +42,13 @@ public class Setting extends BaseModel {
 
 
     public String databalanceCheckTime = "7:00";//"20:30
+    public boolean disableDatabalanceCheck = false;
 
     public String ussd;
 
     public String network;
 
-    public Integer simSlot;
+    public String simSelection;
 
     // "
     //  @Convert(converter = StringListConverter.class, dbType = String.class)
@@ -77,7 +78,8 @@ public class Setting extends BaseModel {
             disableSync = JSONObject.getBoolean("disableSync");
         if (JSONObject.has("serverApi"))
             serverApi = JSONObject.getInt("serverApi");
-
+        if (JSONObject.has("disableDatabalanceCheck"))
+            disableDatabalanceCheck = JSONObject.getBoolean("disableDatabalanceCheck");
 
     }
 
@@ -99,12 +101,13 @@ public class Setting extends BaseModel {
                 JSONObject.put("databalanceCheckTime", databalanceCheckTime);
             if (ussd != null) JSONObject.put("ussd", ussd);
 
-            JSONObject.put("simSlot", simSlot);
+            JSONObject.put("simSelection", simSelection);
             JSONObject.put("network", network);
 
             JSONObject.put("forceUpdate", forceUpdate);
             JSONObject.put("disableSync", disableSync);
             JSONObject.put("serverApi", serverApi);
+            JSONObject.put("disableDatabalanceCheck", disableDatabalanceCheck);
 
 
             return JSONObject;

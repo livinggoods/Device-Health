@@ -28,12 +28,8 @@ import com.google.android.gms.location.LocationRequest;
 
 import org.goods.living.tech.health.device.AppController;
 import org.goods.living.tech.health.device.R;
-import org.goods.living.tech.health.device.services.DataBalanceService;
-import org.goods.living.tech.health.device.services.StatsService;
-import org.goods.living.tech.health.device.services.UserService;
 
 import javax.annotation.Nullable;
-import javax.inject.Inject;
 
 import agency.tango.materialintroscreen.MaterialIntroActivity;
 import agency.tango.materialintroscreen.SlideFragmentBuilder;
@@ -57,20 +53,13 @@ public class RegisterActivity extends MaterialIntroActivity implements RegisterU
     private static final String TAG = RegisterActivity.class.getSimpleName();
 
 
-    @Inject
-    UserService userService;
-
-    @Inject
-    StatsService statsService;
-
-    @Inject
-    DataBalanceService dataBalanceService;
-
     RegisterUserFragment registerUserFragment;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        //  AppController.getInstance().getComponent().inject(this);
         enableLastSlideAlphaExitTransition(true);
 
         getBackButtonTranslationWrapper()
@@ -82,7 +71,7 @@ public class RegisterActivity extends MaterialIntroActivity implements RegisterU
                 });
 
         addSlide(new SlideFragmentBuilder()
-                        .backgroundColor(R.color.second_slide_background)//irst_slide_background
+                        .backgroundColor(R.color.second_slide_background)//first_slide_background
                         .buttonsColor(R.color.second_slide_buttons)
                         //      .image(R.drawable.img_office)
                         .title("Device Health Setup")
@@ -139,7 +128,7 @@ public class RegisterActivity extends MaterialIntroActivity implements RegisterU
      */
     @Override
     public void onDoRegister(View view) {
-        registerUserFragment.onDoRegister();
+        registerUserFragment.onDoRegister(this);
     }
 
 

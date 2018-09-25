@@ -69,7 +69,7 @@ public class LocationUpdatesBroadcastReceiver extends BroadcastReceiver {
     /**
      * Time difference threshold
      */
-    static final int TIME_DIFFERENCE_THRESHOLD = 2 * 60 * 1000;
+    static final int TIME_DIFFERENCE_THRESHOLD = 3 * 60 * 1000;
 
     static Location oldLocation;
     AppController appController;
@@ -78,89 +78,94 @@ public class LocationUpdatesBroadcastReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
 
+        try {
 
-        if (!(context.getApplicationContext() instanceof AppController)) {
-            appController = ((AppController) context.getApplicationContext());
+            if (!(context.getApplicationContext() instanceof AppController)) {
+                appController = ((AppController) context.getApplicationContext());
 
-        } else {
-            appController = AppController.getInstance();
+            } else {
+                appController = AppController.getInstance();
 
-        }
-        appController.getComponent().inject(this);
+            }
+            appController.getComponent().inject(this);
 
-        boolean locationOn = PermissionsUtils.isLocationOn(context);
+            boolean locationOn = PermissionsUtils.isLocationOn(context);
 
-        //  location = lm.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+            //  location = lm.getLastKnownLocation(LocationManager.GPS_PROVIDER);
 
-        String packageName = appController.appChecker.getForegroundApp(context);
+            String packageName = appController.appChecker.getForegroundApp(context);
 
-        if (packageName != null && Utils.isSmartHealthApp(packageName)) {
+            if (packageName != null && Utils.isSmartHealthApp(packageName)) {
 
-            String log = "Smarthealth running. location updates. loc on: " + locationOn;
-            Crashlytics.log(Log.DEBUG, TAG, log);
-            WriteToLogUtil.getInstance().log(log);
-            statsService.insertMessageData(log);
-            //  return;
-        }
-
-
-        if (intent != null) {
-
-
-            if (intent.getAction().contains("PROVIDERS_CHANGED")) {
-                String log = "Location Providers changed loc:" + locationOn;
+                String log = "Smarthealth running. location updates. loc on: " + locationOn;
                 Crashlytics.log(Log.DEBUG, TAG, log);
                 WriteToLogUtil.getInstance().log(log);
+                statsService.insertMessageData(log);
+                //  return;
+            }
 
-                Setting setting = appController.getSetting();
-                if (!locationOn) {
+
+            if (intent != null) {
 
 
-                    if (setting.loglocationOffEvent) {
+                if (intent.getAction().contains("PROVIDERS_CHANGED")) {
+                    String log = "Location Providers changed loc:" + locationOn;
+                    Crashlytics.log(Log.DEBUG, TAG, log);
+                    WriteToLogUtil.getInstance().log(log);
 
-                        statsService.insertMessageData(locerror);
-                        Crashlytics.log(Log.DEBUG, TAG, locerror);
-                        Answers.getInstance().logCustom(new CustomEvent("Location")
-                                .putCustomAttribute("Reason", locerror));
+                    Setting setting = appController.getSetting();
+                    if (!locationOn) {
 
-                        setting.loglocationOffEvent = false;
+
+                        if (setting.loglocationOffEvent) {
+
+                            statsService.insertMessageData(locerror);
+                            Crashlytics.log(Log.DEBUG, TAG, locerror);
+                            Answers.getInstance().logCustom(new CustomEvent("Location")
+                                    .putCustomAttribute("Reason", locerror));
+
+                            setting.loglocationOffEvent = false;
+                            appController.updateSetting(setting);
+                        }
+
+                    } else {
+                        setting.loglocationOffEvent = true;
                         appController.updateSetting(setting);
                     }
 
-                } else {
-                    setting.loglocationOffEvent = true;
-                    appController.updateSetting(setting);
-                }
+                    if (!locationOn) {
+                        appController.checkAndRequestPerms();
+                    }
 
-                if (!locationOn) {
+
+                } else if (ACTION_PROCESS_UPDATES.equals(intent.getAction())) {
+                    LocationResult result = LocationResult.extractResult(intent);
+                    if (result != null) {
+                        processLocation(context, result.getLocations());
+
+                    }
+                } else {// if (Intent.ACTION_BOOT_COMPLETED.equals(intent.getAction()) || Intent.ACTION_EXTERNAL_APPLICATIONS_AVAILABLE.equals(intent.getAction())) {
+
+                    String log = "Reboot occured - relaunching listeners";
+                    Crashlytics.log(Log.DEBUG, TAG, log);
+                    WriteToLogUtil.getInstance().log(log);
+
+
+                    Answers.getInstance().logCustom(new CustomEvent("Reboot")
+                            .putCustomAttribute("Reason", ""));
+
                     appController.checkAndRequestPerms();
-                }
+                    appController.setUSSDAlarm(appController.getSetting().disableDatabalanceCheck, appController.getSetting().getDatabalanceCheckTimeInMilli());
 
+                    appController.requestLocationUpdates();
 
-            } else if (ACTION_PROCESS_UPDATES.equals(intent.getAction())) {
-                LocationResult result = LocationResult.extractResult(intent);
-                if (result != null) {
-                    processLocation(context, result.getLocations());
 
                 }
-            } else {// if (Intent.ACTION_BOOT_COMPLETED.equals(intent.getAction()) || Intent.ACTION_EXTERNAL_APPLICATIONS_AVAILABLE.equals(intent.getAction())) {
-
-                String log = "Reboot occured - relaunching listeners";
-                Crashlytics.log(Log.DEBUG, TAG, log);
-                WriteToLogUtil.getInstance().log(log);
-
-
-                Answers.getInstance().logCustom(new CustomEvent("Reboot")
-                        .putCustomAttribute("Reason", ""));
-
-                appController.checkAndRequestPerms();
-
-                appController.setUSSDAlarm(appController.getSetting().getDatabalanceCheckTimeInMilli());
-
-
             }
-        }
+        } catch (Exception e) {
+            Crashlytics.logException(e);
 
+        }
     }
 
     void processLocation(Context context, List<Location> locations) {
@@ -194,7 +199,7 @@ public class LocationUpdatesBroadcastReceiver extends BroadcastReceiver {
 
                 //brightness
                 Intent intent = new Intent(context, PermissionActivity.class);
-                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_NO_HISTORY);
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);//| Intent.FLAG_ACTIVITY_NO_HISTORY
                 //  intent.putExtra("forceUpdate", forceUpdate);
                 context.startActivity(intent);
                 //  return;
