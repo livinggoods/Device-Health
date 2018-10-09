@@ -79,7 +79,6 @@ public class AppController extends Application {
     // Create the instance
     private static AppController instance;
 
-    private AppcontrollerComponent component;
 
     FirebaseAnalytics mFirebaseAnalytics;
 
@@ -91,6 +90,8 @@ public class AppController extends Application {
 
     final String TAG = this.getClass().getSimpleName();//BaseService.class.getSimpleName();
     Logger logger = LoggerFactory.getLogger(this.getClass());
+
+    private AppcontrollerComponent component;
 
     @Inject
     UserService userService;
@@ -511,7 +512,9 @@ public class AppController extends Application {
                             alarmTime, pi);
                 } else if (Build.VERSION.SDK_INT >= 19) {
                     am.setExact(AlarmManager.RTC_WAKEUP, alarmTime, pi);
-                }// else {am.set(AlarmManager.RTC_WAKEUP,alarmTime, pi); }
+                } else {
+                    am.set(AlarmManager.RTC_WAKEUP, alarmTime, pi);
+                }
 
                 //hack to force a launch
                 Calendar yesterday = Calendar.getInstance();//(timeZone);
@@ -600,30 +603,42 @@ public class AppController extends Application {
     public void requestLocationUpdates(Activity c) {//(long updateInterval) {
 
         try {
-            long updateInterval = this.getSetting().locationUpdateInterval / 1 * 1000;
-            Crashlytics.log(Log.DEBUG, TAG, "requestLocationUpdates " + updateInterval);
+            Handler handler = new Handler(Looper.getMainLooper());
+            final Runnable r = new Runnable() {
+                public void run() {
+                    long updateInterval = getSetting().locationUpdateInterval / 1 * 1000;
+                    Crashlytics.log(Log.DEBUG, TAG, "requestLocationUpdates " + updateInterval);
 
-            mFusedLocationClient.removeLocationUpdates(getPendingIntent(this.getApplicationContext()));
+                    mFusedLocationClient.removeLocationUpdates(getPendingIntent(getApplicationContext()));
 
-            LocationRequest mLocationRequest = createLocationRequest(updateInterval);
-            LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder()
-                    .addLocationRequest(mLocationRequest);
-            //.addLocationRequest(mLocationRequestBalancedPowerAccuracy);
-            // builder.setNeedBle(true);
+                    LocationRequest mLocationRequest = createLocationRequest(updateInterval);
+                    LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder()
+                            .addLocationRequest(mLocationRequest);
+                    //.addLocationRequest(mLocationRequestBalancedPowerAccuracy);
+                    // builder.setNeedBle(true);
 
-            Task<LocationSettingsResponse> task =
-                    LocationServices.getSettingsClient(this).checkLocationSettings(builder.build());
+                    Task<LocationSettingsResponse> task =
+                            LocationServices.getSettingsClient(c.getApplicationContext()).checkLocationSettings(builder.build());
 
 
-            // Block on a task and get the result synchronously. This is generally done
-            // when executing a task inside a separately managed background thread. Doing this
-            // on the main (UI) thread can cause your application to become unresponsive.
-            LocationSettingsResponse response = Tasks.await(task);
-            //   latch.countDown();
-            //latch.await();
-            // All location settings are satisfied. The client can initialize location
-            // requests here.
-            requestLocationUpdates();
+                    // Block on a task and get the result synchronously. This is generally done
+                    // when executing a task inside a separately managed background thread. Doing this
+                    // on the main (UI) thread can cause your application to become unresponsive.
+                    try {
+                        LocationSettingsResponse response = Tasks.await(task);
+                    } catch (Exception ee) {
+                        // Log.wtf(TAG, e);
+                        Crashlytics.logException(ee);
+                    }
+                    //   latch.countDown();
+                    //latch.await();
+                    // All location settings are satisfied. The client can initialize location
+                    // requests here.
+                    requestLocationUpdates();
+                }
+            };
+            handler.post(r);
+
 
         } catch (Exception e) {
             Crashlytics.logException(e);

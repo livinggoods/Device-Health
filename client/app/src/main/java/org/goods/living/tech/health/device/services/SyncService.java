@@ -9,7 +9,7 @@ import com.crashlytics.android.answers.CustomEvent;
 import com.loopj.android.http.TextHttpResponseHandler;
 
 import org.goods.living.tech.health.device.AppController;
-import org.goods.living.tech.health.device.R;
+import org.goods.living.tech.health.device.BuildConfig;
 import org.goods.living.tech.health.device.models.DataBalance;
 import org.goods.living.tech.health.device.models.Setting;
 import org.goods.living.tech.health.device.models.Stats;
@@ -45,10 +45,8 @@ public class SyncService extends BaseService {
 
     Context c;
 
-
-    ServerRestClient serverRestClient = new ServerRestClient(AppController.getInstance().getString(R
-
-            .string.server_url));
+    //https://stackoverflow.com/questions/22995057/how-do-you-manage-multiple-environments-while-developing-android-apps
+    ServerRestClient serverRestClient = new ServerRestClient(BuildConfig.SERVER_URL);
 
     AtomicBoolean syncRunning = new AtomicBoolean(false);
 

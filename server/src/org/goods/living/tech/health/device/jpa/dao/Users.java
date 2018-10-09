@@ -121,6 +121,17 @@ public class Users implements Serializable {
 	@OneToMany(cascade = CascadeType.ALL, mappedBy = "userId")
 	private Collection<DataBalance> dataBalanceCollection;
 
+	@Column(name = "supervisor")
+	private Boolean supervisor;
+
+	public Boolean getSupervisor() {
+		return supervisor;
+	}
+
+	public void setSupervisor(Boolean supervisor) {
+		this.supervisor = supervisor;
+	}
+
 	public Users() {
 	}
 

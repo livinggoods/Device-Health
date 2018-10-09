@@ -22,10 +22,10 @@
                     </a>
                 </li>
                 <li>
-                    <a href="/error">
+                    <router-link :to="{name: 'BatteryStatistics'}" tag="a">
                         <i class="pe-7s-battery"></i>
                         <p>Battery Statistics</p>
-                    </a>
+                    </router-link>
                 </li>
                 <li>
                     <a href="/error">

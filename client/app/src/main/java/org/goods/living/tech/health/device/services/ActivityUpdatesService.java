@@ -71,47 +71,57 @@ public class ActivityUpdatesService extends IntentService {
     @Override
     protected void onHandleIntent(Intent intent) {
 
-        AppController appController;
-        if (!(this.getApplicationContext() instanceof AppController)) {
-            appController = ((AppController) this.getApplicationContext());
+        try {
+            AppController appController;
+            if (!(this.getApplicationContext() instanceof AppController)) {
+                appController = ((AppController) this.getApplicationContext());
 
-        } else {
-            appController = AppController.getInstance();
+            } else {
+                appController = AppController.getInstance();
 
-        }
-        appController.getComponent().inject(this);
+            }
+            appController.getComponent().inject(this);
 
-        Crashlytics.log(Log.DEBUG, TAG, "Activity Detected");
+            Crashlytics.log(Log.DEBUG, TAG, "Activity Detected");
 
-        ActivityRecognitionResult result = ActivityRecognitionResult.extractResult(intent);
+            ActivityRecognitionResult result = ActivityRecognitionResult.extractResult(intent);
 
-        // Get the list of the probable activities associated with the current state of the
-        // device. Each activity is associated with a confidence level (between 0-100)
-
-        List<DetectedActivity> detectedActivities = result.getProbableActivities();
-
-        boolean movement = false;
-        for (DetectedActivity activity : detectedActivities) {//hoping they r ordered by priority
-            Crashlytics.log(Log.DEBUG, TAG, "Detected activity: " + activityName(activity.getType()) + " " + activity.getType() + ", " + activity.getConfidence());
-            //broadcastActivity(activity);
-            // DetectedActivity.IN_VEHICLE;
-
-            if (activity.getConfidence() > THRESHHOLD_CONFIDENCE) {//&& monitoredActivities.contains(activity.getType())) {//hoping they r ordered by priority
-                Crashlytics.log(Log.DEBUG, TAG, "Detected priority activity: " + activityName(detectedActivities.get(0).getType()) + " " + detectedActivities.get(0).getType() + ", " + detectedActivities.get(0).getConfidence());
-                movement = true;//break to ignore loop?
+            if (result == null) {
+                Crashlytics.log(Log.DEBUG, TAG, "null ActivityRecognitionResult");
+                return;
             }
 
+            // Get the list of the probable activities associated with the current state of the
+            // device. Each activity is associated with a confidence level (between 0-100)
+
+            List<DetectedActivity> detectedActivities = result.getProbableActivities();
+
+            boolean movement = false;
+            for (DetectedActivity activity : detectedActivities) {//hoping they r ordered by priority
+                Crashlytics.log(Log.DEBUG, TAG, "Detected activity: " + activityName(activity.getType()) + " " + activity.getType() + ", " + activity.getConfidence());
+                //broadcastActivity(activity);
+                // DetectedActivity.IN_VEHICLE;
+
+                if (activity.getConfidence() > THRESHHOLD_CONFIDENCE) {//&& monitoredActivities.contains(activity.getType())) {//hoping they r ordered by priority
+                    Crashlytics.log(Log.DEBUG, TAG, "Detected priority activity: " + activityName(detectedActivities.get(0).getType()) + " " + detectedActivities.get(0).getType() + ", " + detectedActivities.get(0).getConfidence());
+                    movement = true;//break to ignore loop?
+                }
+
+            }
+
+
+            if (movement) {
+                Crashlytics.log(Log.DEBUG, TAG, "Launching Location listener");
+
+                appController.requestLocationUpdates();
+
+            }
+
+        } catch (Exception e) {
+            // Log.e(TAG, e.toString());
+            Crashlytics.logException(e);
+
         }
-
-
-        if (movement) {
-            Crashlytics.log(Log.DEBUG, TAG, "Launching Location listener");
-
-            appController.requestLocationUpdates();
-
-        }
-
-
     }
 
     String activityName(int type) {

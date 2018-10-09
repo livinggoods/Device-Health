@@ -14,7 +14,6 @@ import com.loopj.android.http.TextHttpResponseHandler;
 
 import org.goods.living.tech.health.device.AppController;
 import org.goods.living.tech.health.device.BuildConfig;
-import org.goods.living.tech.health.device.R;
 import org.goods.living.tech.health.device.UI.UpgradeActivity;
 import org.goods.living.tech.health.device.models.Setting;
 import org.goods.living.tech.health.device.models.User;
@@ -53,9 +52,7 @@ public class RegistrationService extends BaseService {
     SettingService settingService;
 
 
-    ServerRestClient serverRestClient = new ServerRestClient(AppController.getInstance().getString(R
-
-            .string.server_url));
+    ServerRestClient serverRestClient = new ServerRestClient(BuildConfig.SERVER_URL);
 
     @Inject
     public RegistrationService() {

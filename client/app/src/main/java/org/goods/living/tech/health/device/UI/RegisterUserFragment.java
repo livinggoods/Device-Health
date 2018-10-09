@@ -161,34 +161,56 @@ public class RegisterUserFragment extends SlideFragment {
     }
 
     void loadData() {
+        Context c = this.getActivity();
         Utils.getHandlerThread().post(new Runnable() {
             @Override
             public void run() {
                 User user = userService.getRegisteredUser();
                 AppController.getInstance().telephonyInfo.loadInfo();
 
-                new Handler(Looper.getMainLooper()).post(new Runnable() {
+                boolean post = new Handler(Looper.getMainLooper()).post(new Runnable() {
                     @Override
                     public void run() {
                         //this runs on the UI thread
+                        try {
+                            if (!isAdded()) {
+                                Crashlytics.log("Fragment not added");
+                                return;
+                            }
+                            usernameText.setText(user.username);
+                            if (user.phone != null && user.phone.contains("+")) {
+                                ccp.setFullNumber(user.phone);
+                            } else {
+                                edtPhoneNumber.setText(user.phone);
+                            }
 
+                            String network0 = AppController.getInstance().telephonyInfo.networkSIM0;
+                            network0 = network0 == null ? null : network0 + " " + AppController.getInstance().telephonyInfo.networkNameSIM0;
+                            String network1 = AppController.getInstance().telephonyInfo.networkSIM1;
+                            network1 = network1 == null ? null : network1 + " " + AppController.getInstance().telephonyInfo.networkNameSIM1;
 
-                        usernameText.setText(user.username);
-                        if (user.phone != null)
-                            ccp.setFullNumber(user.phone);
+                            radioButton1.setText(c.getString(R.string.sim_slot, "1", network0));
+                            radioButton2.setText(c.getString(R.string.sim_slot, "2", network1));
+                        } catch (Exception e) {
+                            // Log.e(TAG, e.toString());
+                            Crashlytics.logException(e);
 
-                        String network0 = AppController.getInstance().telephonyInfo.networkSIM0;
-                        network0 = network0 == null ? null : network0 + " " + AppController.getInstance().telephonyInfo.networkNameSIM0;
-                        String network1 = AppController.getInstance().telephonyInfo.networkSIM1;
-                        network1 = network1 == null ? null : network1 + " " + AppController.getInstance().telephonyInfo.networkNameSIM1;
-
-                        radioButton1.setText(getString(R.string.sim_slot, "1", network0));
-                        radioButton2.setText(getString(R.string.sim_slot, "2", network1));
+                        }
                     }
                 });
             }
         });
 
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
     }
 
     /**
@@ -204,7 +226,12 @@ public class RegisterUserFragment extends SlideFragment {
             @Override
             public void onClick(DialogInterface dialogInterface, int i) {
 
-                saveRegistration();
+                try {
+                    saveRegistration();
+                } catch (Exception e) {
+                    Crashlytics.logException(e);
+
+                }
             }
         });
         // builder.setNegativeButton(android.R.string.no, null);

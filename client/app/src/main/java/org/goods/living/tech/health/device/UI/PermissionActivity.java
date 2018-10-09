@@ -90,32 +90,35 @@ public class PermissionActivity extends FragmentActivity {
     }
 
     void checkPerms() {
+        try {
+            dismissAlert();
 
-        dismissAlert();
+            Float bright = Utils.getBrightness(this, getWindow());
 
-        Float bright = Utils.getBrightness(this, getWindow());
+            Setting setting = AppController.getInstance().getSetting();
+            setting.brightness = bright != null ? bright.doubleValue() : null;
+            AppController.getInstance().updateSetting(setting);
+            if (!PermissionsUtils.areAllPermissionsGranted(this)) {
 
-        Setting setting = AppController.getInstance().getSetting();
-        setting.brightness = bright != null ? bright.doubleValue() : null;
-        AppController.getInstance().updateSetting(setting);
-        if (!PermissionsUtils.areAllPermissionsGranted(this)) {
+                //request permissions
+                openMain = true;
+                requestAllPermissions(this);
 
-            //request permissions
-            openMain = true;
-            requestAllPermissions(this);
+            } else {
 
-        } else {
+                if (!PermissionsUtils.isLocationOn(this)) {
+                    //   if (!(context instanceof PermissionActivity))
+                    Answers.getInstance().logCustom(new CustomEvent("Missing Permissions")
+                            .putCustomAttribute("Reason", "location"));
+                    requestSettingPermissionsWithDialog(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS, "Location", null);
 
-            if (!PermissionsUtils.isLocationOn(this)) {
-                //   if (!(context instanceof PermissionActivity))
-                Answers.getInstance().logCustom(new CustomEvent("Missing Permissions")
-                        .putCustomAttribute("Reason", "location"));
-                requestSettingPermissionsWithDialog(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS, "Location", null);
-
+                }
+                minimise();
             }
-            minimise();
-        }
+        } catch (Exception e) {
+            Crashlytics.logException(e);
 
+        }
     }
 
     @Override

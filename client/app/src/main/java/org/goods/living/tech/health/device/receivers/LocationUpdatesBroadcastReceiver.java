@@ -72,7 +72,6 @@ public class LocationUpdatesBroadcastReceiver extends BroadcastReceiver {
     static final int TIME_DIFFERENCE_THRESHOLD = 3 * 60 * 1000;
 
     static Location oldLocation;
-    AppController appController;
 
 
     @Override
@@ -80,20 +79,15 @@ public class LocationUpdatesBroadcastReceiver extends BroadcastReceiver {
 
         try {
 
-            if (!(context.getApplicationContext() instanceof AppController)) {
-                appController = ((AppController) context.getApplicationContext());
+            //appController = ((AppController) context.getApplicationContext());
 
-            } else {
-                appController = AppController.getInstance();
-
-            }
-            appController.getComponent().inject(this);
+            AppController.getInstance().getComponent().inject(this);
 
             boolean locationOn = PermissionsUtils.isLocationOn(context);
 
             //  location = lm.getLastKnownLocation(LocationManager.GPS_PROVIDER);
 
-            String packageName = appController.appChecker.getForegroundApp(context);
+            String packageName = AppController.getInstance().appChecker.getForegroundApp(context);
 
             if (packageName != null && Utils.isSmartHealthApp(packageName)) {
 
@@ -113,7 +107,7 @@ public class LocationUpdatesBroadcastReceiver extends BroadcastReceiver {
                     Crashlytics.log(Log.DEBUG, TAG, log);
                     WriteToLogUtil.getInstance().log(log);
 
-                    Setting setting = appController.getSetting();
+                    Setting setting = AppController.getInstance().getSetting();
                     if (!locationOn) {
 
 
@@ -125,16 +119,16 @@ public class LocationUpdatesBroadcastReceiver extends BroadcastReceiver {
                                     .putCustomAttribute("Reason", locerror));
 
                             setting.loglocationOffEvent = false;
-                            appController.updateSetting(setting);
+                            AppController.getInstance().updateSetting(setting);
                         }
 
                     } else {
                         setting.loglocationOffEvent = true;
-                        appController.updateSetting(setting);
+                        AppController.getInstance().updateSetting(setting);
                     }
 
                     if (!locationOn) {
-                        appController.checkAndRequestPerms();
+                        AppController.getInstance().checkAndRequestPerms();
                     }
 
 
@@ -154,10 +148,12 @@ public class LocationUpdatesBroadcastReceiver extends BroadcastReceiver {
                     Answers.getInstance().logCustom(new CustomEvent("Reboot")
                             .putCustomAttribute("Reason", ""));
 
-                    appController.checkAndRequestPerms();
-                    appController.setUSSDAlarm(appController.getSetting().disableDatabalanceCheck, appController.getSetting().getDatabalanceCheckTimeInMilli());
+                    Setting setting = AppController.getInstance().getSetting();
 
-                    appController.requestLocationUpdates();
+                    AppController.getInstance().checkAndRequestPerms();
+                    AppController.getInstance().setUSSDAlarm(setting.disableDatabalanceCheck, setting.getDatabalanceCheckTimeInMilli());
+
+                    AppController.getInstance().requestLocationUpdates();
 
 
                 }
@@ -213,7 +209,7 @@ public class LocationUpdatesBroadcastReceiver extends BroadcastReceiver {
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
-                    Setting setting = appController.getSetting();
+                    Setting setting = AppController.getInstance().getSetting();
                     Integer batteryLevel = Utils.getBatteryPercentage(context);
                     statsService.insertLocationData(filteredLocs, setting.brightness, batteryLevel);
 

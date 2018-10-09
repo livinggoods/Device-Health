@@ -92,25 +92,30 @@ public class USSDBalanceBroadcastReceiver extends BroadcastReceiver {
         new Thread(new Runnable() {
             @Override
             public void run() {
-                Crashlytics.log(Log.DEBUG, TAG, "USSDJobService thread ...");
+                try {
+                    Crashlytics.log(Log.DEBUG, TAG, "USSDJobService thread ...");
 
-                Setting setting = AppController.getInstance().getSetting();
-                setting.lastUSSDRun = Calendar.getInstance().getTime();
-                AppController.getInstance().updateSetting(setting);
+                    Setting setting = appController.getSetting();
+                    setting.lastUSSDRun = Calendar.getInstance().getTime();
+                    AppController.getInstance().updateSetting(setting);
 
 
-                // if (PermissionsUtils.checkAllPermissionsGrantedAndRequestIfNot(appController.getApplicationContext())) {
-                // User user = userService.getRegisteredUser();
+                    // if (PermissionsUtils.checkAllPermissionsGrantedAndRequestIfNot(appController.getApplicationContext())) {
+                    // User user = userService.getRegisteredUser();
 
-                Answers.getInstance().logCustom(new CustomEvent("USSD Job service")
-                        .putCustomAttribute("Reason", ""));
+                    Answers.getInstance().logCustom(new CustomEvent("USSD Job service")
+                            .putCustomAttribute("Reason", ""));
 
-                //  registrationService.checkBalanceThroughUSSD(c);
-                //   if (setting.lastUSSDRun == null || setting.lastUSSDRun.before(yesterday.getTime())) {
-                registrationService.checkBalanceThroughSMS(appController.getApplicationContext(), null);
+                    //  registrationService.checkBalanceThroughUSSD(c);
+                    //   if (setting.lastUSSDRun == null || setting.lastUSSDRun.before(yesterday.getTime())) {
+                    registrationService.checkBalanceThroughSMS(appController.getApplicationContext(), null);
 
-                //    }
+                    //    }
+                } catch (Exception e) {
+                    // Log.e(TAG, e.toString());
+                    Crashlytics.logException(e);
 
+                }
 
             }
         }).start();

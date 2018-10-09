@@ -9,7 +9,7 @@
     <string name="data_balance">Bundle balance: %1$s expiry: %2$s \n %3$s</string>
     <string name="sync_data">Synced data: %1$s/%2$s</string>
 
-    <string name="server_url">https://device-health.lg-apps.com/api</string><!-- http://192.168.4.144/api https://device-health.lg-apps.com/api http://lg-apps.com:8081/api http://lg-apps.com:8081/api   -->
+    <!-- <string name="server_url">http://192.168.4.144/api</string> http://192.168.4.144/api https://device-health.lg-apps.com/api http://lg-apps.com:8081/api http://lg-apps.com:8081/api   -->
 
     <string name="permission_denied_explanation">Core Permission is needed: \n %1$s </string>
     <string name="settings">Settings</string>

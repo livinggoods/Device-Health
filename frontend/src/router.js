@@ -8,6 +8,7 @@ import PasswordResetVerification from '@/views/PasswordResetVerification.vue'
 import DataUsageStatistics from '@/views/DataUsageStatistics.vue'
 import NewAcc from '@/views/CreateAcc.vue'
 import Error from '@/views/Error.vue'
+import BatteryStatistics from '@/views/BatteryStatistics.vue'
 
 Vue.use(Router)
 
@@ -18,6 +19,12 @@ export default new Router({
             path: '/',
             name: 'locationStatistics',
             component: LocationStatistics,
+            meta: { requiresAuth: true }
+        },
+        {
+            path: '/battery-statistics',
+            name: 'BatteryStatistics',
+            component: BatteryStatistics,
             meta: { requiresAuth: true }
         },
         {

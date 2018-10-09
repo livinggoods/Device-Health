@@ -113,6 +113,9 @@ public class DataBalanceHelper {
         knownPatterns.add(new SimpleDateFormat("dd-mm-yyyy"));
         knownPatterns.add(new SimpleDateFormat("dd/mm/yyyy"));
         knownPatterns.add(new SimpleDateFormat("dd.mm.yyyy"));
+        knownPatterns.add(new SimpleDateFormat("yyyy-mm-dd"));
+        knownPatterns.add(new SimpleDateFormat("yyyy/mm/dd"));
+        knownPatterns.add(new SimpleDateFormat("yyyy.mm.dd"));
 
         String[] elements = rawText.split(" ");
 

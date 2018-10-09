@@ -17,7 +17,7 @@ apply plugin: 'io.fabric'
 
 ext.versionMajor = 1
 ext.versionMinor = 1
-ext.versionPatch = 17
+ext.versionPatch = 18
 ext.versionClassifier = null
 ext.isSnapshot = true
 ext.minimumSdkVersion = 19
@@ -51,7 +51,19 @@ android {
 
     buildTypes {
 
+        debug {
+            //   buildConfigField 'String', 'BASE_URL', '"http://127.0.0.1:8080/"'
+            getProps('./config/development.props').each { p ->
+                buildConfigField 'String', p.key, p.value
+            }
+        }
+
         release {
+            // buildConfigField 'String', 'BASE_URL', '"http://127.0.0.1:8080/"'
+            getProps('./config/production.props').each { p ->
+                buildConfigField 'String', p.key, p.value
+            }
+
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
             // signingConfig signingConfigs.release
@@ -59,6 +71,12 @@ android {
     }
     productFlavors {
     }
+}
+
+def getProps(path) {
+    Properties props = new Properties()
+    props.load(new FileInputStream(file(path)))
+    return props
 }
 
 private Integer generateVersionCode() {

@@ -38,7 +38,7 @@
 	<Parameter name="org.goods.living.tech.health.device.jwt.token.life"
 		value="31536000" /> <!-- 1 year -->
 	<Parameter name="org.goods.living.tech.health.device.api"
-		value="10117" />
+		value="10118" />
 	<Parameter name="org.goods.living.tech.health.device.locationUpdateInterval"
 		value="300" />
 	<Parameter name="org.goods.living.tech.health.device.updateUSSDBalanceCodes"
