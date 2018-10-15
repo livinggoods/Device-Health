@@ -68,8 +68,9 @@ public class Utils {
     final static String TAG = Utils.class.getSimpleName();//BaseService.class.getSimpleName();
     final static String KEY_INSTALL_ID = "KEY_INSTALL_ID";
 
-    public final static String DATE_FORMAT_TIMEZONE = "MM-dd-yyyy HH:mm:ss Z";//"MM-dd-yyyy HH:mm:ss"
+    public final static String DATE_FORMAT_TIMEZONE = "dd-mm-yyyy HH:mm:ss Z";//"MM-dd-yyyy HH:mm:ss"
     static SimpleDateFormat dateFormatWithTimezone = new SimpleDateFormat(DATE_FORMAT_TIMEZONE, Locale.getDefault());
+    static SimpleDateFormat dateFormatOnly = new SimpleDateFormat("dd-mm-yyyy", Locale.getDefault());
     public final static String TIMEZONE_UTC = "UTC";
 
     public final static String SMARTHEALTH = "livinggoods";//org.medicmobile.webapp.mobile.livinggoodskenya
@@ -196,6 +197,16 @@ public class Utils {
         try {
             dateFormatWithTimezone.setTimeZone(timezone);//TimeZone.getTimeZone("UTC"
             return dateFormatWithTimezone.format(date);
+        } catch (Exception e) {
+            Crashlytics.logException(e);
+            return null;
+        }
+
+    }
+
+    public static String getStringDateFromDate(Date date) {
+        try {
+            return dateFormatOnly.format(date);
         } catch (Exception e) {
             Crashlytics.logException(e);
             return null;

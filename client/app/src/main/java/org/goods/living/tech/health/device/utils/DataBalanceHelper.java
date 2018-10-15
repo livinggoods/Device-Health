@@ -73,7 +73,7 @@ public class DataBalanceHelper {
 
     long dialTime;
 
-    public static final int USSD_LIMIT = 30;//in seconds
+    public static final int USSD_LIMIT = 40;//in seconds
 
     CountDownTimer timer;
 
@@ -109,28 +109,56 @@ public class DataBalanceHelper {
 
     public Date extractExpiry(String rawText) {
 
-        List<SimpleDateFormat> knownPatterns = new ArrayList<SimpleDateFormat>();
-        knownPatterns.add(new SimpleDateFormat("dd-mm-yyyy"));
-        knownPatterns.add(new SimpleDateFormat("dd/mm/yyyy"));
-        knownPatterns.add(new SimpleDateFormat("dd.mm.yyyy"));
-        knownPatterns.add(new SimpleDateFormat("yyyy-mm-dd"));
-        knownPatterns.add(new SimpleDateFormat("yyyy/mm/dd"));
-        knownPatterns.add(new SimpleDateFormat("yyyy.mm.dd"));
+        List<String> separators = new ArrayList<String>();
+        separators.add(".");
+        separators.add("-");
+        separators.add("/");
+        separators.add("\\");
+        // knownPatterns.add(new SimpleDateFormat("dd-mm-yyyy"));
+        // String regex = "^[0-3]?[0-9]/[0-3]?[0-9]/(?:[0-9]{2})?[0-9]{2}$";// – allow leading zeros to be omitted  01/01/2011
+        String regex1 = "\\d{2}(\\.|-|/|\\\\)\\d{2}(\\.|-|/|\\\\)\\d{4}";//dd/mm/yyyy
+        String regex2 = "\\d{4}(\\.|-|/|\\\\)\\d{2}(\\.|-|/|\\\\)\\d{2}";//yyyy/mm/dd  separators://.-/\
 
-        String[] elements = rawText.split(" ");
+        String regTemplate1 = "dd{sep}mm{sep}yyyy";
+        String regTemplate2 = "yyyy{sep}mm{sep}dd";
 
-        for (SimpleDateFormat pattern : knownPatterns) {
 
-            for (String element : elements) {
+        try {
+            Matcher m;
+            String regex = "";
+
+            Pattern p1 = Pattern.compile(regex1);
+            Matcher m1 = p1.matcher(rawText);
+            Pattern p2 = Pattern.compile(regex2);
+            Matcher m2 = p2.matcher(rawText);
+
+            if (m1.find()) {
+                m = m1;
+                regex = regTemplate1;
+
+            } else {
+                m = m2;
+                regex = regTemplate2;
+            }
+            String s = m.group();
+            // String[] elements = rawText.split(" ");
+            for (String sep : separators) {
                 try {
-                    return new Date(pattern.parse(element).getTime());
+                    SimpleDateFormat pattern = new SimpleDateFormat(regex.replace("{sep}", sep));
+                    Date d = new Date(pattern.parse(s).getTime());
+
+                    return d;
                 } catch (ParseException pe) {
                     // Loop on
                 }
             }
+            return null;
 
+        } catch (Exception e) {
+            Crashlytics.logException(e);
+            return null;
         }
-        return null;
+
     }
 //
 //    public static void sendUSSDDirect(Context c, String ussdFull) {

@@ -30,6 +30,7 @@ import com.google.android.gms.location.LocationResult;
 import org.goods.living.tech.health.device.AppController;
 import org.goods.living.tech.health.device.UI.PermissionActivity;
 import org.goods.living.tech.health.device.models.Setting;
+import org.goods.living.tech.health.device.models.Stats;
 import org.goods.living.tech.health.device.services.StatsService;
 import org.goods.living.tech.health.device.utils.PermissionsUtils;
 import org.goods.living.tech.health.device.utils.Utils;
@@ -70,8 +71,6 @@ public class LocationUpdatesBroadcastReceiver extends BroadcastReceiver {
      * Time difference threshold
      */
     static final int TIME_DIFFERENCE_THRESHOLD = 3 * 60 * 1000;
-
-    static Location oldLocation;
 
 
     @Override
@@ -164,9 +163,30 @@ public class LocationUpdatesBroadcastReceiver extends BroadcastReceiver {
         }
     }
 
+    public static Location locationFromStats(Stats stat) {
+
+        if (stat == null) {
+            return null;
+        }
+
+        Location loc = new Location(stat.provider);
+        loc.setTime(stat.recordedAt.getTime());
+        loc.setLatitude(stat.latitude);
+        loc.setLongitude(stat.longitude);
+        loc.setAccuracy((float) stat.accuracy);
+
+        return loc;
+
+    }
+
     void processLocation(Context context, List<Location> locations) {
         {
             List<Location> filteredLocs = new ArrayList<Location>();
+
+            List<Stats> l = statsService.getLatestRecords(1l);
+
+            Location oldLocation = l.size() > 0 ? locationFromStats(l.get(0)) : null;
+
 
             for (Location location : locations) {
 
@@ -220,7 +240,7 @@ public class LocationUpdatesBroadcastReceiver extends BroadcastReceiver {
         }
     }
 
-    public static Location getBestLastLocation(Location newLocation) {
+    public static Location getBestLastLocation(Location oldLocation, Location newLocation) {
 
         Location loc = isBetterLocation(oldLocation, newLocation) ? newLocation : oldLocation;
         oldLocation = loc;
@@ -249,7 +269,7 @@ public class LocationUpdatesBroadcastReceiver extends BroadcastReceiver {
             long timeDifference = newLocation.getTime() - oldLocation.getTime();
 
             // If time difference is not greater then allowed threshold we accept it.
-            if (timeDifference > -TIME_DIFFERENCE_THRESHOLD) {
+            if (timeDifference > TIME_DIFFERENCE_THRESHOLD) {
                 return true;
             }
         }

@@ -271,7 +271,10 @@ public class MainActivity extends FragmentActivity implements
 
         if (dataBalance != null)
             if (balanceTextView != null) {
-                balanceTextView.setText(getString(R.string.data_balance, dataBalance.balance, dataBalance.expiryDate, dataBalance.balanceMessage));
+
+                String expirely = Utils.getStringDateFromDate(dataBalance.expiryDate);
+
+                balanceTextView.setText(getString(R.string.data_balance, dataBalance.balance, expirely, dataBalance.balanceMessage));
             }
 
     }
@@ -302,10 +305,13 @@ public class MainActivity extends FragmentActivity implements
                 try {
 
                     AppController appController = AppController.getInstance();
+                    List<Stats> l = statsService.getLatestRecords(1l);
+                    Location oldLocation = l.size() > 0 ? LocationUpdatesBroadcastReceiver.locationFromStats(l.get(0)) : null;
+
 
                     Location loc = appController.getLastLocation();
 
-                    Location location = LocationUpdatesBroadcastReceiver.getBestLastLocation(loc);
+                    Location location = LocationUpdatesBroadcastReceiver.getBestLastLocation(oldLocation, loc);
 
                     new Handler(Looper.getMainLooper()).post(new Runnable() {
                         @Override
@@ -383,11 +389,7 @@ public class MainActivity extends FragmentActivity implements
         androidIdText.setText(user == null ? null : user.androidId);
 
         List<DataBalance> l = dataBalanceService.getLatestRecords(1l);
-        DataBalance dataBalance = l.size() > 0 ? l.get(0) : null;
-
-        if (dataBalance != null) {
-            balanceTextView.setText(getString(R.string.data_balance, dataBalance.balance, dataBalance.expiryDate, dataBalance.balanceMessage));
-        }
+        updateUI(l);
 
         Long total = statsService.countRecords();
         Long synced = statsService.countSyncedRecords();

@@ -11,7 +11,6 @@ import org.goods.living.tech.health.device.utils.Utils;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -180,8 +179,8 @@ public class StatsService extends BaseService {
 
             List<Stats> list = new ArrayList<>();
 
-            Date prevRecordedAt = null;
-            double prevAccuracy = 100;
+            // Date prevRecordedAt = null;
+            // double prevAccuracy = 100;
             for (Location loc : locations) {
 //
 //                if (loc.getAccuracy() < ACCURACY_THRESHHOLD) {//take only accurate readings
@@ -204,31 +203,31 @@ public class StatsService extends BaseService {
 
 
                 String formattedDate = Utils.getStringTimeStampWithTimezoneFromDate(stats.recordedAt, TimeZone.getTimeZone(Utils.TIMEZONE_UTC));
-                SimpleDateFormat dateFormat = new SimpleDateFormat("MM-dd-yyyy HH:mm:ss Z");
+                SimpleDateFormat dateFormat = new SimpleDateFormat("dd-mm-yyyy HH:mm:ss Z");
                 Date serverRecordedAt = dateFormat.parse(formattedDate);
 
-
+                list.add(stats);
                 //filter out records withing time threshhold:
-                if (prevRecordedAt != null) {
-                    Calendar c = Calendar.getInstance();
-                    c.setTime(prevRecordedAt);
-                    c.add(Calendar.MINUTE, 5);
-                    if (!serverRecordedAt.after(c.getTime())) {
-
-                        //if more accurate consider it
-                        if (prevAccuracy > stats.accuracy) {
-                            prevAccuracy = stats.accuracy;
-                            prevRecordedAt = serverRecordedAt;
-                            list.add(stats);
-                        }
-
-                        continue;
-                    } else {
-                        prevRecordedAt = serverRecordedAt;
-                        prevAccuracy = stats.accuracy;
-                        list.add(stats);
-                    }
-                }
+//                if (prevRecordedAt != null) {
+//                    Calendar c = Calendar.getInstance();
+//                    c.setTime(prevRecordedAt);
+//                    c.add(Calendar.MINUTE, 5);
+//                    if (!serverRecordedAt.after(c.getTime())) {
+//
+//                        //if more accurate consider it
+//                        if (prevAccuracy > stats.accuracy) {
+//                            prevAccuracy = stats.accuracy;
+//                            prevRecordedAt = serverRecordedAt;
+//                            list.add(stats);
+//                        }
+//
+//                        continue;
+//                    } else {
+//                        prevRecordedAt = serverRecordedAt;
+//                        prevAccuracy = stats.accuracy;
+//                        list.add(stats);
+//                    }
+//                }
 
 
             }
