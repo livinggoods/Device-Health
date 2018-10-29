@@ -16,6 +16,7 @@ public class MedicUser implements Serializable {
 	String name;
 	String branch;
 	String phone;
+	Boolean supervisor;
 
 	public String getUsername() {
 		return username;
@@ -55,6 +56,14 @@ public class MedicUser implements Serializable {
 
 	public void setPhone(String phone) {
 		this.phone = phone;
+	}
+
+	public Boolean getSupervisor() {
+		return supervisor;
+	}
+
+	public void setSupervisor(Boolean supervisor) {
+		this.supervisor = supervisor;
 	}
 
 }

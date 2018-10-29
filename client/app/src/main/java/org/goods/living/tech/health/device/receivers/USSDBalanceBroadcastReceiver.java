@@ -16,11 +16,9 @@
 
 package org.goods.living.tech.health.device.receivers;
 
-import android.app.KeyguardManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.os.PowerManager;
 import android.util.Log;
 
 import com.crashlytics.android.Crashlytics;
@@ -32,7 +30,6 @@ import org.goods.living.tech.health.device.models.Setting;
 import org.goods.living.tech.health.device.services.DataBalanceService;
 import org.goods.living.tech.health.device.services.RegistrationService;
 import org.goods.living.tech.health.device.services.UserService;
-import org.goods.living.tech.health.device.utils.DataBalanceHelper;
 
 import java.util.Calendar;
 
@@ -86,6 +83,7 @@ public class USSDBalanceBroadcastReceiver extends BroadcastReceiver {
         appController.getComponent().inject(this);
         Crashlytics.log(Log.DEBUG, TAG, "USSDBalanceBroadcastReceiver");
 
+        Setting setting = appController.getSetting();
 
         // unlock(context);
         //Offloading work to a new thread.
@@ -95,7 +93,7 @@ public class USSDBalanceBroadcastReceiver extends BroadcastReceiver {
                 try {
                     Crashlytics.log(Log.DEBUG, TAG, "USSDJobService thread ...");
 
-                    Setting setting = appController.getSetting();
+
                     setting.lastUSSDRun = Calendar.getInstance().getTime();
                     AppController.getInstance().updateSetting(setting);
 
@@ -123,25 +121,25 @@ public class USSDBalanceBroadcastReceiver extends BroadcastReceiver {
 
     }
 
-    void unlock(Context context) {
-        try {
-            KeyguardManager km = (KeyguardManager) context.getSystemService(Context.KEYGUARD_SERVICE);
-            final KeyguardManager.KeyguardLock kl = km.newKeyguardLock("MyKeyguardLock");
-            kl.disableKeyguard();
-
-            PowerManager pm = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
-            PowerManager.WakeLock wakeLock = pm.newWakeLock(PowerManager.FULL_WAKE_LOCK
-                    | PowerManager.ACQUIRE_CAUSES_WAKEUP
-                    | PowerManager.ON_AFTER_RELEASE, "MyWakeLock");
-            wakeLock.acquire(DataBalanceHelper.USSD_LIMIT * 1000);
-
-
-        } catch (Exception e) {
-            // Log.e(TAG, e.toString());
-            Crashlytics.logException(e);
-
-        }
-    }
+//    void unlock(Context context) {
+//        try {
+//            KeyguardManager km = (KeyguardManager) context.getSystemService(Context.KEYGUARD_SERVICE);
+//            final KeyguardManager.KeyguardLock kl = km.newKeyguardLock("MyKeyguardLock");
+//            kl.disableKeyguard();
+//
+//            PowerManager pm = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
+//            PowerManager.WakeLock wakeLock = pm.newWakeLock(PowerManager.FULL_WAKE_LOCK
+//                    | PowerManager.ACQUIRE_CAUSES_WAKEUP
+//                    | PowerManager.ON_AFTER_RELEASE, "MyWakeLock");
+//            wakeLock.acquire(DataBalanceHelper.USSD_LIMIT * 1000);
+//
+//
+//        } catch (Exception e) {
+//            // Log.e(TAG, e.toString());
+//            Crashlytics.logException(e);
+//
+//        }
+//    }
 }
 
 

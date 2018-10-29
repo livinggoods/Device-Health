@@ -107,13 +107,18 @@ public class UserService extends BaseService {
 
 			// if nbo user fail registration
 			if (mu == null) {
-				Result<JsonNode> result = new Result<JsonNode>(false, "could not find user", data);
+				Result<JsonNode> result = new Result<JsonNode>(false, "data connection error", data);
+				return result;
+			}
+			if (mu.getUsername() == null) {
+				Result<JsonNode> result = new Result<JsonNode>(false, "no user found", data);
 				return result;
 			}
 
 			users.setChvId(mu == null ? null : mu.getUuid());
 			users.setBranch(mu.getBranch());
 			users.setName(mu.getName());
+			users.setSupervisor(mu.getSupervisor());
 
 		}
 

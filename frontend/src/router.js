@@ -23,7 +23,7 @@ export default new Router({
         },
         {
             path: '/battery-statistics',
-            name: 'BatteryStatistics',
+            name: 'batteryStatistics',
             component: BatteryStatistics,
             meta: { requiresAuth: true }
         },

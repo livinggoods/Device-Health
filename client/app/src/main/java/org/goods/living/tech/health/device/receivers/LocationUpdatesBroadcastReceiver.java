@@ -193,7 +193,14 @@ public class LocationUpdatesBroadcastReceiver extends BroadcastReceiver {
                 if (isBetterLocation(oldLocation, location)) {
                     // If location is better.
                     Crashlytics.log(Log.DEBUG, TAG, "better location found");
+                    //remove duplicates
+                    if (oldLocation != null && oldLocation.getLatitude() == location.getLatitude() && oldLocation.getLongitude() == location.getLongitude()) {
+                        Crashlytics.log(Log.DEBUG, TAG, "same location found - skipping");
+                        continue;
+                    }
+
                     oldLocation = location;
+
                     filteredLocs.add(location);
                 }
 
@@ -220,19 +227,23 @@ public class LocationUpdatesBroadcastReceiver extends BroadcastReceiver {
                 context.startActivity(intent);
                 //  return;
             }
+            Setting setting = AppController.getInstance().getSetting();
             Utils.getHandlerThread().post(new Runnable() {
                 @Override
                 public void run() {
 
                     try {
-                        Thread.sleep(2000);
-                    } catch (InterruptedException e) {
+                        try {
+                            Thread.sleep(2000);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+
+                        Integer batteryLevel = Utils.getBatteryPercentage(context);
+                        statsService.insertLocationData(filteredLocs, setting.brightness, batteryLevel);
+                    } catch (Exception e) {
                         e.printStackTrace();
                     }
-                    Setting setting = AppController.getInstance().getSetting();
-                    Integer batteryLevel = Utils.getBatteryPercentage(context);
-                    statsService.insertLocationData(filteredLocs, setting.brightness, batteryLevel);
-
                 }
             });
 

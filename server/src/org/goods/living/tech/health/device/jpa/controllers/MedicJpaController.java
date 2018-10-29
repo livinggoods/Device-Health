@@ -12,6 +12,7 @@ import java.util.List;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
+import javax.persistence.NoResultException;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -93,10 +94,17 @@ public class MedicJpaController implements Serializable {
 		EntityManager em = getEntityManager(db);
 		try {
 
-			Object[] o = (Object[]) em.createNativeQuery("SELECT "
-					+ "doc->>'name' AS username, doc->>'contact_id' contact_id, chw_name , branch_name, chw_phone "
-					+ "FROM couchdb left join contactview_hierarchy ch on ch.chw_uuid=doc->>'contact_id' WHERE doc->>'type' = 'user-settings' "
-					+ "and doc->>'name' ILIKE :name").setParameter("name", "" + username + "").getSingleResult();
+			Object[] o = (Object[]) em.createNativeQuery("select * from (\n"
+					+ "	SELECT doc->>'name' AS username, doc->>'contact_id' contact_id, chw_name , branch_name, chw_phone ,false as supervisor\n"
+					+ "FROM couchdb left join contactview_hierarchy ch on ch.chw_uuid=doc->>'contact_id'  WHERE doc->>'type' = 'user-settings'\n"
+					+ "union (\n" + "	SELECT \n" + "    form.doc->>'name' AS username, \n"
+					+ "    form.doc->>'contact_id' contact_id, \n" + "    cmeta.name,\n"
+					+ "    branch.\"name\" branch_name,\n" + "    branch.uuid,\n" + "	true as supervisor\n"
+					+ "    FROM  \n" + "    contactview_branch branch\n"
+					+ "    INNER JOIN contactview_metadata cmeta ON (cmeta.parent_uuid = branch.uuid)\n"
+					+ "    LEFT  JOIN couchdb form  on cmeta.uuid=form.doc->>'contact_id'\n"
+					+ "    WHERE doc->>'type' = 'user-settings'\n" + "	 )\n" + ") as tab\n"
+					+ "	 where  username ILIKE :name").setParameter("name", "" + username + "").getSingleResult();
 			// List<MedicUser> l = new ArrayList<>();
 			// for (Object[] o : list) {
 			MedicUser mu = new MedicUser();
@@ -105,9 +113,13 @@ public class MedicJpaController implements Serializable {
 			mu.setName((String) o[2]);
 			mu.setBranch((String) o[3]);
 			mu.setPhone((String) o[4]);
+			mu.setSupervisor((Boolean) o[5]);
 			// l.add(mu);
 			// }
 			return mu;
+		} catch (NoResultException e) {
+			logger.error(e);
+			return new MedicUser();
 		} catch (Exception e) {
 			logger.error(e);
 			return null;

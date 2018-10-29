@@ -213,6 +213,7 @@ public class RegisterUserFragment extends SlideFragment {
         super.onResume();
     }
 
+
     /**
      * Handles the Save registration button.
      */
@@ -245,6 +246,8 @@ public class RegisterUserFragment extends SlideFragment {
 
     void saveRegistration() {
 
+        AppController.getInstance().getComponent().inject(this);
+        
         User user = userService.getRegisteredUser();
         String username = usernameText.getText().toString().trim();
         user.username = username.isEmpty() ? null : username;

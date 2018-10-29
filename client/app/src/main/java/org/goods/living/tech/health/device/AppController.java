@@ -179,6 +179,7 @@ public class AppController extends Application {
             // log it & phone home.
             // androidDefaultUEH.uncaughtException(thread, ex);
             Intent intent = new Intent(instance, MainActivity.class);
+            //intent.addCategory(Intent.CATEGORY_LAUNCHER);
             PendingIntent pi = PendingIntent.getBroadcast(instance, 0, intent
                     , PendingIntent.FLAG_UPDATE_CURRENT);
             AlarmManager mgr = (AlarmManager) getSystemService(Context.ALARM_SERVICE);

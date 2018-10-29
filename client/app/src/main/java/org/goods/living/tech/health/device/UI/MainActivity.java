@@ -120,6 +120,7 @@ public class MainActivity extends FragmentActivity implements
         //  ((AppController) this.getApplicationContext()).getComponent().inject(this);
         AppController.getInstance().getComponent().inject(this);
 
+
         mLocationUpdatesResultView = (TextView) findViewById(R.id.location_updates_result);
         usernameText = (TextView) findViewById(R.id.usernameText);
         nameText = (TextView) findViewById(R.id.nameText);
@@ -404,7 +405,7 @@ public class MainActivity extends FragmentActivity implements
         // long count = statsService.getStatsCount();
         String data = "";
         for (Stats stats : list) {
-            data += "" + DateFormat.format("MM/dd h:m:s", stats.recordedAt); //new Date(TimeinMilliSeccond)
+            data += "" + DateFormat.format("MM/dd HH:m:s", stats.recordedAt); //new Date(TimeinMilliSeccond)
             data += " lat: " + stats.latitude;
             data += " lon: " + stats.longitude;
             data += " acu: " + stats.accuracy;

@@ -44,14 +44,14 @@
                                         </i></el-input>
                                     </li>
                                     <li style="margin-left: 5px; margin-top: 10px;">
-                                        <el-input label="With data bundle'" placeholder="Amount" v-model="searchParams.amount" >
+                                        <el-input label="With Battery'" placeholder="Battery" v-model="searchParams.amount" >
                                             <el-select style="width: 250px;" slot="prepend" v-model="searchParams.operator" placeholder="Operator" >
                                                 <el-option
-                                                        label="With data bundle Less Than"
+                                                        label="With Battery Less Than"
                                                         value="less_than">
                                                 </el-option>
                                                 <el-option
-                                                        label="With data bundle Equal To"
+                                                        label="With Battery Equal To"
                                                         value="equal_to">
                                                 </el-option>
                                             </el-select>
@@ -122,8 +122,6 @@ import 'bootstrap'
 import {generalConfig, api} from '../../config/config'
 import Sidebar from '@/components/Sidebar'
 import Loading from 'vue-loading-overlay'
-import toastr from 'toastr'
-
 export default {
     name: 'BatteryStatistics',
     data () {
@@ -146,12 +144,8 @@ export default {
                 label: 'App Version'
             },
             {
-                prop: 'balance',
-                label: 'Balance'
-            },
-            {
-                prop: 'balance_message',
-                label: 'Raw Message'
+                prop: 'battery',
+                label: 'Battery'
             },
             {
                 prop: 'date',
@@ -315,4 +309,3 @@ export default {
         width: 300px !important;
     }
 </style>
-
