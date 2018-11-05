@@ -88,8 +88,8 @@ public class RegisterUserFragment extends SlideFragment {
     @Inject
     SyncService syncService;
 
-    private Button registerBtn;
-    private TextView usernameText;
+    Button registerBtn;
+    TextView usernameText;
     CountryCodePicker ccp;
     AppCompatEditText edtPhoneNumber;
     TextView msgTextView;
@@ -104,7 +104,7 @@ public class RegisterUserFragment extends SlideFragment {
 
     }
 
-    @Nullable
+
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         final View view = inflater.inflate(R.layout.fragment_slide1, container, false);
@@ -219,7 +219,7 @@ public class RegisterUserFragment extends SlideFragment {
      */
     public void onDoRegister(Activity activity) {
         Crashlytics.log(Log.DEBUG, TAG, "onDoRegister");
-
+        TextView usernameText = this.usernameText;
         final AlertDialog.Builder builder = new AlertDialog.Builder(activity);
         builder.setTitle("Register CHV");
         builder.setMessage("Please confirm username and phone number.\n\n\n * This is a one time registration.");
@@ -228,7 +228,7 @@ public class RegisterUserFragment extends SlideFragment {
             public void onClick(DialogInterface dialogInterface, int i) {
 
                 try {
-                    saveRegistration();
+                    saveRegistration(usernameText.getText().toString().trim());
                 } catch (Exception e) {
                     Crashlytics.logException(e);
 
@@ -244,12 +244,11 @@ public class RegisterUserFragment extends SlideFragment {
     }
 
 
-    void saveRegistration() {
+    void saveRegistration(String username) {
 
         AppController.getInstance().getComponent().inject(this);
-        
+
         User user = userService.getRegisteredUser();
-        String username = usernameText.getText().toString().trim();
         user.username = username.isEmpty() ? null : username;
         String phone = "";
         try {

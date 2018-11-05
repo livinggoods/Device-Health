@@ -17,7 +17,7 @@ apply plugin: 'io.fabric'
 
 ext.versionMajor = 1
 ext.versionMinor = 1
-ext.versionPatch = 19
+ext.versionPatch = 20
 ext.versionClassifier = null
 ext.isSnapshot = true
 ext.minimumSdkVersion = 19
@@ -42,10 +42,11 @@ android {
     defaultConfig {
         applicationId "org.goods.living.tech.health.device"
         targetSdkVersion 28
-        minSdkVersion 21
+        minSdkVersion 19
         // 15// 0010203
-        versionName generateVersionName() // 1.2.3-SNAPSHOT
+        versionName '10120' // 1.2.3-SNAPSHOT
         signingConfig signingConfigs.config
+        versionCode 10120
     }
 
     buildTypes {
@@ -60,7 +61,7 @@ android {
             getProps('./config/production.props').each { p ->
                 buildConfigField 'String', p.key, p.value
             }
-            debuggable true
+            debuggable false
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
             // signingConfig signingConfigs.release

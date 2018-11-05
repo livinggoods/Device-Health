@@ -104,7 +104,8 @@ public class MedicJpaController implements Serializable {
 					+ "    INNER JOIN contactview_metadata cmeta ON (cmeta.parent_uuid = branch.uuid)\n"
 					+ "    LEFT  JOIN couchdb form  on cmeta.uuid=form.doc->>'contact_id'\n"
 					+ "    WHERE doc->>'type' = 'user-settings'\n" + "	 )\n" + ") as tab\n"
-					+ "	 where  username ILIKE :name").setParameter("name", "" + username + "").getSingleResult();
+					+ "	 where  username ILIKE :name").setParameter("name", "" + username + "").setFirstResult(0)
+					.setMaxResults(1).getSingleResult();
 			// List<MedicUser> l = new ArrayList<>();
 			// for (Object[] o : list) {
 			MedicUser mu = new MedicUser();
