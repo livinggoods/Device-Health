@@ -55,6 +55,11 @@ public class Stats extends BaseModel {
                 String formattedDate = Utils.getStringTimeStampWithTimezoneFromDate(recordedAt, TimeZone.getTimeZone(Utils.TIMEZONE_UTC));
                 JSONObject.put("recordedAt", formattedDate);
             }
+            if (createdAt != null) {
+                String formattedDate = Utils.getStringTimeStampWithTimezoneFromDate(createdAt, TimeZone.getTimeZone(Utils.TIMEZONE_UTC));
+                JSONObject.put("createdAt", formattedDate);
+            }
+
 
             if (batteryLevel != null) JSONObject.put("batteryLevel", batteryLevel);
             if (brightness != null) JSONObject.put("brightness", brightness);

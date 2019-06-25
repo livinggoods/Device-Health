@@ -200,7 +200,7 @@ public class StatsService extends BaseService {
 
 
                 String formattedDate = Utils.getStringTimeStampWithTimezoneFromDate(stats.recordedAt, TimeZone.getTimeZone(Utils.TIMEZONE_UTC));
-                SimpleDateFormat dateFormat = new SimpleDateFormat("dd-mm-yyyy HH:mm:ss Z");
+                SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss Z");
                 Date serverRecordedAt = dateFormat.parse(formattedDate);
 
                 list.add(stats);

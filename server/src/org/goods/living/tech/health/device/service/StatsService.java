@@ -95,6 +95,13 @@ public class StatsService extends BaseService {
 
 				stats.setRecordedAt(recordedAt);
 			}
+			if (j.has("createdAt")) {
+
+				Date requestedAt = Utils.getDateFromTimeStampWithTimezone(j.get("createdAt").asText(),
+						TimeZone.getTimeZone(Utils.TIMEZONE_UTC));
+
+				stats.setRequestedAt(requestedAt);
+			}
 
 			stats.setCreatedAt(new Date());
 			statsJpaController.create(stats);

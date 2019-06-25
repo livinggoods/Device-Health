@@ -10,7 +10,7 @@ import org.apache.logging.log4j.Logger;
 
 public class Utils {
 
-	public final static String DATE_FORMAT_TIMEZONE = "dd-mm-yyyy HH:mm:ss Z";// "dd-mm-yyyy HH:mm:ss"
+	public final static String DATE_FORMAT_TIMEZONE = "dd-MM-yyyy'T'HH:mm:ss'Z'";// "dd-mm-yyyy HH:mm:ss"
 	static SimpleDateFormat dateFormatWithTimezone = new SimpleDateFormat(DATE_FORMAT_TIMEZONE, Locale.getDefault());
 	public final static String TIMEZONE_UTC = "UTC";
 

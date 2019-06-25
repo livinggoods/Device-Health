@@ -114,7 +114,7 @@ public class DataBalanceHelper {
         separators.add("-");
         separators.add("/");
         separators.add("\\");
-        // knownPatterns.add(new SimpleDateFormat("dd-mm-yyyy"));
+        // knownPatterns.add(new SimpleDateFormat("dd-MM-yyyy"));
         // String regex = "^[0-3]?[0-9]/[0-3]?[0-9]/(?:[0-9]{2})?[0-9]{2}$";// – allow leading zeros to be omitted  01/01/2011
         String regex1 = "\\d{2}(\\.|-|/|\\\\)\\d{2}(\\.|-|/|\\\\)\\d{4}";//dd/mm/yyyy
         String regex2 = "\\d{4}(\\.|-|/|\\\\)\\d{2}(\\.|-|/|\\\\)\\d{2}";//yyyy/mm/dd  separators://.-/\
@@ -317,8 +317,10 @@ public class DataBalanceHelper {
 
             String ussdCode = ussd.replace("#", "") + Uri.encode("#");
 
-            Intent intent = new Intent("android.intent.action.CALL", Uri.parse("tel:" + ussdCode));
-
+            //  Intent intent = new Intent("android.intent.action.CALL", Uri.parse("tel:" + ussdCode));
+            Intent intent = new Intent(Intent.ACTION_CALL, Uri.parse("tel:" + ussdCode));
+            // Intent intent = new Intent(Intent.ACTION_CALL, Uri.fromParts("tel", ussdCode, null));
+            //   intent.putExtra("android.intent.action.CALL", Uri.fromParts("tel", ussdCode, null));
             intent.putExtra("com.android.phone.force.slot", true);
             intent.putExtra("Cdma_Supp", true);
             //Add all slots here, according to device.. (different device require different key so put all together)
@@ -372,7 +374,8 @@ public class DataBalanceHelper {
                     timer.start();
                 }
             });
-        } catch (Exception e) {
+        } catch (
+                Exception e) {
             // Log.e(TAG, e.toString());
             Crashlytics.logException(e);
             if (USSDResult != null)

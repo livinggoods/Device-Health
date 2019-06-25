@@ -64,6 +64,11 @@ public class Stats implements Serializable {
 	@Column(name = "recorded_at")
 	@Temporal(TemporalType.TIMESTAMP)
 	private Date recordedAt;
+
+	@Column(name = "requested_at")
+	@Temporal(TemporalType.TIMESTAMP)
+	private Date requestedAt;
+
 	@Basic(optional = false)
 	@Column(name = "created_at", nullable = false)
 	@Temporal(TemporalType.TIMESTAMP)
@@ -149,6 +154,14 @@ public class Stats implements Serializable {
 
 	public void setRecordedAt(Date recordedAt) {
 		this.recordedAt = recordedAt;
+	}
+
+	public Date getRequestedAt() {
+		return requestedAt;
+	}
+
+	public void setRequestedAt(Date requestedAt) {
+		this.requestedAt = requestedAt;
 	}
 
 	public Date getCreatedAt() {
