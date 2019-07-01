@@ -11,13 +11,12 @@ buildscript {
 apply plugin: 'com.android.application'
 
 
-
 apply plugin: 'io.objectbox'
 apply plugin: 'io.fabric'
 
 ext.versionMajor = 1
 ext.versionMinor = 1
-ext.versionPatch = 20
+ext.versionPatch = 21
 ext.versionClassifier = null
 ext.isSnapshot = true
 ext.minimumSdkVersion = 19
@@ -44,9 +43,9 @@ android {
         targetSdkVersion 28
         minSdkVersion 19
         // 15// 0010203
-        versionName '10120' // 1.2.3-SNAPSHOT
+        versionName '10121' // 1.2.3-SNAPSHOT
         signingConfig signingConfigs.config
-        versionCode 10120
+        versionCode 10121
     }
 
     buildTypes {
