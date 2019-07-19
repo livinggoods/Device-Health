@@ -230,7 +230,7 @@ public class RegisterUserFragment extends SlideFragment {
                 try {
                     saveRegistration(usernameText.getText().toString().trim());
                 } catch (Exception e) {
-                    Crashlytics.logException(e);
+                    Crashlytics.log(Log.DEBUG, TAG, "What is the error"+e);
 
                 }
             }

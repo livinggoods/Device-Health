@@ -34,6 +34,8 @@ import android.view.WindowManager;
 import android.widget.TextView;
 
 import com.crashlytics.android.Crashlytics;
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.location.LocationRequest;
 
 import org.goods.living.tech.health.device.AppController;
@@ -94,7 +96,7 @@ public class MainActivity extends FragmentActivity implements
     private TextView usernameText;
     private TextView nameText;
     private TextView balanceTextView;
-    TextView phoneText;
+    private TextView userId;
 
 
     private TextView syncTextView;
@@ -124,8 +126,8 @@ public class MainActivity extends FragmentActivity implements
         mLocationUpdatesResultView = (TextView) findViewById(R.id.location_updates_result);
         usernameText = (TextView) findViewById(R.id.usernameText);
         nameText = (TextView) findViewById(R.id.nameText);
-        phoneText = (TextView) findViewById(R.id.phone_number);
         androidIdText = (TextView) findViewById(R.id.androidIdText);
+        userId = (TextView) findViewById(R.id.user_id);
 
 
         syncTextView = (TextView) findViewById(R.id.syncTextView);
@@ -280,7 +282,15 @@ public class MainActivity extends FragmentActivity implements
 
     }
 
-
+    private boolean isGooglePlayServicesAvailable() {
+        int status = GooglePlayServicesUtil.isGooglePlayServicesAvailable(this);
+        if (ConnectionResult.SUCCESS == status) {
+            return true;
+        } else {
+            GooglePlayServicesUtil.getErrorDialog(status, this, 0).show();
+            return false;
+        }
+    }
     /**
      * Handles the checkLocation  button.
      */
@@ -308,6 +318,16 @@ public class MainActivity extends FragmentActivity implements
                     AppController appController = AppController.getInstance();
                     List<Stats> l = statsService.getLatestRecords(1l);
                     Location oldLocation = l.size() > 0 ? LocationUpdatesBroadcastReceiver.locationFromStats(l.get(0)) : null;
+
+
+                    if(!isGooglePlayServicesAvailable()){
+
+                        Utils.dismissProgressDialog();
+                        SnackbarUtil.showSnack(c, "First update google play service");
+                        Crashlytics.log("First update google play service");
+                        return;
+                    }
+
 
 
                     Location loc = appController.getLastLocation();
@@ -386,8 +406,8 @@ public class MainActivity extends FragmentActivity implements
         //if(user ==null){
         usernameText.setText(user == null ? null : user.username);
         nameText.setText(user == null ? null : user.name);
-        phoneText.setText(user == null ? null : user.phone);
         androidIdText.setText(user == null ? null : user.androidId);
+        userId.setText(user == null ? null : user.masterId.toString());
 
         List<DataBalance> l = dataBalanceService.getLatestRecords(1l);
         updateUI(l);

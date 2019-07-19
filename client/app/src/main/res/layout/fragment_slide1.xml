@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/second_slide_background"
+    android:background="@color/living_blue"
     android:orientation="vertical"
     android:paddingBottom="164dp"
     tools:context=".UI.RegisterUserFragment">
@@ -38,22 +38,26 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal">
+                android:orientation="vertical">
 
                 <TextView
                     android:id="@+id/textView"
-                    android:layout_width="wrap_content"
+                    android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:layout_weight="1"
                     android:editable="false"
                     android:gravity="center_vertical"
-                    android:text="Smart Health Username" />
+                    android:text="Smart Health Username"
+                    android:textColor="@color/gray_light"
+                    android:textSize="14sp"/>
 
                 <EditText
                     android:id="@+id/usernameText"
-                    android:layout_width="wrap_content"
+                    android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:ems="10"
+                    android:layout_marginTop="-4dp"
+                    android:layout_marginLeft="4dp"
                     android:hint="Username"
                     android:inputType="textPersonName"
                     android:singleLine="true" />
@@ -80,14 +84,16 @@
                     android:layout_height="wrap_content"
                     app:ccp_autoDetectCountry="true"
                     app:ccp_countryPreference="UG,KE,TZ,US"
-                    app:ccp_rememberLastSelection="true" />
+                    app:ccp_rememberLastSelection="true"
+                    app:ccp_contentColor="@color/living_orange"
+                    app:ccpDialog_textColor="@color/living_orange"/>
 
                 <android.support.v7.widget.AppCompatEditText
                     android:id="@+id/phone_number_edt"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:hint="phone"
+                    android:hint="Phone number"
                     android:inputType="phone" />
 
 
@@ -110,6 +116,7 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="2"
                         android:checked="true"
+                        android:textColor="@color/gray_light"
                         android:text="@string/sim_slot" />
 
                     <RadioButton
@@ -117,7 +124,8 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_weight="2"
-                        android:text="@string/sim_slot" />
+                        android:text="@string/sim_slot"
+                        android:textColor="@color/gray_light"/>
                 </RadioGroup>
 
             </LinearLayout>
@@ -127,7 +135,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:background="@color/second_slide_buttons"
+                android:background="@drawable/button_radius"
                 android:onClick="onDoRegister"
                 android:text="Register" />
 

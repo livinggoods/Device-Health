@@ -12,7 +12,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentTop="true"
-        android:background="#AFA7EF"
+        android:background="@color/living_blue"
+        android:padding="4dp"
         android:gravity="center">
 
         <TextView
@@ -20,7 +21,8 @@
             android:layout_height="wrap_content"
             android:layout_margin="3dp"
             android:text="Device Health Stats"
-            android:textSize="15sp" />
+            android:textSize="16sp"
+            android:textColor="@color/living_orange" />
     </RelativeLayout>
 
 
@@ -38,7 +40,8 @@
             android:focusable="true"
             android:focusableInTouchMode="true"
             android:gravity="top"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            android:layout_margin="8dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -46,7 +49,8 @@
                 android:focusable="true"
                 android:focusableInTouchMode="true"
                 android:gravity="top"
-                android:orientation="vertical">
+                android:orientation="vertical"
+                android:layout_margin="3dp">
 
 
                 <LinearLayout
@@ -61,7 +65,10 @@
                         android:layout_weight="1"
                         android:editable="false"
                         android:gravity="center_vertical"
-                        android:text="Smart Health User" />
+                        android:text="Smart Health User:"
+                        android:textSize="12sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/name_gray"/>
 
                     <TextView
                         android:id="@+id/nameText"
@@ -71,7 +78,9 @@
                         android:ems="10"
                         android:hint="Name"
                         android:inputType="textPersonName"
-                        android:singleLine="true" />
+                        android:singleLine="true"
+                        android:textSize="15sp"
+                        android:textColor="@color/gray"/>
 
                 </LinearLayout>
 
@@ -87,7 +96,10 @@
                         android:layout_weight="1"
                         android:editable="false"
                         android:gravity="center_vertical"
-                        android:text="Smart Health Username" />
+                        android:text="Smart Health Username:"
+                        android:textSize="12sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/name_gray"/>
 
                     <TextView
                         android:id="@+id/usernameText"
@@ -97,7 +109,9 @@
                         android:ems="10"
                         android:hint="Username"
                         android:inputType="textPersonName"
-                        android:singleLine="true" />
+                        android:singleLine="true"
+                        android:textSize="15sp"
+                        android:textColor="@color/gray"/>
 
                 </LinearLayout>
 
@@ -113,7 +127,10 @@
                         android:layout_weight="1"
                         android:editable="false"
                         android:gravity="center_vertical"
-                        android:text="Android Id" />
+                        android:text="Android Id:"
+                        android:textSize="12sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/name_gray"/>
 
                     <TextView
                         android:id="@+id/androidIdText"
@@ -123,7 +140,9 @@
                         android:ems="10"
                         android:hint="AndroidId"
                         android:inputType="text"
-                        android:singleLine="true" />
+                        android:singleLine="true"
+                        android:textSize="15sp"
+                        android:textColor="@color/gray" />
 
                 </LinearLayout>
 
@@ -133,19 +152,24 @@
                     android:orientation="horizontal">
 
                     <TextView
-                        android:id="@+id/phonetextView"
+                        android:id="@+id/userIdtextView"
                         android:layout_width="141dp"
                         android:layout_height="match_parent"
                         android:layout_weight="1"
                         android:gravity="center_vertical"
-                        android:text="Phone" />
+                        android:text="User ID:"
+                        android:textSize="12dp"
+                        android:textStyle="bold"
+                        android:textColor="@color/name_gray"/>
 
                     <TextView
-                        android:id="@+id/phone_number"
+                        android:id="@+id/user_id"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:inputType="phone" />
+                        android:inputType="text"
+                        android:textSize="14dp"
+                        android:textColor="@color/gray"/>
 
                 </LinearLayout>
 
@@ -164,7 +188,9 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:onClick="checkBalance"
-                    android:text="Check Bundle Balance" />
+                    android:text="Check Bundle Balance"
+                    android:textSize="13dp"
+                    android:textColor="@color/name_gray"/>
 
 
             </LinearLayout>
@@ -180,7 +206,11 @@
                     android:layout_width="match_parent"
                     android:layout_height="34dp"
                     android:layout_weight="1"
-                    android:text="@string/data_balance" />
+                    android:layout_margin="2dp"
+                    android:text="@string/data_balance"
+                    android:textSize="13dp"
+                    android:textStyle="bold"
+                    android:textColor="@color/name_gray"/>
 
 
             </LinearLayout>
@@ -198,7 +228,9 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:onClick="checkLocation"
-                    android:text="Check Location" />
+                    android:text="Check Location"
+                    android:textSize="13dp"
+                    android:textColor="@color/name_gray"/>
 
 
             </LinearLayout>
@@ -215,13 +247,7 @@
                 android:orientation="horizontal"
                 android:visibility="visible">
 
-                <Button
-                    android:id="@+id/syncBtn"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:onClick="triggerSync"
-                    android:text="Sync now" />
+
             </LinearLayout>
 
 
@@ -248,22 +274,42 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginBottom="@dimen/default_margin"
-                        android:text="Locations"
-                        android:textSize="@dimen/text_large" />
+                        android:text="LOCATION DETAILS"
+                        android:layout_marginLeft="2dp"
+                        android:textStyle="bold"
+                        android:textSize="16sp"
+                        android:textColor="@color/name_gray"/>
 
-                    <TextView
-                        android:id="@+id/syncTextView"
-                        android:paddingLeft="5sp"
-                        android:layout_width="match_parent"
+                    <Button
+                        android:id="@+id/syncBtn"
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="@string/sync_data" />
+                        android:onClick="triggerSync"
+                        android:layout_gravity="end"
+                        android:layout_marginLeft="48dp"
+                        android:text="Sync now"
+                        android:textSize="13dp"
+                        android:textColor="@color/name_gray"/>
+
+
                 </LinearLayout>
+
+                <TextView
+                    android:id="@+id/syncTextView"
+                    android:paddingLeft="5sp"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="-16dp"
+                    android:layout_marginLeft="-4dp"
+                    android:layout_weight="1"
+                    android:text="@string/sync_data" />
 
                 <TextView
                     android:id="@+id/intervalTextView"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_marginLeft="2dp"
                     android:layout_weight="0"
                     android:gravity="center_vertical"
                     android:text="@string/locationupdate_interval" />
@@ -275,6 +321,7 @@
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:layout_margin="2dp"
                         android:orientation="vertical">
 
                         <TextView

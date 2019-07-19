@@ -1,14 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="colorPrimary">#3F51B5</color>
-    <color name="colorPrimaryDark">#303F9F</color>
+    <color name="colorPrimaryDark">#23241F</color>
     <color name="colorAccent">#FF4081</color>
 
+    <color name="black">#000000</color>
+    <color name="gray">#737374</color>
+    <color name="name_gray">#444445</color>
+    <color name="living_blue">#15489B</color>
+    <color name="living_orange">#DA8006</color>
+    <color name="gray_light">#CACACD</color>
 
-    <color name="first_slide_background">#E91E63</color>
+
+    <color name="first_slide_background">#15489B</color>
     <color name="first_slide_buttons">#880E4F</color>
 
-    <color name="second_slide_background">#9c27b0</color>
+    <color name="second_slide_background">#15489B</color>
     <color name="second_slide_buttons">#4A148C</color>
 
     <color name="third_slide_background">#009688</color>
