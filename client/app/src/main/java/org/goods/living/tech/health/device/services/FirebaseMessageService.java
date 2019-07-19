@@ -52,7 +52,9 @@ public class FirebaseMessageService extends FirebaseMessagingService {
         // ...
 
         Answers.getInstance().logCustom(new CustomEvent("Firebase message received")
-                .putCustomAttribute("Reason", remoteMessage.getData().toString()));
+                .putCustomAttribute("Reason", remoteMessage.getData().toString())
+                .putCustomAttribute("function", remoteMessage.getData().get("function")));
+        ;
 
         // TODO(developer): Handle FCM messages here.
         // Not getting messages here? See why this may be: https://goo.gl/39bRNJ
@@ -62,7 +64,7 @@ public class FirebaseMessageService extends FirebaseMessagingService {
             Crashlytics.log(Log.INFO, TAG, "Message data payload: " + remoteMessage.getData());
 
             String function = remoteMessage.getData().get("function");
-            function = function.toLowerCase();
+            function = function == null ? "" : function.toLowerCase();
 
             switch (function) {
                 case "setting":

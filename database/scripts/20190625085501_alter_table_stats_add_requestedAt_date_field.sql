@@ -19,8 +19,10 @@
 
 
 ALTER TABLE events.stats ADD COLUMN requested_at timestamp with time zone ;
+ALTER TABLE events.stats ADD COLUMN version_name character varying(128);
 -- //@UNDO
 -- SQL to undo the change goes here.
 
+ALTER TABLE events.stats DROP COLUMN version_name;
 ALTER TABLE events.stats DROP COLUMN requested_at;
 

@@ -291,6 +291,7 @@ public class MainActivity extends FragmentActivity implements
             return false;
         }
     }
+
     /**
      * Handles the checkLocation  button.
      */
@@ -320,7 +321,7 @@ public class MainActivity extends FragmentActivity implements
                     Location oldLocation = l.size() > 0 ? LocationUpdatesBroadcastReceiver.locationFromStats(l.get(0)) : null;
 
 
-                    if(!isGooglePlayServicesAvailable()){
+                    if (!isGooglePlayServicesAvailable()) {
 
                         Utils.dismissProgressDialog();
                         SnackbarUtil.showSnack(c, "First update google play service");
@@ -329,10 +330,9 @@ public class MainActivity extends FragmentActivity implements
                     }
 
 
+                    Location location = appController.getLastLocation();
 
-                    Location loc = appController.getLastLocation();
-
-                    Location location = LocationUpdatesBroadcastReceiver.getBestLastLocation(oldLocation, loc);
+                    //   Location location = LocationUpdatesBroadcastReceiver.getBestLastLocation(oldLocation, loc);
 
                     new Handler(Looper.getMainLooper()).post(new Runnable() {
                         @Override
@@ -425,7 +425,7 @@ public class MainActivity extends FragmentActivity implements
         // long count = statsService.getStatsCount();
         String data = "";
         for (Stats stats : list) {
-            data += "" + DateFormat.format("MM/dd HH:m:s", stats.recordedAt); //new Date(TimeinMilliSeccond)
+            data += "" + DateFormat.format("MM/dd HH:mm:s", stats.recordedAt); //new Date(TimeinMilliSeccond)
             data += " lat: " + stats.latitude;
             data += " lon: " + stats.longitude;
             data += " acu: " + stats.accuracy;

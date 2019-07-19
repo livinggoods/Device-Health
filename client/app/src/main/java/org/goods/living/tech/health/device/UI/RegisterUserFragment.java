@@ -35,6 +35,8 @@ import android.widget.RadioButton;
 import android.widget.TextView;
 
 import com.crashlytics.android.Crashlytics;
+import com.crashlytics.android.answers.Answers;
+import com.crashlytics.android.answers.CustomEvent;
 import com.google.android.gms.location.LocationRequest;
 import com.hbb20.CountryCodePicker;
 
@@ -230,7 +232,7 @@ public class RegisterUserFragment extends SlideFragment {
                 try {
                     saveRegistration(usernameText.getText().toString().trim());
                 } catch (Exception e) {
-                    Crashlytics.log(Log.DEBUG, TAG, "What is the error"+e);
+                    Crashlytics.log(Log.DEBUG, TAG, "What is the error" + e);
 
                 }
             }
@@ -323,6 +325,11 @@ public class RegisterUserFragment extends SlideFragment {
                             });
                         }
                     });
+                } else { //could not register user
+
+                    SnackbarUtil.showSnack(c, "Could not register CHV. Please check your internet connection ... ");
+                    Answers.getInstance().logCustom(new CustomEvent("User Registration fail")
+                            .putCustomAttribute("Reason", "username: " + user.username + " msg: " + "server error or no internet"));
                 }
 
             }

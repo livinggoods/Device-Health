@@ -6,6 +6,7 @@ import org.goods.living.tech.health.device.UI.RegisterUserFragment;
 import org.goods.living.tech.health.device.receivers.LocationUpdatesBroadcastReceiver;
 import org.goods.living.tech.health.device.receivers.SmsBroadcastReceiver;
 import org.goods.living.tech.health.device.receivers.USSDBalanceBroadcastReceiver;
+import org.goods.living.tech.health.device.receivers.UnlockBroadcastReceiver;
 import org.goods.living.tech.health.device.receivers.UpdateBroadcastReceiver;
 import org.goods.living.tech.health.device.services.ActivityUpdatesService;
 import org.goods.living.tech.health.device.services.FirebaseMessageService;
@@ -63,5 +64,7 @@ public interface AppcontrollerComponent extends AndroidInjector<AppController> {
     void inject(FirebaseMessageService target);
 
     void inject(ActivityUpdatesService target);
+
+    void inject(UnlockBroadcastReceiver target);
 
 }

@@ -12,6 +12,8 @@ public class Utils {
 
 	public final static String DATE_FORMAT_TIMEZONE = "dd-MM-yyyy'T'HH:mm:ss'Z'";// "dd-mm-yyyy HH:mm:ss"
 	static SimpleDateFormat dateFormatWithTimezone = new SimpleDateFormat(DATE_FORMAT_TIMEZONE, Locale.getDefault());
+	static SimpleDateFormat oldDateFormatWithTimezone = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss Z",
+			Locale.getDefault());
 	public final static String TIMEZONE_UTC = "UTC";
 
 	static Logger logger = LogManager.getLogger();// .getName());
@@ -24,8 +26,15 @@ public class Utils {
 			dateFormatWithTimezone.setTimeZone(timezone);
 			return dateFormatWithTimezone.parse(date);
 		} catch (Exception e) {
-			logger.error(e);
-			return null;
+			try {
+				logger.error("exception mapping date... attempting old approach", e);
+
+				oldDateFormatWithTimezone.setTimeZone(timezone);
+				return oldDateFormatWithTimezone.parse(date);
+			} catch (Exception ee) {
+				logger.error(ee);
+				return null;
+			}
 		}
 
 	}

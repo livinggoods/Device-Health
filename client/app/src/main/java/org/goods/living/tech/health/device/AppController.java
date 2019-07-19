@@ -8,6 +8,7 @@ import android.app.PendingIntent;
 import android.content.ComponentCallbacks2;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.IntentSender;
 import android.content.pm.ApplicationInfo;
 import android.location.Location;
@@ -35,7 +36,10 @@ import com.firebase.jobdispatcher.Trigger;
 import com.google.android.gms.common.api.ResolvableApiException;
 import com.google.android.gms.location.ActivityRecognitionClient;
 import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationAvailability;
+import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.LocationSettingsRequest;
 import com.google.android.gms.location.LocationSettingsResponse;
@@ -54,6 +58,7 @@ import org.goods.living.tech.health.device.models.Setting;
 import org.goods.living.tech.health.device.models.User;
 import org.goods.living.tech.health.device.receivers.LocationUpdatesBroadcastReceiver;
 import org.goods.living.tech.health.device.receivers.USSDBalanceBroadcastReceiver;
+import org.goods.living.tech.health.device.receivers.UnlockBroadcastReceiver;
 import org.goods.living.tech.health.device.services.ActivityUpdatesService;
 import org.goods.living.tech.health.device.services.SettingService;
 import org.goods.living.tech.health.device.services.UserService;
@@ -274,6 +279,9 @@ public class AppController extends Application {
         Setting setting = getSetting();
         setUSSDAlarm(setting.disableDatabalanceCheck, setting.getDatabalanceCheckTimeInMilli());
         requestActivityRecognition(setting.locationUpdateInterval * 1000);
+
+        registerReceiver(new UnlockBroadcastReceiver(), new IntentFilter("android.intent.action.USER_PRESENT"));
+
 
     }
 
@@ -593,7 +601,31 @@ public class AppController extends Application {
             long updateInterval = this.getSetting().locationUpdateInterval / 1 * 1000;
             Crashlytics.log(Log.DEBUG, TAG, "requestLocationUpdates " + updateInterval);
             LocationRequest mLocationRequest = createLocationRequest(updateInterval);
+            mFusedLocationClient.removeLocationUpdates(getPendingIntent(getApplicationContext()));
             Task<Void> locationTask = mFusedLocationClient.requestLocationUpdates(mLocationRequest, getPendingIntent(getApplicationContext()));
+
+            mFusedLocationClient.requestLocationUpdates(mLocationRequest, new LocationCallback() {
+                @Override
+                public void onLocationResult(LocationResult result) {
+                    Crashlytics.log(Log.DEBUG, TAG, "onLocationResult");
+                    //if (result != null) {
+                    //     result.getLastLocation();
+                    //  }
+                    mFusedLocationClient.removeLocationUpdates(getPendingIntent(getApplicationContext()));
+                    mFusedLocationClient.requestLocationUpdates(mLocationRequest, getPendingIntent(getApplicationContext()));
+                }
+
+                @Override
+                public void onLocationAvailability(LocationAvailability locationAvailability) {
+                    Crashlytics.log(Log.DEBUG, TAG, "onLocationAvailability: isLocationAvailable =  " + locationAvailability.isLocationAvailable());
+                    // requestLocationUpdates();
+
+                    mFusedLocationClient.removeLocationUpdates(getPendingIntent(getApplicationContext()));
+                    mFusedLocationClient.requestLocationUpdates(mLocationRequest, getPendingIntent(getApplicationContext()));
+
+                }
+            }, null);
+
 
         } catch (Exception ee) {
             // Log.wtf(TAG, e);

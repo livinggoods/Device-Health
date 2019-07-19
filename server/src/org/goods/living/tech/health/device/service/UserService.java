@@ -102,23 +102,35 @@ public class UserService extends BaseService {
 			users.setFcmToken(fcmToken);
 			users.setPhone(phone);
 
-			// set chvId - retrieve from medic
-			MedicUser mu = medicJpaController.findByUsername(country, username);
+			// if user had been registered before, retrieve from there
+			Users user = usersJpaController.findByUserName(username);// usernames are unique
 
-			// if nbo user fail registration
-			if (mu == null) {
-				Result<JsonNode> result = new Result<JsonNode>(false, "data connection error", data);
-				return result;
-			}
-			if (mu.getUsername() == null) {
-				Result<JsonNode> result = new Result<JsonNode>(false, "no user found", data);
-				return result;
-			}
+			if (user != null) {
 
-			users.setChvId(mu == null ? null : mu.getUuid());
-			users.setBranch(mu.getBranch());
-			users.setName(mu.getName());
-			users.setSupervisor(mu.getSupervisor());
+				logger.debug("found existing user: " + user.getUsername());
+				users.setChvId(user.getChvId());
+				users.setBranch(user.getBranch());
+				users.setName(user.getName());
+				users.setSupervisor(user.getSupervisor());
+			} else {
+				// set chvId - retrieve from medic
+				MedicUser mu = medicJpaController.findByUsername(country, username);
+
+				// if nbo user fail registration
+				if (mu == null) {
+					Result<JsonNode> result = new Result<JsonNode>(false, "could not connect to the medic db", data);
+					return result;
+				}
+				if (mu.getUsername() == null) {
+					Result<JsonNode> result = new Result<JsonNode>(false, "no user found", data);
+					return result;
+				}
+
+				users.setChvId(mu == null ? null : mu.getUuid());
+				users.setBranch(mu.getBranch());
+				users.setName(mu.getName());
+				users.setSupervisor(mu.getSupervisor());
+			}
 
 		}
 

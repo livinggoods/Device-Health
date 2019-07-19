@@ -7,15 +7,12 @@ import com.crashlytics.android.Crashlytics;
 
 import org.goods.living.tech.health.device.models.Stats;
 import org.goods.living.tech.health.device.models.Stats_;
-import org.goods.living.tech.health.device.utils.Utils;
 
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.TimeZone;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -198,10 +195,6 @@ public class StatsService extends BaseService {
                 stats.brightness = brightness;
                 stats.createdAt = new Date();
 
-
-                String formattedDate = Utils.getStringTimeStampWithTimezoneFromDate(stats.recordedAt, TimeZone.getTimeZone(Utils.TIMEZONE_UTC));
-                SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss Z");
-                Date serverRecordedAt = dateFormat.parse(formattedDate);
 
                 list.add(stats);
                 //filter out records withing time threshhold:

@@ -4,6 +4,7 @@ import android.util.Log;
 
 import com.crashlytics.android.Crashlytics;
 
+import org.goods.living.tech.health.device.BuildConfig;
 import org.goods.living.tech.health.device.utils.Utils;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -63,6 +64,9 @@ public class Stats extends BaseModel {
 
             if (batteryLevel != null) JSONObject.put("batteryLevel", batteryLevel);
             if (brightness != null) JSONObject.put("brightness", brightness);
+
+
+            JSONObject.put("versionName", BuildConfig.VERSION_CODE);
 
 
             return JSONObject;

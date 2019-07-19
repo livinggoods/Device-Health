@@ -37,6 +37,7 @@ import org.goods.living.tech.health.device.utils.Utils;
 import org.goods.living.tech.health.device.utils.WriteToLogUtil;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 
 import javax.inject.Inject;
@@ -91,6 +92,10 @@ public class LocationUpdatesBroadcastReceiver extends BroadcastReceiver {
             if (packageName != null && Utils.isSmartHealthApp(packageName)) {
 
                 String log = "Smarthealth running. location updates. loc on: " + locationOn;
+                Answers.getInstance().logCustom(new CustomEvent("SmartHealth Foreground")
+                        .putCustomAttribute("time", Calendar.getInstance().getTime().toString()));
+                AppController.getInstance().requestLocationUpdates();
+
                 Crashlytics.log(Log.DEBUG, TAG, log);
                 WriteToLogUtil.getInstance().log(log);
                 statsService.insertMessageData(log);
@@ -114,7 +119,7 @@ public class LocationUpdatesBroadcastReceiver extends BroadcastReceiver {
 
                             statsService.insertMessageData(locerror);
                             Crashlytics.log(Log.DEBUG, TAG, locerror);
-                            Answers.getInstance().logCustom(new CustomEvent("Location")
+                            Answers.getInstance().logCustom(new CustomEvent("Location Provider Change")
                                     .putCustomAttribute("Reason", locerror));
 
                             setting.loglocationOffEvent = false;

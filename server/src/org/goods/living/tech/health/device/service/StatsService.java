@@ -88,6 +88,8 @@ public class StatsService extends BaseService {
 
 			stats.setBatteryLevel(j.has("batteryLevel") ? j.get("batteryLevel").asDouble() : null);
 			stats.setBrightness(j.has("brightness") ? j.get("brightness").asDouble() : null);
+			stats.setVersionName(j.has("versionName") ? j.get("versionName").asText() : null);
+
 			if (j.has("recordedAt")) {
 
 				Date recordedAt = Utils.getDateFromTimeStampWithTimezone(j.get("recordedAt").asText(),

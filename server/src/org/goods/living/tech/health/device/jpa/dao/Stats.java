@@ -65,6 +65,9 @@ public class Stats implements Serializable {
 	@Temporal(TemporalType.TIMESTAMP)
 	private Date recordedAt;
 
+	@Column(length = 128, name = "version_name")
+	private String versionName;
+
 	@Column(name = "requested_at")
 	@Temporal(TemporalType.TIMESTAMP)
 	private Date requestedAt;
@@ -182,6 +185,14 @@ public class Stats implements Serializable {
 
 	public Users getUserId() {
 		return userId;
+	}
+
+	public void setVersionName(String versionName) {
+		this.versionName = versionName;
+	}
+
+	public String getVersionName() {
+		return versionName;
 	}
 
 	public void setUserId(Users userId) {
