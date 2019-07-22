@@ -39,6 +39,7 @@ import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.location.LocationRequest;
 
 import org.goods.living.tech.health.device.AppController;
+import org.goods.living.tech.health.device.BuildConfig;
 import org.goods.living.tech.health.device.R;
 import org.goods.living.tech.health.device.models.DataBalance;
 import org.goods.living.tech.health.device.models.Setting;
@@ -92,7 +93,7 @@ public class MainActivity extends FragmentActivity implements
     RegistrationService registrationService;
 
     // UI Widgets
-
+    private TextView versionName;
     private TextView usernameText;
     private TextView nameText;
     private TextView balanceTextView;
@@ -124,6 +125,7 @@ public class MainActivity extends FragmentActivity implements
 
 
         mLocationUpdatesResultView = (TextView) findViewById(R.id.location_updates_result);
+        versionName = (TextView) findViewById(R.id.txt_versionname);
         usernameText = (TextView) findViewById(R.id.usernameText);
         nameText = (TextView) findViewById(R.id.nameText);
         androidIdText = (TextView) findViewById(R.id.androidIdText);
@@ -401,13 +403,15 @@ public class MainActivity extends FragmentActivity implements
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
             // intent.putExtra("forceUpdate", forceUpdate);
             this.startActivity(intent);
+            return;
         }
 
         //if(user ==null){
-        usernameText.setText(user == null ? null : user.username);
-        nameText.setText(user == null ? null : user.name);
-        androidIdText.setText(user == null ? null : user.androidId);
-        userId.setText(user == null ? null : user.masterId.toString());
+        versionName.setText(BuildConfig.VERSION_NAME);
+        usernameText.setText(user.username);
+        nameText.setText( user.name);
+        androidIdText.setText( user.androidId);
+        userId.setText(user.masterId == null ? null : user.masterId.toString());
 
         List<DataBalance> l = dataBalanceService.getLatestRecords(1l);
         updateUI(l);
