@@ -7,12 +7,14 @@ import com.crashlytics.android.Crashlytics;
 
 import org.goods.living.tech.health.device.models.Stats;
 import org.goods.living.tech.health.device.models.Stats_;
+import org.goods.living.tech.health.device.utils.Constants;
 
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -130,12 +132,22 @@ public class StatsService extends BaseService {
 
             List<Stats> trimmedList = new ArrayList<Stats>();
 
-            //compress to first and last
+            //compress to at least 5 min interval - filter out shorter intervals for same location
             for (Map.Entry<String, List<Stats>> set : hashMap.entrySet()) {
-                trimmedList.add(set.getValue().get(0));
-                if (set.getValue().size() > 1) {
-                    trimmedList.add(set.getValue().get(set.getValue().size() - 1));//get last
+
+                List<Stats> l = set.getValue();
+                Date createdAt = new Date();
+
+                for (int x = 0; x < l.size(); x++) {
+
+                    if (Math.abs(createdAt.getTime() - l.get(x).createdAt.getTime()) >= TimeUnit.SECONDS.toMillis(Constants.UPDATE_INTERVAL)) {
+
+                        trimmedList.add(l.get(x));
+                        createdAt = l.get(x).createdAt;
+                    }
+
                 }
+
 
             }
 

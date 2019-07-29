@@ -16,7 +16,7 @@ apply plugin: 'io.fabric'
 
 ext.versionMajor = 1
 ext.versionMinor = 1
-ext.versionPatch = 21
+ext.versionPatch = 22
 ext.versionClassifier = null
 ext.isSnapshot = true
 ext.minimumSdkVersion = 19
@@ -43,9 +43,9 @@ android {
         targetSdkVersion 28
         minSdkVersion 19
         // 15// 0010203
-        versionName '10121' // 1.2.3-SNAPSHOT
+        versionName '10123' // 1.2.3-SNAPSHOT
         signingConfig signingConfigs.config
-        versionCode 10121
+        versionCode 10123
     }
 
     buildTypes {
