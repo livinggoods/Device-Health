@@ -21,8 +21,10 @@ import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.node.JsonNodeFactory;
 import org.codehaus.jackson.node.ObjectNode;
 import org.goods.living.tech.health.device.jpa.controllers.AdminUsersJpaController;
+import org.goods.living.tech.health.device.jpa.controllers.ChwJpaController;
 import org.goods.living.tech.health.device.jpa.controllers.MedicJpaController;
 import org.goods.living.tech.health.device.jpa.controllers.UsersJpaController;
+import org.goods.living.tech.health.device.jpa.dao.Chw;
 import org.goods.living.tech.health.device.jpa.dao.MedicUser;
 import org.goods.living.tech.health.device.jpa.dao.Users;
 import org.goods.living.tech.health.device.models.Result;
@@ -59,6 +61,9 @@ public class UserService extends BaseService {
 
 	@Inject
 	AdminUsersJpaController adminUsersJpaController;
+	
+	@Inject
+	ChwJpaController chwJpaController;
 
 	Integer DEFAULT_UPDATE_INTERVAL = 300;
 
@@ -104,7 +109,7 @@ public class UserService extends BaseService {
 
 			// if user had been registered before, retrieve from there
 			Users user = usersJpaController.findByUserName(username);// usernames are unique
-
+			Chw chw = chwJpaController.findByUserName(username);
 			if (user != null) {
 
 				logger.debug("found existing user: " + user.getUsername());
@@ -112,6 +117,13 @@ public class UserService extends BaseService {
 				users.setBranch(user.getBranch());
 				users.setName(user.getName());
 				users.setSupervisor(user.getSupervisor());
+			}else if(user == null && chw != null) {
+				
+				users.setChvId(chw.getContactId());
+				users.setBranch(chw.getBranchName());
+				users.setName(chw.getChwName());
+				//users.setSupervisor(chw.getSupervisorName());
+				
 			} else {
 				// set chvId - retrieve from medic
 				MedicUser mu = medicJpaController.findByUsername(country, username);
