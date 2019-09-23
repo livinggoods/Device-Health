@@ -122,7 +122,11 @@ public class UserService extends BaseService {
 				users.setChvId(chw.getContactId());
 				users.setBranch(chw.getBranchName());
 				users.setName(chw.getChwName());
-				//users.setSupervisor(chw.getSupervisorName());
+				if(chw.getSupervisorName() != "Unassigned Supervisor" ) {
+				   users.setSupervisor(true);
+				}else {
+					users.setSupervisor(false);
+				}
 				
 			} else {
 				// set chvId - retrieve from medic
