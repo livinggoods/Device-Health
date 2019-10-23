@@ -10,6 +10,10 @@ import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
 import javax.persistence.Table;
 import javax.xml.bind.annotation.XmlRootElement;
+
+import org.hibernate.annotations.TypeDef;
+
+import com.vladmihalcea.hibernate.type.json.JsonNodeBinaryType;
 /**
  *
  * @author ernestmurimi
@@ -27,6 +31,7 @@ import javax.xml.bind.annotation.XmlRootElement;
     , @NamedQuery(name = "Chw.findByCountry", query = "SELECT c FROM Chw c WHERE c.country = :country")
     , @NamedQuery(name = "Chw.findBySupervisorName", query = "SELECT c FROM Chw c WHERE c.supervisorName = :supervisorName")
     , @NamedQuery(name = "Chw.findById", query = "SELECT c FROM Chw c WHERE c.id = :id")})
+@TypeDef(name = "jsonb-node", typeClass = JsonNodeBinaryType.class)
 public class Chw implements Serializable {
     private static final long serialVersionUID = 1L;
     @Column(name = "username")
@@ -51,6 +56,7 @@ public class Chw implements Serializable {
     private Long id;
     
     public Chw() {
+    	
     }
 
     public Chw(Long id) {

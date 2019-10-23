@@ -40,7 +40,8 @@ public class ChwJpaController implements Serializable{
 
 			List<Chw> list = em.createNamedQuery("Chw.findByUsername").setParameter("username", username)
 					.getResultList();
-
+			
+			System.out.print("The user is found and " + list.toString());
 			return list.size() > 0 ? list.get(0) : null;
 		} finally {
 			em.close();

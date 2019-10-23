@@ -70,6 +70,7 @@ public class DatabalanceService extends BaseService {
 		logger.debug("create");
 		// JSONObject response = new JSONObject(responseString);
 		List<JsonNode> list = JSonHelper.getJsonNodeArray(incomingData);
+		logger.debug("incomingCreating databalance From Postman/App " + incomingData);
 
 		Users user = getCurrentUser();
 
@@ -117,15 +118,17 @@ public class DatabalanceService extends BaseService {
 	@Path(Constants.URL.DATABALANCE_USSDCODES)
 	public Result<String> ussdCodes(InputStream incomingData) {
 		logger.debug("ussdCodes");
+		
 
 		JsonNode data = JSonHelper.getJsonNode(incomingData);
-
+		logger.debug("incomingDatabalance data From Postman/App " + data);
 		// if (data.has("setting")) {
 		// JacksonUtil.toJsonNode(); JsonNode entity = new
 		// ObjectMapper().readTree(data.get("deviceInfo").toString());
 		com.fasterxml.jackson.databind.JsonNode settingEntity = JacksonUtil.toJsonNode(data.get("setting").toString());
 
 		String network = settingEntity.get("network").asText();
+		logger.debug("Data balance network found:" + network);
 
 		// }
 

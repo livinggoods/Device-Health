@@ -117,14 +117,9 @@ public class MedicJpaController implements Serializable {
 			mu.setSupervisor((Boolean) o[5]);
 			// l.add(mu);
 			// }
+			logger.error(mu.toString());
 			return mu;
-		} catch (NoResultException e) {
-			logger.error(e);
-			return new MedicUser();
-		} catch (Exception e) {
-			logger.error(e);
-			return null;
-		} finally {
+		}  finally {
 			em.close();
 		}
 

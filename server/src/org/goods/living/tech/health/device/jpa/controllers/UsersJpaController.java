@@ -13,9 +13,11 @@ import java.util.List;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.EntityNotFoundException;
+import javax.persistence.EntityTransaction;
 import javax.persistence.Query;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Root;
+import javax.transaction.Transactional;
 
 import org.goods.living.tech.health.device.jpa.controllers.exceptions.IllegalOrphanException;
 import org.goods.living.tech.health.device.jpa.controllers.exceptions.NonexistentEntityException;
@@ -60,7 +62,8 @@ public class UsersJpaController implements Serializable {
 				}
 			}
 			em.getTransaction().commit();
-		} finally {
+		} 
+		finally {
 			if (em != null) {
 				em.close();
 			}
@@ -207,21 +210,30 @@ public class UsersJpaController implements Serializable {
 	}
 
 	public Users findByUserNameAndAndroidId(String username, String androidId) {
-
+		
+		System.out.print("findByUserNameAndAndroidId Called ");
+		
 		EntityManager em = getEntityManager();
 		try {
-			// CriteriaQuery cq = em.getCriteriaBuilder().createQuery();
-			// Root<Users> rt = cq.from(Users.class);
-			// cq.select(em.getCriteriaBuilder().count(rt));
-			// Query q = em.createQuery(cq);
+
 
 			List<Users> list = em.createNamedQuery("Users.findByUserNameAndAndroidId")
 					.setParameter("username", username).setParameter("androidId", androidId).getResultList();
-
+			
+			System.out.print("findByUserNameAndAndroidId Called - Username" + username +  list.size());
+			
 			return list.size() > 0 ? list.get(0) : null;
-		} finally {
+			
+			
+		}catch(Exception ex) {
+			System.out.print("findByUserNameAndAndroidId Called ERROR");
+		}
+		
+		
+		finally {
 			em.close();
 		}
+		return null;
 
 	}
 
@@ -262,16 +274,17 @@ public class UsersJpaController implements Serializable {
 		}
 
 	}
-
+	//@Transactional(noRollbackFor = Exception.class)
 	public Users update(Users users) {
 		EntityManager em = getEntityManager();
 		try {
 			em.getTransaction().begin();
-
+ 
 			users = em.merge(users);
 			em.getTransaction().commit();
 			return users;
-		} finally {
+		}
+		finally {
 			em.close();
 		}
 	}
