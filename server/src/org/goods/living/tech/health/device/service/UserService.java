@@ -21,8 +21,10 @@ import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.node.JsonNodeFactory;
 import org.codehaus.jackson.node.ObjectNode;
 import org.goods.living.tech.health.device.jpa.controllers.AdminUsersJpaController;
+import org.goods.living.tech.health.device.jpa.controllers.ChwJpaController;
 import org.goods.living.tech.health.device.jpa.controllers.MedicJpaController;
 import org.goods.living.tech.health.device.jpa.controllers.UsersJpaController;
+import org.goods.living.tech.health.device.jpa.dao.Chw;
 import org.goods.living.tech.health.device.jpa.dao.MedicUser;
 import org.goods.living.tech.health.device.jpa.dao.Users;
 import org.goods.living.tech.health.device.models.Result;
@@ -59,6 +61,9 @@ public class UserService extends BaseService {
 
 	@Inject
 	AdminUsersJpaController adminUsersJpaController;
+	
+	@Inject
+	ChwJpaController chwJpaController;
 
 	Integer DEFAULT_UPDATE_INTERVAL = 300;
 
@@ -71,9 +76,15 @@ public class UserService extends BaseService {
 	@Path(Constants.URL.CREATE)
 	public Result<JsonNode> create(InputStream incomingData) throws Exception {
 		logger.debug("create");
+		Result<JsonNode> result = null;
 		JsonNode data = JSonHelper.getJsonNode(incomingData);
-
+		//JsonNode existing = JSonHelper.getJsonNode(incomingData);
+		
+		//System.out.print("incomingData" + incomingData);
+		
+		logger.debug("incomingData From Postman " + data);
 		Users users;
+		//String id = data.has("id") ? data.get("id").asText() : null;
 		String username = data.has("username") ? data.get("username").asText() : null;
 		String androidId = data.has("androidId") ? data.get("androidId").asText() : null;
 		String deviceTimeStr = data.has("deviceTime") ? data.get("deviceTime").asText() : null;
@@ -92,103 +103,159 @@ public class UserService extends BaseService {
 			clockDrift = Duration.between(serverTime.toInstant(), deviceTime.toInstant()).getSeconds();
 		}
 
-		users = usersJpaController.findByUserNameAndAndroidId(username, androidId);
-		if (users == null) {
+		//users = usersJpaController.findByUserNameAndAndroidId(username, androidId);
+		//users = usersJpaController.findByUserName(username);
+		
+		Users user = usersJpaController.findByUserName(username);
+		
+		if (user == null) {
 			users = new Users();
-			users.setUsername(username);
-			users.setPassword(data.has("password") ? data.get("password").asText() : null);
-			users.setAndroidId(androidId);
-			users.setCountry(country);
-			users.setFcmToken(fcmToken);
-			users.setPhone(phone);
+			
+			logger.debug("user does not exist on Users Table: NULL ");
+			Chw chw = chwJpaController.findByUserName(username);
+			
+				if(chw == null) {
+				
+					logger.debug("user does not exist on CHW Table: NULL ");
+					
+					users.setUsername(username);
+					users.setPassword(data.has("password") ? data.get("password").asText() : null);
+					users.setAndroidId(androidId);
+					users.setCountry(country);
+					users.setFcmToken(fcmToken);
+					users.setPhone(phone);
+					
+					//IF NULL ON USERS AND CHW THEN INSERT
+					
+					int versionCode = data.has("versionCode") ? Integer.valueOf(data.get("versionCode").asText()) : 1;
+					users.setVersionCode(versionCode);
+					users.setVersionName(data.has("versionName") ? data.get("versionName").asText() : null);
+					users.setDeviceTime(deviceTime);
 
-			// if user had been registered before, retrieve from there
-			Users user = usersJpaController.findByUserName(username);// usernames are unique
+					if (data.has("deviceInfo")) {
+						// JacksonUtil.toJsonNode(); JsonNode entity = new
+						// ObjectMapper().readTree(data.get("deviceInfo").toString());
+						com.fasterxml.jackson.databind.JsonNode entity = JacksonUtil.toJsonNode(data.get("deviceInfo").toString());
+						users.setDeviceInfo(entity);
+					}
+					if (data.has("setting")) {
+						// JacksonUtil.toJsonNode(); JsonNode entity = new
+						// ObjectMapper().readTree(data.get("deviceInfo").toString());
+						com.fasterxml.jackson.databind.JsonNode settingEntity = JacksonUtil
+								.toJsonNode(data.get("setting").toString());
+						users.setSetting(settingEntity);
+					}
 
-			if (user != null) {
+					if (data.has("recordedAt")) {
+						Date recordedAt = Utils.getDateFromTimeStampWithTimezone(data.get("recordedAt").asText(),
+								TimeZone.getTimeZone(Utils.TIMEZONE_UTC));// dateFormat.parse(data.get("recordedAt").asText());
 
-				logger.debug("found existing user: " + user.getUsername());
-				users.setChvId(user.getChvId());
-				users.setBranch(user.getBranch());
-				users.setName(user.getName());
-				users.setSupervisor(user.getSupervisor());
-			} else {
-				// set chvId - retrieve from medic
-				MedicUser mu = medicJpaController.findByUsername(country, username);
+						users.setRecordedAt(recordedAt);
+					}
 
-				// if nbo user fail registration
-				if (mu == null) {
-					Result<JsonNode> result = new Result<JsonNode>(false, "could not connect to the medic db", data);
-					return result;
+					logger.debug("create new user");
+					users.setCreatedAt(new Date());
+					
+					usersJpaController.create(users);
+					
+					
+					// generate token
+					if (token == null) {
+						token = getJWT(users);
+
+					}
+
+					ObjectNode o = (ObjectNode) data;
+					o.put("masterId", users.getId());
+					o.put("phone", users.getPhone());
+					o.put("chvId", users.getChvId());
+					o.put("name", users.getName());
+					o.put("branch", users.getBranch());
+					o.put("country", users.getCountry());
+					if (token != null)
+						o.put("token", token);
+					if (clockDrift != null)
+						o.put("clockDrift", clockDrift);
+
+					o.put("serverApi", applicationParameters.getServerApi());
+
+					result = new Result<JsonNode>(true, "", o);
+				
+					
+			}else {
+				
+				logger.debug("user FOUND ON CHW Table: NULL ");
+				//I think we need to insert the users table with new record from chw table
+				users.setChvId(chw.getContactId());
+				users.setBranch(chw.getBranchName());
+				users.setName(chw.getChwName());
+				if(chw.getSupervisorName() != "Unassigned Supervisor" ) {
+				   users.setSupervisor(true);
+				}else {
+					users.setSupervisor(false);
 				}
-				if (mu.getUsername() == null) {
-					Result<JsonNode> result = new Result<JsonNode>(false, "no user found", data);
-					return result;
-				}
+				
+				ObjectNode o = (ObjectNode) data;
+				o.put("masterId", chw.getId());
 
-				users.setChvId(mu == null ? null : mu.getUuid());
-				users.setBranch(mu.getBranch());
-				users.setName(mu.getName());
-				users.setSupervisor(mu.getSupervisor());
+				//boolean shouldforceupdate = shouldForceUpdate(users.getVersionName(), versionCode);
+				o.put("serverApi", applicationParameters.getServerApi());
+				//o.put("forceUpdate", shouldforceupdate);
+				o.put("chvId", chw.getContactId());
+				o.put("name", chw.getChwName());
+				o.put("branch", chw.getBranchName());
+				//o.put("country", chw.getCountry());
+
+				result = new Result<JsonNode>(true, "", o);
 			}
 
+			
+		}else {
+			//I think we need to update the users table with missing details here like name and branch
+			Chw chw = chwJpaController.findByUserName(username);
+			logger.debug("found existing user: " + user.getUsername());
+			user.setChvId(user.getChvId());
+			user.setBranch(user.getBranch());
+			user.setName(user.getName());
+			user.setSupervisor(user.getSupervisor());
+			
+			if(chw != null) {
+				user.setChvId(chw.getContactId());
+				user.setPhone(chw.getChwPhone());
+				user.setName(chw.getChwName());
+				user.setBranch(chw.getBranchName());
+				if(chw.getSupervisorName() != "Unassigned Supervisor" ) {
+					   user.setSupervisor(true);
+				}else {
+						user.setSupervisor(false);
+				}
+				usersJpaController.update(user);
+			}
+			
+			ObjectNode o = (ObjectNode) data;
+			if(user != null) {
+				o.put("masterId", user.getId());
+				//boolean shouldforceupdate = shouldForceUpdate(users.getVersionName(), versionCode);
+				o.put("serverApi", applicationParameters.getServerApi());
+				//o.put("forceUpdate", shouldforceupdate);
+				o.put("chvId", user.getChvId());
+				o.put("name", user.getName());
+				o.put("branch", user.getBranch());
+			}else {
+				o.put("masterId", user.getId());
+				//boolean shouldforceupdate = shouldForceUpdate(users.getVersionName(), versionCode);
+				o.put("serverApi", applicationParameters.getServerApi());
+				//o.put("forceUpdate", shouldforceupdate);
+				o.put("chvId", chw.getContactId());
+				o.put("name", chw.getChwName());
+				o.put("branch", chw.getBranchName());
+				//o.put("country", chw.getCountry());
+			}
+		
+			result = new Result<JsonNode>(true, "", o);
+			//return result;
 		}
-
-		int versionCode = data.has("versionCode") ? Integer.valueOf(data.get("versionCode").asText()) : 1;
-		users.setVersionCode(versionCode);
-		users.setVersionName(data.has("versionName") ? data.get("versionName").asText() : null);
-		users.setDeviceTime(deviceTime);
-
-		if (data.has("deviceInfo")) {
-			// JacksonUtil.toJsonNode(); JsonNode entity = new
-			// ObjectMapper().readTree(data.get("deviceInfo").toString());
-			com.fasterxml.jackson.databind.JsonNode entity = JacksonUtil.toJsonNode(data.get("deviceInfo").toString());
-			users.setDeviceInfo(entity);
-		}
-		if (data.has("setting")) {
-			// JacksonUtil.toJsonNode(); JsonNode entity = new
-			// ObjectMapper().readTree(data.get("deviceInfo").toString());
-			com.fasterxml.jackson.databind.JsonNode settingEntity = JacksonUtil
-					.toJsonNode(data.get("setting").toString());
-			users.setSetting(settingEntity);
-		}
-
-		if (data.has("recordedAt")) {
-			Date recordedAt = Utils.getDateFromTimeStampWithTimezone(data.get("recordedAt").asText(),
-					TimeZone.getTimeZone(Utils.TIMEZONE_UTC));// dateFormat.parse(data.get("recordedAt").asText());
-
-			users.setRecordedAt(recordedAt);
-		}
-
-		logger.debug("create new user");
-		users.setCreatedAt(new Date());
-		if (users.getId() == null) {
-			usersJpaController.create(users);
-		} else {
-			usersJpaController.update(users);
-		}
-
-		// generate token
-		if (token == null) {
-			token = getJWT(users);
-
-		}
-
-		ObjectNode o = (ObjectNode) data;
-		o.put("masterId", users.getId());
-		o.put("phone", users.getPhone());
-		o.put("chvId", users.getChvId());
-		o.put("name", users.getName());
-		o.put("branch", users.getBranch());
-		o.put("country", users.getCountry());
-		if (token != null)
-			o.put("token", token);
-		if (clockDrift != null)
-			o.put("clockDrift", clockDrift);
-
-		o.put("serverApi", applicationParameters.getServerApi());
-
-		Result<JsonNode> result = new Result<JsonNode>(true, "", o);
+		
 		return result;
 	}
 
@@ -305,7 +372,7 @@ public class UserService extends BaseService {
 	// Roles can be found at
 	// org.goods.living.tech.health.device.service.security.qualifier
 
-	@Secured(value = UserCategory.ADMIN)
+	/*@Secured(value = UserCategory.ADMIN)
 	@POST
 	// @Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
@@ -343,7 +410,7 @@ public class UserService extends BaseService {
 		Result<JsonNode> result = new Result<JsonNode>(true, "", node);
 		return result;
 
-	}
+	}*/
 
 	@Secured(value = UserCategory.USER)
 	@POST
@@ -433,3 +500,4 @@ public class UserService extends BaseService {
 	}
 
 }
+

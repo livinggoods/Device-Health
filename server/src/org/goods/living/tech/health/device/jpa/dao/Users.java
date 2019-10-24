@@ -36,7 +36,7 @@ import com.vladmihalcea.hibernate.type.json.JsonNodeBinaryType;
  * @author bensonbundi
  */
 @Entity
-@Table(name = "users", uniqueConstraints = { @UniqueConstraint(columnNames = { "chv_id" }) })
+@Table(name = "users",  uniqueConstraints = { @UniqueConstraint(columnNames = { "chv_id" }) })
 @XmlRootElement
 @NamedQueries({ @NamedQuery(name = "Users.findAll", query = "SELECT u FROM Users u"),
 		@NamedQuery(name = "Users.findById", query = "SELECT u FROM Users u WHERE u.id = :id"),
@@ -70,8 +70,7 @@ public class Users implements Serializable {
 	private String chvId;
 	@Column(name = "phone", length = 64)
 	private String phone;
-	@Basic(optional = false)
-	@Column(name = "android_id", nullable = false, length = 64)
+	@Column(name = "android_id", nullable = true, length = 64)
 	private String androidId;
 
 	@Basic(optional = false)
