@@ -76,6 +76,11 @@ public class ControllerManager {
 	public AdminUsersJpaController getAdminUsersJpaController() {
 		return new AdminUsersJpaController(entityManagerFactoryDH);
 	}
+	
+	@Produces
+	public ChwJpaController getChwJpaController() {
+		return new ChwJpaController(entityManagerFactoryDH);
+	}
 
 	void setUp() throws Exception {
 		entityManagerFactoryDH = Persistence.createEntityManagerFactory("postgresClientDBDeviceHealth");

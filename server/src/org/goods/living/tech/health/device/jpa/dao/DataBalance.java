@@ -33,7 +33,7 @@ import com.vladmihalcea.hibernate.type.json.JsonNodeBinaryType;
  * @author bensonbundi
  */
 @Entity
-@Table(name = "data_balance", schema = "events")
+@Table(name = "data_balance")
 @XmlRootElement
 @NamedQueries({ @NamedQuery(name = "DataBalance.findAll", query = "SELECT d FROM DataBalance d"),
 		@NamedQuery(name = "DataBalance.findById", query = "SELECT d FROM DataBalance d WHERE d.id = :id"),
